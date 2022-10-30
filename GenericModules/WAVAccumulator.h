@@ -2,6 +2,7 @@
 #define WAVACCUMULATOR
 
 #include "BaseModule.h"
+
 class WAVAccumulator :
     public BaseModule
 {
