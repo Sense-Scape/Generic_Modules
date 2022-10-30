@@ -1,0 +1,10 @@
+# Visual Studio directories to ignore
+.vs/
+
+# Build directories to ignore
+Debug/
+Release/
+x64/
+
+# Other
+build/
