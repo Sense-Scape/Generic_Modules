@@ -9,25 +9,27 @@ project(SC_Generic_Module_Types C CXX ASM)
 # 			-L-
 # Adding Chunk Types libs to modules
 # 			---
+# Adding Chunk Types to modules
 find_library(SC_Chunk_Types
 			PUBLIC
-			$ENV{SC_INCLUDE_DIRS}/Cpp_Chunk_Types/Cpp_Chunk_Types/build
+			$ENV{SC_LIB_DIR}/Lib_Chunk_Types/CPP_Chunk_Types/build
 			)
 include_directories(SC_Chunk_Types
 				INTERFACE
-				$ENV{SC_INCLUDE_DIRS}/Cpp_Chunk_Types/Cpp_Chunk_Types
+				$ENV{SC_LIB_DIR}/Lib_Chunk_Types/CPP_Chunk_Types
 				)
+
 
 # 			-L-
 # Adding Base Module libs to Generic Modules
 # 			---
 find_library(SC_Base_Module_Types
 			PUBLIC
-			$ENV{SC_INCLUDE_DIRS}/Cpp_Module_Types/Cpp_Module_Types/Base/BaseModule/BaseModule/build
+			$ENV{SC_LIB_DIR}/Lib_Base_Module/BaseModule/build
 			)
 include_directories(SC_Base_Module_Types
 				INTERFACE
-				$ENV{SC_INCLUDE_DIRS}/Cpp_Module_Types/Cpp_Module_Types/Base/BaseModule/BaseModule
+				$ENV{SC_LIB_DIR}/Lib_Base_Module/BaseModule
 				)
 
 # What to add to library
