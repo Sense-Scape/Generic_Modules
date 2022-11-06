@@ -10,7 +10,7 @@ SessionProcModule::SessionProcModule(unsigned uBufferSize) : BaseModule(uBufferS
 
 void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-    auto pUDPChunk = std::dynamic_pointer_cast<UDPChunk>(pBaseChunk);
+    auto pUDPChunk = std::static_pointer_cast<UDPChunk>(pBaseChunk);
     m_mFunctionCallbacksMap[SessionModeTypes::WAVSession](pUDPChunk);
 }
 
@@ -28,7 +28,7 @@ void SessionProcModule::ProcessWAVSession(std::shared_ptr<UDPChunk> pUDPChunk)
 {
     // TODO: Add ability to run sessions for each MAC Address
     // Updating session states
-    auto pWAVHeaderState = std::dynamic_pointer_cast<WAVSessionMode>(m_mSessionModesStatesMap[SessionModeTypes::WAVSession]);
+    auto pWAVHeaderState = std::static_pointer_cast<WAVSessionMode>(m_mSessionModesStatesMap[SessionModeTypes::WAVSession]);
     pWAVHeaderState->CovertBytesToStates(pUDPChunk);
 
     // Checking for sequence number continuity

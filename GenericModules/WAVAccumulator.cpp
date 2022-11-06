@@ -10,7 +10,7 @@ WAVAccumulator::WAVAccumulator(double dAccumulatePeriod, unsigned uMaxInputBuffe
 
 void WAVAccumulator::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-	auto pWAVChunk = std::dynamic_pointer_cast<WAVChunk>(pBaseChunk);
+	auto pWAVChunk = std::static_pointer_cast<WAVChunk>(pBaseChunk);
 	AccumulateWAVChunk(pWAVChunk);
 }
 
@@ -60,7 +60,7 @@ void WAVAccumulator::AccumulateWAVChunk(std::shared_ptr<WAVChunk> pWAVChunk)
 	else
 	{
 		// Try accumulate data
-		auto pAccumulatedWAVChunk = std::dynamic_pointer_cast<WAVChunk>(m_mAccumulatedWAVChunks[pWAVChunk->m_sMACAddress]);
+		auto pAccumulatedWAVChunk = std::static_pointer_cast<WAVChunk>(m_mAccumulatedWAVChunks[pWAVChunk->m_sMACAddress]);
 		if (VerifyTimeContinuity(pAccumulatedWAVChunk, pWAVChunk) || !WAVHeaderChanged(pAccumulatedWAVChunk, pWAVChunk))
 			Accumuluate(pAccumulatedWAVChunk, pWAVChunk);
 
