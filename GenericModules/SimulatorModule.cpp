@@ -4,33 +4,29 @@ SimulatorModule::SimulatorModule(double dSampleRate, double dChunkSize, unsigned
                                                                                                                                m_uNumChannels(uNumChannels),
                                                                                                                                m_uSimulatedFrequency(uSimulatedFrequency),
                                                                                                                                m_dSampleRate(dSampleRate),
-                                                                                                                               m_dChunkSize(dChunkSize),
-                                                                                                                               m_dCurrentSampleIndex(0),
-                                                                                                                               m_bSampleNow(),
-                                                                                                                               m_bSamplingInProgress(),
-                                                                                                                               m_bSamplingCompleted()
-
+                                                                                                                               m_dChunkSize(dChunkSize)
 {
     std::cout << std::string(__PRETTY_FUNCTION__) + "  ADC module created with m_dSampleRate [ " + std::to_string(m_dSampleRate) + " ] Hz and m_dChunkSize [ " + std::to_string(m_dChunkSize) + " ] \n";
     m_pTimeChunk = std::make_shared<TimeChunk>(m_dChunkSize, m_dSampleRate, 0, 12, sizeof(float));
-    StartTimer();
 }
 
-void SimulatorModule::Process()
+void SimulatorModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     while (true)
     {
-        if (!m_bSamplingInProgress)
-            ReinitializeTimeChunk();
-
+		// Creating simulated data
+        ReinitializeTimeChunk();
         SimulateADCSample();
+		
+		// Passing data on
+		std::shared_ptr<TimeChunk> pTimeChunk = std::move(m_pTimeChunk);
+		if (!TryPassChunk(std::static_pointer_cast<BaseChunk>(pTimeChunk)))
+		{
+			std::cout << std::string(__PRETTY_FUNCTION__) + ": Next buffer full, dropping current chunk and passing \n";
+		}
 
-        if (!m_bSamplingInProgress && m_bSamplingCompleted)
-        {
-            std::shared_ptr<TimeChunk> pTimeChunk = std::move(m_pTimeChunk);
-            if (!TryPassChunk(std::dynamic_pointer_cast<BaseChunk>(pTimeChunk)))
-            std::cout << std::string(__PRETTY_FUNCTION__) + ": Next buffer full, dropping current chunk and passing \n";
-        }
+		// Sleeping for time equivalent to chunk period
+		//std::this_thread::sleep_for(std::chrono::milliseconds(1000*(m_dChunkSize/m_dSampleRate)));
     }
 }
 
@@ -55,51 +51,15 @@ void SimulatorModule::ReinitializeTimeChunk()
 
 void SimulatorModule::SimulateADCSample()
 {
-    bool bUpdateIndex = false;
+	// Iterating through each ADC channel vector and sample index
+	for (unsigned uCurrentSampleIndex = 0; uCurrentSampleIndex < m_dChunkSize; uCurrentSampleIndex++)
+	{
+		for (unsigned uADCChannel = 0; uADCChannel < m_uNumChannels; uADCChannel++)
+		{
+			m_pTimeChunk->m_vvvdTimeChunk[0][uADCChannel][uCurrentSampleIndex] = (float)sin(2 * 3.14159 * ((float)m_uSimulatedFrequency * uCurrentSampleIndex / (float)m_dSampleRate));
+		}
+	}
 
-    if (m_bSampleNow)
-    {
-        // Iterating through each ADC channel vector
-        for (unsigned uADCChannel = 0; uADCChannel < m_uNumChannels; uADCChannel++)
-            m_pTimeChunk->m_vvvdTimeChunk[0][uADCChannel][m_dCurrentSampleIndex] = (float)sin(2 * 3.14159 * ((float)m_uSimulatedFrequency * m_dCurrentSampleIndex / (float)m_dSampleRate));
+    std::cout << std::string(__PRETTY_FUNCTION__) + " TimeChunk created and fully sampled \n";
 
-        m_bSampleNow = false;
-        bUpdateIndex = true;
-    }
-
-    // If finished sampling chunk setting a bunch of flags
-    if (m_dCurrentSampleIndex == m_dChunkSize)
-    {
-        m_bSamplingCompleted = true;
-        m_bSamplingInProgress = false;
-        m_dCurrentSampleIndex = 0;
-        std::cout << std::string(__PRETTY_FUNCTION__) + " TimeChunk created and fully sampled \n";
-    }
-    else if (bUpdateIndex)
-    {
-        // Sampling not done
-        m_bSampleNow = false;
-        m_bSamplingInProgress = true;
-        m_dCurrentSampleIndex++;
-    }
-}
-
-void SimulatorModule::StartTimer()
-{
-
-    uint64_t uSamplePeriod = std::round(1e6 / m_dSampleRate);
-    const esp_timer_create_args_t espPeriodicTimerArgs = {
-        .callback = &SampleTimerCallback,
-        .arg = (bool *)&m_bSampleNow};
-
-    std::cout << std::string(__PRETTY_FUNCTION__) + " Starting timer with sampling period " + std::to_string(uSamplePeriod) + " us \n";
-
-    ESP_ERROR_CHECK(esp_timer_create(&espPeriodicTimerArgs, &m_espPeriodicTimer));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(m_espPeriodicTimer, uSamplePeriod));
-}
-
-void SimulatorModule::SampleTimerCallback(void *void_pbSampleNow)
-{
-    bool *pbSampleNow = (bool *)void_pbSampleNow;
-    *pbSampleNow = true;
 }

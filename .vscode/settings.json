@@ -1,3 +1,6 @@
 {
-	"cmake.sourceDirectory": "${workspaceFolder}/GenericModules"
+	"C_Cpp.default.configurationProvider": "go2sh.cmake-integration",
+	"files.associations": {
+		"functional": "cpp"
+	}
 }

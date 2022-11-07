@@ -2,6 +2,7 @@
 #define SIMULATOR_MODULE
 
 #include <map>
+#include <chrono>
 #include <cmath>
 #include <thread>
 
@@ -31,19 +32,20 @@ public:
      * @brief Generate and fill complex time data chunk and pass on to next module
      *
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk);
+    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+
+	/**
+     * @brief Returns module type
+     * @param[out] ModuleType of processing module
+     */
+    ModuleType GetModuleType() override { return ModuleType::SimulatorModule; };
 
 private:
     unsigned m_uNumChannels;                 ///< Number of ADC channels to simulate
     unsigned m_uSimulatedFrequency;          ///< Sinusoid frequency to simulate
     double m_dSampleRate;                    ///< Sample rate in Hz
     double m_dChunkSize;                     ///< How many samples in each chunk channel
-    double m_dCurrentSampleIndex;            ///< What sample index is currently be created
-    bool m_bSampleNow;                       ///< Whether ADC should sample now or wait
-    bool m_bSamplingInProgress;              ///< If the module is already generating dataChunk
-    bool m_bSamplingCompleted;               ///< boolean if the timechunk is full
     std::shared_ptr<TimeChunk> m_pTimeChunk; ///< Pointer to member time data chunk
-    esp_timer_handle_t m_espPeriodicTimer;
 
     /**
      * @brief Initializes Time Chunk vectrs default values. Initializes according to number of ADCs and their channels
@@ -57,18 +59,6 @@ private:
      */
     void SimulateADCSample();
 
-    /**
-     * @brief Starts ESP timer using SimulatorModule parameters
-     *
-     */
-    void StartTimer();
-
-    /**
-     * @brief Function called everytime timer interrupt occurs. Infoms module to sample now
-     * 
-     * @param void_pbSampleNow 
-     */
-    static void SampleTimerCallback(void *void_pbSampleNow);
 };
 
 #endif
