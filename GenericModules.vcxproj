@@ -72,15 +72,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/include</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -88,7 +92,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SC_LIB_DIR)/Lib_Chunk_Types/Chunk_Types; $(SC_LIB_DIR)/Lib_Base_Module/BaseModule</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Chunk_Types/include;../Base_Module/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -103,7 +107,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SC_LIB_DIR)/Lib_Chunk_Types/Chunk_Types; $(SC_LIB_DIR)/Lib_Base_Module/BaseModule</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Chunk_Types/include;../Base_Module/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,7 +122,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SC_LIB_DIR)/Lib_Chunk_Types/Chunk_Types; $(SC_LIB_DIR)/Lib_Base_Module/BaseModule</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Chunk_Types/include;../Base_Module/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,7 +137,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SC_LIB_DIR)/Lib_Chunk_Types/Chunk_Types; $(SC_LIB_DIR)/Lib_Base_Module/BaseModule</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Chunk_Types/include;../Base_Module/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,16 +147,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="RouterModule.h" />
-    <ClInclude Include="SessionProcModule.h" />
-    <ClInclude Include="WAVAccumulator.h" />
-    <ClInclude Include="WAVWriterModule.h" />
+    <ClInclude Include="include/RouterModule.h" />
+    <ClInclude Include="include/SessionProcModule.h" />
+    <ClInclude Include="include\WAVAccumulator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RouterModule.cpp" />
     <ClCompile Include="SessionProcModule.cpp" />
     <ClCompile Include="WAVAccumulator.cpp" />
-    <ClCompile Include="WAVWriterModule.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Base_Module\BaseModule.vcxproj">
+      <Project>{36fd5345-1eb3-4a92-8f96-a07cc3fa8e32}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Chunk_Types\ChunkTypes.vcxproj">
+      <Project>{5583b73c-eb54-4cb6-86e1-439a4b9a9315}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

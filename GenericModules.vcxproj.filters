@@ -15,16 +15,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RouterModule.h">
+    <ClInclude Include="include/RouterModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SessionProcModule.h">
+    <ClInclude Include="include/SessionProcModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WAVAccumulator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WAVWriterModule.h">
+    <ClInclude Include="include\WAVAccumulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -36,9 +33,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="WAVAccumulator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WAVWriterModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
