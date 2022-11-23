@@ -20,13 +20,13 @@ public:
     /**
      * @brief Construct a new ADCInterface object
      *
-     * @param m_dSampleRate simulated sample rate in Hz
-     * @param m_dChunkSize Number of sampels in a single channel of chunk data
-     * @param uNumChannels Number of data channels to simulate
-     * @param uSimulatedFrequency Frequency of sinusoid to simulate
+     * @param[in] m_dSampleRate simulated sample rate in Hz
+     * @param[in] m_dChunkSize Number of sampels in a single channel of chunk data
+     * @param[in] uNumChannels Number of data channels to simulate
+     * @param[in] uSimulatedFrequency Frequency of sinusoid to simulate
      */
     SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency);
-    ~SimulatorModule(){};
+    //~SimulatorModule(){};
 
     /**
      * @brief Generate and fill complex time data chunk and pass on to next module
@@ -39,6 +39,13 @@ public:
      * @param[out] ModuleType of processing module
      */
     ModuleType GetModuleType() override { return ModuleType::SimulatorModule; };
+
+    /**
+     * @brief Check input buffer and try process data
+     *
+     */
+    virtual void ContinuouslyTryProcess() override;
+
 
 private:
     unsigned m_uNumChannels;                 ///< Number of ADC channels to simulate

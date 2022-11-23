@@ -17,7 +17,7 @@ void SimulatorModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		// Creating simulated data
         ReinitializeTimeChunk();
         SimulateADCSample();
-		
+
 		// Passing data on
 		std::shared_ptr<TimeChunk> pTimeChunk = std::move(m_pTimeChunk);
 		if (!TryPassChunk(std::static_pointer_cast<BaseChunk>(pTimeChunk)))
@@ -26,7 +26,7 @@ void SimulatorModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		}
 
 		// Sleeping for time equivalent to chunk period
-		//std::this_thread::sleep_for(std::chrono::milliseconds(1000*(m_dChunkSize/m_dSampleRate)));
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000*((unsigned)((double)m_dChunkSize/(double)m_dSampleRate))));
     }
 }
 
@@ -62,4 +62,19 @@ void SimulatorModule::SimulateADCSample()
 
     std::cout << std::string(__PRETTY_FUNCTION__) + " TimeChunk created and fully sampled \n";
 
+}
+
+void SimulatorModule::ContinuouslyTryProcess()
+{
+    std::unique_lock<std::mutex> ProcessLock(m_ProcessStateMutex);
+
+    while (!m_bShutDown)
+    {
+        ProcessLock.unlock();
+
+        std::shared_ptr<BaseChunk> pBaseChunk;
+        Process(pBaseChunk);
+
+        ProcessLock.lock();
+    }
 }
