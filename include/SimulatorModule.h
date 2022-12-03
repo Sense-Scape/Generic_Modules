@@ -25,8 +25,9 @@ public:
      * @param[in] m_dChunkSize Number of sampels in a single channel of chunk data
      * @param[in] uNumChannels Number of data channels to simulate
      * @param[in] uSimulatedFrequency Frequency of sinusoid to simulate
+     * @param[in] uBufferSize Size of input buffer
      */
-    SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency);
+    SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, unsigned uBufferSize);
     //~SimulatorModule(){};
 
     /**

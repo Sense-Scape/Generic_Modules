@@ -1,7 +1,7 @@
 #include "SimulatorModule.h"
 
-SimulatorModule::SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency) : 
-BaseModule(),                                                                                                                                                                                                                                            
+SimulatorModule::SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, unsigned uBufferSize) : 
+BaseModule(uBufferSize),                                                                                                                                                                                                                                            
 m_uNumChannels(uNumChannels),
 m_uSimulatedFrequency(uSimulatedFrequency),
 m_dSampleRate(dSampleRate),
