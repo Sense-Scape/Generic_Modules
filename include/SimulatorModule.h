@@ -9,6 +9,7 @@
 #include "BaseModule.h"
 #include "TimeChunk.h"
 
+
 /**
  * @brief Class that simulates and ADC sampling pure tones
  *
@@ -44,7 +45,7 @@ public:
      * @brief Check input buffer and try process data
      *
      */
-    virtual void ContinuouslyTryProcess() override;
+    void ContinuouslyTryProcess() override;
 
 
 private:
