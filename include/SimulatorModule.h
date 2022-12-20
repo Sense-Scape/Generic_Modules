@@ -21,8 +21,8 @@ public:
     /**
      * @brief Construct a new ADCInterface object
      *
-     * @param[in] m_dSampleRate simulated sample rate in Hz
-     * @param[in] m_dChunkSize Number of sampels in a single channel of chunk data
+     * @param[in] dSampleRate simulated sample rate in Hz
+     * @param[in] dChunkSize Number of sampels in a single channel of chunk data
      * @param[in] uNumChannels Number of data channels to simulate
      * @param[in] uSimulatedFrequency Frequency of sinusoid to simulate
      * @param[in] uBufferSize Size of input buffer

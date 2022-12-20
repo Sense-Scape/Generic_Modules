@@ -1,5 +1,5 @@
 #include "SimulatorModule.h"
-
+#include "esp_system.h"
 SimulatorModule::SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, unsigned uBufferSize) : 
 BaseModule(uBufferSize),                                                                                                                                                                                                                                            
 m_uNumChannels(uNumChannels),
@@ -43,14 +43,16 @@ void SimulatorModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         // Sleeping for time equivalent to chunk period
         std::cout << std::string(__PRETTY_FUNCTION__) + ": sleeping for " + std::to_string((1000*m_dChunkSize)/m_dSampleRate) +" milliseconds \n";
 		std::this_thread::sleep_for(std::chrono::milliseconds((unsigned)((1000*m_dChunkSize)/m_dSampleRate)));
+
+        //TODO: Add a means to exit this in the case that this thread needs to be killed
     }
 }
 
 void SimulatorModule::ReinitializeTimeChunk()
 {
     m_pTimeChunk = std::make_shared<TimeChunk>(m_dChunkSize, m_dSampleRate, 0, 12, sizeof(float));
-    m_pTimeChunk->m_vvvdTimeChunk.resize(1);
-    m_pTimeChunk->m_vvvdTimeChunk[0].resize(m_uNumChannels);
+    m_pTimeChunk->m_vvvfTimeChunk.resize(1);
+    m_pTimeChunk->m_vvvfTimeChunk[0].resize(m_uNumChannels);
 
     unsigned uADCChannelCount = 0;
 
@@ -58,7 +60,7 @@ void SimulatorModule::ReinitializeTimeChunk()
     for (unsigned uADCChannel = 0; uADCChannel < m_uNumChannels; uADCChannel++)
     {
         // Initialising channel data vector for each ADC
-        m_pTimeChunk->m_vvvdTimeChunk[0][uADCChannel].resize(m_dChunkSize);
+        m_pTimeChunk->m_vvvfTimeChunk[0][uADCChannel].resize(m_dChunkSize);
         uADCChannelCount++;
     }
 
@@ -72,10 +74,9 @@ void SimulatorModule::SimulateADCSample()
 	{
 		for (unsigned uADCChannel = 0; uADCChannel < m_uNumChannels; uADCChannel++)
 		{
-			m_pTimeChunk->m_vvvdTimeChunk[0][uADCChannel][uCurrentSampleIndex] = (float)sin(2 * 3.14159 * ((float)m_uSimulatedFrequency * uCurrentSampleIndex / (float)m_dSampleRate));
+			m_pTimeChunk->m_vvvfTimeChunk[0][uADCChannel][uCurrentSampleIndex] = (float)sin(2 * 3.14159 * ((float)m_uSimulatedFrequency * uCurrentSampleIndex / (float)m_dSampleRate));
 		}
 	}
 
     std::cout << std::string(__PRETTY_FUNCTION__) + " TimeChunk created and fully sampled \n";
-
 }
