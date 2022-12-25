@@ -8,7 +8,7 @@ m_dSampleRate(dSampleRate),
 m_dChunkSize(dChunkSize)
 {
     std::cout << std::string(__PRETTY_FUNCTION__) + "  ADC module created with m_dSampleRate [ " + std::to_string(m_dSampleRate) + " ] Hz and m_dChunkSize [ " + std::to_string(m_dChunkSize) + " ] \n";
-    m_pTimeChunk = std::make_shared<TimeChunk>(m_dChunkSize, m_dSampleRate, 0, 12, sizeof(float));
+    m_pTimeChunk = std::make_shared<TimeChunk>(m_dChunkSize, m_dSampleRate, 0, 12, sizeof(float),1);
 }
 
 void SimulatorModule::ContinuouslyTryProcess()
@@ -50,9 +50,8 @@ void SimulatorModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 
 void SimulatorModule::ReinitializeTimeChunk()
 {
-    m_pTimeChunk = std::make_shared<TimeChunk>(m_dChunkSize, m_dSampleRate, 0, 12, sizeof(float));
-    m_pTimeChunk->m_vvvfTimeChunk.resize(1);
-    m_pTimeChunk->m_vvvfTimeChunk[0].resize(m_uNumChannels);
+    m_pTimeChunk = std::make_shared<TimeChunk>(m_dChunkSize, m_dSampleRate, 0, 12, sizeof(float), 1);
+    m_pTimeChunk->m_vvfTimeChunks.resize(m_uNumChannels);
 
     unsigned uADCChannelCount = 0;
 
@@ -60,7 +59,7 @@ void SimulatorModule::ReinitializeTimeChunk()
     for (unsigned uADCChannel = 0; uADCChannel < m_uNumChannels; uADCChannel++)
     {
         // Initialising channel data vector for each ADC
-        m_pTimeChunk->m_vvvfTimeChunk[0][uADCChannel].resize(m_dChunkSize);
+        m_pTimeChunk->m_vvfTimeChunks[uADCChannel].resize(m_dChunkSize);
         uADCChannelCount++;
     }
 
@@ -74,7 +73,7 @@ void SimulatorModule::SimulateADCSample()
 	{
 		for (unsigned uADCChannel = 0; uADCChannel < m_uNumChannels; uADCChannel++)
 		{
-			m_pTimeChunk->m_vvvfTimeChunk[0][uADCChannel][uCurrentSampleIndex] = (float)sin(2 * 3.14159 * ((float)m_uSimulatedFrequency * uCurrentSampleIndex / (float)m_dSampleRate));
+			m_pTimeChunk->m_vvfTimeChunks[uADCChannel][uCurrentSampleIndex] = (float)sin(2 * 3.14159 * ((float)m_uSimulatedFrequency * uCurrentSampleIndex / (float)m_dSampleRate));
 		}
 	}
 
