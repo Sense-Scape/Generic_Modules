@@ -33,8 +33,7 @@ bool WAVAccumulator::VerifyTimeContinuity(std::shared_ptr<WAVChunk> pAccumulateD
 
 bool WAVAccumulator::CheckMaxTimeThreshold(std::shared_ptr<WAVChunk> pAccumulateDWAVChunk)
 {
-	double dAccumulatedPeriod = ((double)pAccumulateDWAVChunk->m_vfData.size() / (double)pAccumulateDWAVChunk->m_sWAVHeader.NumOfChan) / (double)pAccumulateDWAVChunk->m_sWAVHeader.SamplesPerSec;
-	std::cout << std::string(__FUNCTION__) + ": ---- " + std::to_string(dAccumulatedPeriod) + " \n";
+	double dAccumulatedPeriod = ((double)pAccumulateDWAVChunk->m_vfData.size() / (double)pAccumulateDWAVChunk->m_sWAVHeader.NumOfChan) * (1/(double)pAccumulateDWAVChunk->m_sWAVHeader.SamplesPerSec);
 	if (dAccumulatedPeriod > m_dAccumulatePeriod)
 	{
 		std::cout << std::string(__FUNCTION__) + ": WAV recoding of " + std::to_string(dAccumulatedPeriod) + " seconds made \n";

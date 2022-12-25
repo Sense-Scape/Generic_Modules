@@ -10,76 +10,76 @@ SessionProcModule::SessionProcModule(unsigned uBufferSize) : BaseModule(uBufferS
 
 void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
+    // find out what chunk type one is processing
+    uint32_t u32ChunkType;
     auto pUDPChunk = std::static_pointer_cast<UDPChunk>(pBaseChunk);
-    m_mFunctionCallbacksMap[SessionModeTypes::WAVSession](pUDPChunk);
+    memcpy(&u32ChunkType, &pUDPChunk->m_vcDataChunk[9], sizeof(u32ChunkType));
+
+    // Call a function as a function of chunk type
+    m_mFunctionCallbacksMap[u32ChunkType](pUDPChunk);
 }
 
 void SessionProcModule::RegisterFunctionHandlers()
 {
-    m_mFunctionCallbacksMap[SessionModeTypes::WAVSession] = [this](std::shared_ptr<UDPChunk> pUDPChunk) { ProcessWAVSession(pUDPChunk); };
+    m_mFunctionCallbacksMap[ChunkTypesUtility::toU32(ChunkType::TimeChunk)] = [this](std::shared_ptr<BaseChunk> pBaseChunk) { ProcessTimeChunkSession(pBaseChunk); };
 }
 
 void SessionProcModule::RegisterSessionStates()
 {
-    m_mSessionModesStatesMap[SessionModeTypes::WAVSession] = std::make_shared<WAVSessionMode>();
+    m_mSessionModesStatesMap[SessionModeTypes::TimeChunkSession] = std::make_shared<TimeChunkSessionMode>();
 }
 
-void SessionProcModule::ProcessWAVSession(std::shared_ptr<UDPChunk> pUDPChunk)
+void SessionProcModule::ProcessTimeChunkSession(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-    // TODO: Add ability to run sessions for each MAC Address
-    // Updating session states
-    auto pWAVHeaderState = std::static_pointer_cast<WAVSessionMode>(m_mSessionModesStatesMap[SessionModeTypes::WAVSession]);
-    pWAVHeaderState->CovertBytesToStates(pUDPChunk);
+    //// TODO: Add ability to run sessions for each MAC Address
+
+    //// Extract state bytes and store in session state
+    auto pTimeChunkHeaderState = std::static_pointer_cast<TimeChunkSessionMode>(m_mSessionModesStatesMap[SessionModeTypes::TimeChunkSession]);
+    auto pUDPChunk = std::dynamic_pointer_cast<UDPChunk>(pBaseChunk);
+    pTimeChunkHeaderState->CovertBytesToStates(pUDPChunk);
 
     // Checking for sequence number continuity
-    bool bStartSequence = (pWAVHeaderState->m_puSequenceNumber.second == 0);
-    bool bContinuingSequence = ((pWAVHeaderState->m_pcTransmissionState.second == 0) && (pWAVHeaderState->m_puSequenceNumber.second == pWAVHeaderState->m_uPreviousSequenceNumber + 1));
-    bool bLastInSequence = (pWAVHeaderState->m_pcTransmissionState.second == 1) && (pWAVHeaderState->m_puSequenceNumber.second == pWAVHeaderState->m_uPreviousSequenceNumber + 1);
+    bool bStartSequence = (pTimeChunkHeaderState->m_puSequenceNumber.second == 0);
+    bool bContinuingSequence = ((pTimeChunkHeaderState->m_pcTransmissionState.second == 0) && (pTimeChunkHeaderState->m_puSequenceNumber.second == pTimeChunkHeaderState->m_uPreviousSequenceNumber + 1));
+    bool bLastInSequence = (pTimeChunkHeaderState->m_pcTransmissionState.second == 1) && (pTimeChunkHeaderState->m_puSequenceNumber.second == pTimeChunkHeaderState->m_uPreviousSequenceNumber + 1);
     
     // Updating previous sequence after required for continuity/start checks
-    pWAVHeaderState->m_uPreviousSequenceNumber = pWAVHeaderState->m_puSequenceNumber.second;
+    pTimeChunkHeaderState->m_uPreviousSequenceNumber = pTimeChunkHeaderState->m_puSequenceNumber.second;
 
     // Store intermediate bytes
     if (bStartSequence || bContinuingSequence)
     {
         if (bStartSequence)
-            m_mSessionBytes[SessionModeTypes::WAVSession] = std::make_shared<std::vector<char>>();
+            m_mSessionBytes[SessionModeTypes::TimeChunkSession] = std::make_shared<std::vector<char>>();
 
-        auto pvcIntermediateSessionBytes = m_mSessionBytes[SessionModeTypes::WAVSession];
-        std::copy(pUDPChunk->m_vcDataChunk.begin() + pWAVHeaderState->m_uDataStartPosition, pUDPChunk->m_vcDataChunk.begin() + pWAVHeaderState->m_puTransmissionSize.second, std::back_inserter(*pvcIntermediateSessionBytes));
+        auto pvcIntermediateSessionBytes = m_mSessionBytes[SessionModeTypes::TimeChunkSession];
+        auto DataStart = pUDPChunk->m_vcDataChunk.begin() + pTimeChunkHeaderState->m_uDataStartPosition;
+        auto DataEnd = pUDPChunk->m_vcDataChunk.begin() + pTimeChunkHeaderState->m_puTransmissionSize.second;
+        std::copy(DataStart, DataEnd, std::back_inserter(*pvcIntermediateSessionBytes));
     }
     else if (bLastInSequence)
     {
-        auto pvcIntermediateSessionBytes = m_mSessionBytes[SessionModeTypes::WAVSession];
-        std::copy(pUDPChunk->m_vcDataChunk.begin() + pWAVHeaderState->m_uDataStartPosition, pUDPChunk->m_vcDataChunk.begin() + pWAVHeaderState->m_puTransmissionSize.second, std::back_inserter(*pvcIntermediateSessionBytes));
+        auto pvcIntermediateSessionBytes = m_mSessionBytes[SessionModeTypes::TimeChunkSession];
+        auto DataStart = pUDPChunk->m_vcDataChunk.begin() + pTimeChunkHeaderState->m_uDataStartPosition;
+        auto DataEnd = pUDPChunk->m_vcDataChunk.begin() + pTimeChunkHeaderState->m_puTransmissionSize.second;
+        std::copy(DataStart, DataEnd, std::back_inserter(*pvcIntermediateSessionBytes));
 
-        // Extracting WAV header and creating WAV chunk
-        auto pWAVChunk = std::make_shared<WAVChunk>(pWAVHeaderState->m_pusMacUID.second);
-        std::vector<char> vcWAVHeader(pvcIntermediateSessionBytes->begin(), pvcIntermediateSessionBytes->begin() + sizeof(WAVHeader));
-        pWAVChunk->m_sWAVHeader = WAVChunk::BytesToWAVHeader(vcWAVHeader);
-
-        // Converting remaining bytes to time samples
-        std::vector<char> vcTimeData(pvcIntermediateSessionBytes->begin() + sizeof(WAVHeader), pvcIntermediateSessionBytes->end());
-        unsigned sample = 0;
-        while (sample < vcTimeData.size())
-        {
-            pWAVChunk->m_vfData.emplace_back(*(reinterpret_cast<float*>(&vcTimeData[sample])));
-            sample += sizeof(float);
-        }
+        auto pTimChunk = std::make_shared<TimeChunk>(0,0,0,0,0,0);
+        pTimChunk->Deserialise(pvcIntermediateSessionBytes);
 
         // Pass pointer to data on
-        if (TryPassChunk(pWAVChunk))
+        if (TryPassChunk(pTimChunk))
             std::cout << std::string(__FUNCTION__) + " - WAV session complete passing WAV recording on \n";
 
         // Clear stored data and state information for current session
-        m_mSessionModesStatesMap[SessionModeTypes::WAVSession] = std::make_shared<WAVSessionMode>();
-        m_mSessionBytes[SessionModeTypes::WAVSession] = std::make_shared<std::vector<char>>();
+        m_mSessionModesStatesMap[SessionModeTypes::TimeChunkSession] = std::make_shared<TimeChunkSessionMode>();
+        m_mSessionBytes[SessionModeTypes::TimeChunkSession] = std::make_shared<std::vector<char>>();
     }
     else
     {
         std::cout << std::string(__FUNCTION__) + " - WAV session chunk missed, resetting \n";
-        m_mSessionModesStatesMap[SessionModeTypes::WAVSession] = std::make_shared<WAVSessionMode>();
-        m_mSessionBytes[SessionModeTypes::WAVSession] = std::make_shared<std::vector<char>>();
+        m_mSessionModesStatesMap[SessionModeTypes::TimeChunkSession] = std::make_shared<TimeChunkSessionMode>();
+        m_mSessionBytes[SessionModeTypes::TimeChunkSession] = std::make_shared<std::vector<char>>();
     }
 }
 

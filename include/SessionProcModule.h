@@ -14,7 +14,7 @@ class SessionProcModule :
     public BaseModule
 {
 private:
-    std::map<SessionModeTypes, std::function<void(std::shared_ptr<UDPChunk>)>> m_mFunctionCallbacksMap; ///< Map of function callbacks called according to session type
+    std::map<uint32_t, std::function<void(std::shared_ptr<UDPChunk>)>> m_mFunctionCallbacksMap; ///< Map of function callbacks called according to session type
     std::map<SessionModeTypes, std::shared_ptr<SessionModeBase>> m_mSessionModesStatesMap;              ///< Map of session modes to track session mode states
     std::map<SessionModeTypes, std::shared_ptr<std::vector<char>>> m_mSessionBytes;                                      ///< Map of session mode intermediate bytes prior ro session completion
 
@@ -38,7 +38,7 @@ private:
     *        when recording complete passes on otherwise if it will clear all
     *        data in the case a UDP chunk is missed
     */
-    void ProcessWAVSession(std::shared_ptr<UDPChunk> pUDPChunk);
+    void ProcessTimeChunkSession(std::shared_ptr<BaseChunk> pBaseChunk);
 
 public:
     /**
