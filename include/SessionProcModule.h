@@ -3,7 +3,7 @@
 
 /*Standard Includes*/
 
-/*Custom Includes*/
+/* Custom Includes */
 #include "BaseModule.h"
 #include "UDPChunk.h"
 #include "WAVChunk.h"
@@ -15,8 +15,8 @@ class SessionProcModule :
 {
 private:
     std::map<uint32_t, std::function<void(std::shared_ptr<UDPChunk>)>> m_mFunctionCallbacksMap; ///< Map of function callbacks called according to session type
-    std::map<SessionModeTypes, std::shared_ptr<SessionModeBase>> m_mSessionModesStatesMap;              ///< Map of session modes to track session mode states
-    std::map<SessionModeTypes, std::shared_ptr<std::vector<char>>> m_mSessionBytes;                                      ///< Map of session mode intermediate bytes prior ro session completion
+    std::map<SessionModeTypes, std::shared_ptr<SessionModeBase>> m_mSessionModesStatesMap;      ///< Map of session modes to track session mode states
+    std::map<SessionModeTypes, std::shared_ptr<std::vector<char>>> m_mSessionBytes;             ///< Map of session mode intermediate bytes prior ro session completion
 
     /*
      * @brief Module process to collect and format UDP data
@@ -24,7 +24,7 @@ private:
     void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
 
     /*
-    * @brief Registers all UDP Chunk function callbacks according session mode types
+    * @brief Registers all UDP Chunk function callbacks according rx'ed chunk type
     */
     void RegisterFunctionHandlers();
 
@@ -44,15 +44,14 @@ public:
     /**
      * @brief Construct a new Session Processing Module to produce UDP data. responsible
      *  for acummulating all required UDP bytes and passing on for further processing
-     * 
-     * @param uBufferSize size of processing input buffer
+     * @param[in] uBufferSize size of processing input buffer
      */
     SessionProcModule(unsigned uBufferSize);
     ~SessionProcModule() {};
 
     /**
      * @brief Returns module type
-     * @param[out] ModuleType of processing module
+     * @return ModuleType of processing module
      */
     ModuleType GetModuleType() override { return ModuleType::SessionProcModule; };
 

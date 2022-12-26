@@ -1,5 +1,5 @@
-#ifndef WAVACCUMULATOR
-#define WAVACCUMULATOR
+#ifndef WAV_ACCUMULATOR
+#define WAV_ACCUMULATOR
 
 #include "BaseModule.h"
 
@@ -7,9 +7,9 @@ class WAVAccumulator :
     public BaseModule
 {
 private:
-    unsigned m_dAccumulatePeriod; // Maximum number of seconds with which a module will make a recording
-    std::map<std::string, std::shared_ptr<BaseChunk>> m_mAccumulatedWAVChunks; // Map of accumulated WAV chunks as a function of string mac addr
-    std::map<std::string, unsigned> m_mPreviousTimestamp; // Map of accumulated WAV chunk previous time stamps as a function of string mac addr
+    unsigned m_dAccumulatePeriod;                                               ///< Maximum number of seconds with which a module will make a recording
+    std::map<std::string, std::shared_ptr<BaseChunk>> m_mAccumulatedWAVChunks;  ///< Map of accumulated WAV chunks as a function of string mac addr
+    std::map<std::string, unsigned> m_mPreviousTimestamp;                       ///< Map of accumulated WAV chunk previous time stamps as a function of string mac addr
 
     /*
     * @brief Module process to accumulate WAV chunks
@@ -43,6 +43,7 @@ private:
     * @param[in] pCurrentWAVChunk pointer to current WAV chunk
     */
     bool WAVHeaderChanged(std::shared_ptr<WAVChunk> pAccumulatedWAVChunk, std::shared_ptr<WAVChunk> pCurrentWAVChunk);
+
 
 protected:
     /*

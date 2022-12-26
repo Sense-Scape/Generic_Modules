@@ -24,6 +24,9 @@
     <ClInclude Include="include\WAVAccumulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\TimeToWAVModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RouterModule.cpp">
@@ -33,6 +36,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="WAVAccumulator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TimeToWAVModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
