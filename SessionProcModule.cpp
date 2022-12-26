@@ -39,18 +39,25 @@ void SessionProcModule::ProcessTimeChunkSession(std::shared_ptr<BaseChunk> pBase
     auto pTimeChunkHeaderState = std::dynamic_pointer_cast<TimeChunkSessionMode>(m_mSessionModesStatesMap[SessionModeTypes::TimeChunkSession]);
     auto pUDPChunk = std::dynamic_pointer_cast<UDPChunk>(pBaseChunk);
     pTimeChunkHeaderState->CovertBytesToStates(pUDPChunk);
+    
+    unsigned uSequenceNumber = 0;
 
     // Checking for sequence number continuity
     bool bStartSequence = (pTimeChunkHeaderState->m_puSequenceNumber.second == 0);
-    bool bSequenceContinuous = (pTimeChunkHeaderState->m_puSequenceNumber.second == pTimeChunkHeaderState->m_uPreviousSequenceNumber + 1);
-    bool bContinuingSequence = ((pTimeChunkHeaderState->m_pcTransmissionState.second == 0) && bSequenceContinuous);
-    bool bLastInSequence = ((pTimeChunkHeaderState->m_pcTransmissionState.second == 1) && bSequenceContinuous);
+    bool bSequenceContinuous = (pTimeChunkHeaderState->m_puSequenceNumber.second == pTimeChunkHeaderState->m_uPreviousSequenceNumber + 1); //intra
+    bool bContinuingSequence = ((pTimeChunkHeaderState->m_pcTransmissionState.second == 0));
+    bool bLastInSequence = ((pTimeChunkHeaderState->m_pcTransmissionState.second == 1));
+    bool SameSesession = (pTimeChunkHeaderState->m_puSessionNumber.second == pTimeChunkHeaderState->m_uPreviousSessionNumber || pTimeChunkHeaderState->m_puSessionNumber.second == 0); //inter
     
+    if (bStartSequence)
+    {
+        pTimeChunkHeaderState->m_uPreviousSessionNumber = pTimeChunkHeaderState->m_puSessionNumber.second;
+    }
     // Updating previous sequence after required for continuity/start checks
     pTimeChunkHeaderState->m_uPreviousSequenceNumber = pTimeChunkHeaderState->m_puSequenceNumber.second;
 
     // Store intermediate bytes
-    if (bStartSequence || bContinuingSequence)
+    if (bStartSequence || (SameSesession && bContinuingSequence && bSequenceContinuous))
     {
         if (bStartSequence)
             m_mSessionBytes[SessionModeTypes::TimeChunkSession] = std::make_shared<std::vector<char>>();
@@ -60,7 +67,7 @@ void SessionProcModule::ProcessTimeChunkSession(std::shared_ptr<BaseChunk> pBase
         auto DataEnd = pUDPChunk->m_vcDataChunk.begin() + pTimeChunkHeaderState->m_puTransmissionSize.second;
         std::copy(DataStart, DataEnd, std::back_inserter(*pvcIntermediateSessionBytes));
     }
-    else if (bLastInSequence)
+    else if (bLastInSequence && SameSesession && bSequenceContinuous)
     {
         auto pvcIntermediateSessionBytes = m_mSessionBytes[SessionModeTypes::TimeChunkSession];
         auto DataStart = pUDPChunk->m_vcDataChunk.begin() + pTimeChunkHeaderState->m_uDataStartPosition;
