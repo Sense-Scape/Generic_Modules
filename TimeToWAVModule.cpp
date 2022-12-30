@@ -29,7 +29,7 @@ void TimeToWAVModule::ConvertTimeToWAV(std::shared_ptr<TimeChunk> pTimeChunk, st
     pWAVChunk->m_sWAVHeader.blockAlign = 4; // stereo?
     // Setting chunk Sizes
     pWAVChunk->m_sWAVHeader.Subchunk2Size = pTimeChunk->m_uNumChannels * pTimeChunk->m_dChunkSize * pTimeChunk->m_uNumBytes;
-    pWAVChunk->m_sWAVHeader.ChunkSize = pWAVChunk->m_sWAVHeader.Subchunk2Size + 44 - 8;
+    pWAVChunk->m_sWAVHeader.ChunkSize = pWAVChunk->m_sWAVHeader.Subchunk2Size + 44 - 8; 
 
     for (unsigned uSampleIndex = 0; uSampleIndex < pTimeChunk->m_dChunkSize; uSampleIndex++)
     {

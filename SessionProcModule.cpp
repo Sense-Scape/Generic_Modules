@@ -38,7 +38,7 @@ void SessionProcModule::ProcessTimeChunkSession(std::shared_ptr<BaseChunk> pBase
     // Extract state bytes and store in session state
     auto pTimeChunkHeaderState = std::dynamic_pointer_cast<TimeChunkSessionMode>(m_mSessionModesStatesMap[SessionModeTypes::TimeChunkSession]);
     auto pUDPChunk = std::dynamic_pointer_cast<UDPChunk>(pBaseChunk);
-    pTimeChunkHeaderState->CovertBytesToStates(pUDPChunk);
+    pTimeChunkHeaderState->ConvertBytesToStates(pUDPChunk);
     
     unsigned uSequenceNumber = 0;
 
@@ -80,8 +80,7 @@ void SessionProcModule::ProcessTimeChunkSession(std::shared_ptr<BaseChunk> pBase
         pTimeChunk->Deserialise(pvcIntermediateSessionBytes);
 
         // Pass pointer to data on
-        if (TryPassChunk(pTimeChunk))
-            std::cout << std::string(__FUNCTION__) + " - WAV session complete passing WAV recording on \n";
+        TryPassChunk(pTimeChunk);
 
         // Clear stored data and state information for current session
         m_mSessionModesStatesMap[SessionModeTypes::TimeChunkSession] = std::make_shared<TimeChunkSessionMode>();
