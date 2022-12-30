@@ -12,11 +12,9 @@
 
 /**
  * @brief Class that simulates and ADC sampling pure tones
- *
  */
 class SimulatorModule : public BaseModule
 {
-
 public:
     /**
      * @brief Construct a new ADCInterface object
@@ -32,7 +30,6 @@ public:
 
     /**
      * @brief Generate and fill complex time data chunk and pass on to next module
-     *
      */
     void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
 
@@ -44,7 +41,6 @@ public:
 
     /**
      * @brief Check input buffer and try process data
-     *
      */
     void ContinuouslyTryProcess() override;
 
@@ -58,13 +54,11 @@ private:
 
     /**
      * @brief Initializes Time Chunk vectrs default values. Initializes according to number of ADCs and their channels
-     *
      */
     void ReinitializeTimeChunk();
 
     /**
      * @brief Emulates Sampling of ADC. Stores a simulated sample accoriding to member sampling frequency
-     *
      */
     void SimulateADCSample();
 

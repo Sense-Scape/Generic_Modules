@@ -1,5 +1,6 @@
 #include "SimulatorModule.h"
 #include "esp_system.h"
+
 SimulatorModule::SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, unsigned uBufferSize) : 
 BaseModule(uBufferSize),                                                                                                                                                                                                                                            
 m_uNumChannels(uNumChannels),
