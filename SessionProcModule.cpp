@@ -38,7 +38,7 @@ void SessionProcModule::ProcessTimeChunkSession(std::shared_ptr<BaseChunk> pBase
     // Extract state bytes and store in session state
     auto pTimeChunkHeaderState = std::dynamic_pointer_cast<TimeChunkSessionMode>(m_mSessionModesStatesMap[SessionModeTypes::TimeChunkSession]);
     auto pUDPChunk = std::dynamic_pointer_cast<UDPChunk>(pBaseChunk);
-    pTimeChunkHeaderState->CovertBytesToStates(pUDPChunk);
+    pTimeChunkHeaderState->ConvertBytesToStates(pUDPChunk);
     
     unsigned uSequenceNumber = 0;
 

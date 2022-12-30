@@ -28,10 +28,10 @@ void HPFModule::CalculateButterWorthCoefficients()
 
 }
 
-void HPFModule::ApplyFilter(std::vector<float>& vfData)
+void HPFModule::ApplyFilter(std::vector<uint16_t>& vfData)
 {
 	// Creating arrays to store previosuly processed values
-	std::vector<float> vfOutputData;
+	std::vector<uint16_t> vfOutputData;
 	vfOutputData.resize(vfData.size());
 
 	// Applying Filter

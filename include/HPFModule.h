@@ -44,7 +44,7 @@ private:
     /*
     * @brief Applies the filter using difference equation onto data vector
     */
-    void ApplyFilter(std::vector<float> &vfData);
+    void ApplyFilter(std::vector<uint16_t> &vfData);
 
 };
 
