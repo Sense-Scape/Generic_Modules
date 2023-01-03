@@ -1,5 +1,5 @@
-#ifndef CHUNKROUTER
-#define CHUNKROUTER
+#ifndef CHUNK_ROUTER
+#define CHUNK_ROUTER
 
 #include "BaseModule.h"
 

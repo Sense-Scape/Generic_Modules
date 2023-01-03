@@ -149,10 +149,12 @@
   <ItemGroup>
     <ClInclude Include="include/RouterModule.h" />
     <ClInclude Include="include/SessionProcModule.h" />
+    <ClInclude Include="include\HPFModule.h" />
     <ClInclude Include="include\TimeToWAVModule.h" />
     <ClInclude Include="include\WAVAccumulator.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="HPFModule.cpp" />
     <ClCompile Include="RouterModule.cpp" />
     <ClCompile Include="SessionProcModule.cpp" />
     <ClCompile Include="TimeToWAVModule.cpp" />
