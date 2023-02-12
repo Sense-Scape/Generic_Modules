@@ -8,6 +8,9 @@ m_uSimulatedFrequency(uSimulatedFrequency),
 m_dSampleRate(dSampleRate),
 m_dChunkSize(dChunkSize)
 {
+    // Set all channel phases to zero with angle of arrival = 0 
+    m_vfChannelPhases.resize(m_uNumChannels);
+
     std::cout << std::string(__PRETTY_FUNCTION__) + "  ADC module created with m_dSampleRate [ " + std::to_string(m_dSampleRate) + " ] Hz and m_dChunkSize [ " + std::to_string(m_dChunkSize) + " ] \n";
     m_pTimeChunk = std::make_shared<TimeChunk>(m_dChunkSize, m_dSampleRate, 0, 12, sizeof(float),1);
 }
@@ -51,17 +54,14 @@ void SimulatorModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 
 void SimulatorModule::ReinitializeTimeChunk()
 {
-    m_pTimeChunk = std::make_shared<TimeChunk>(m_dChunkSize, m_dSampleRate, 0, 12, sizeof(float), 1);
-    m_pTimeChunk->m_vvfTimeChunks.resize(m_uNumChannels);
-
-    unsigned uADCChannelCount = 0;
+    m_pTimeChunk = std::make_shared<TimeChunk>(m_dChunkSize, m_dSampleRate, 0, sizeof(int16_t)*8, sizeof(int16_t), 1);
+    m_pTimeChunk->m_vvi16TimeChunks.resize(m_uNumChannels);
 
     // Current implementation simulated N channels on a single ADC
-    for (unsigned uADCChannel = 0; uADCChannel < m_uNumChannels; uADCChannel++)
+    for (unsigned uChannel = 0; uChannel < m_uNumChannels; uChannel++)
     {
         // Initialising channel data vector for each ADC
-        m_pTimeChunk->m_vvfTimeChunks[uADCChannel].resize(m_dChunkSize);
-        uADCChannelCount++;
+        m_pTimeChunk->m_vvi16TimeChunks[uChannel].resize(m_dChunkSize);
     }
 
     m_pTimeChunk->m_uNumChannels = m_uNumChannels;
@@ -69,14 +69,22 @@ void SimulatorModule::ReinitializeTimeChunk()
 
 void SimulatorModule::SimulateADCSample()
 {
-	// Iterating through each ADC channel vector and sample index
+	// Iterate through each channel vector and sample index
 	for (unsigned uCurrentSampleIndex = 0; uCurrentSampleIndex < m_dChunkSize; uCurrentSampleIndex++)
 	{
-		for (unsigned uADCChannel = 0; uADCChannel < m_uNumChannels; uADCChannel++)
+		for (unsigned uChannel = 0; uChannel < m_uNumChannels; uChannel++)
 		{
-			m_pTimeChunk->m_vvfTimeChunks[uADCChannel][uCurrentSampleIndex] = (float)sin(2 * 3.14159 * ((float)m_uSimulatedFrequency * uCurrentSampleIndex / (float)m_dSampleRate));
+            // And create a "sampled" float value between 0 and 1 with phase offests
+            auto datum = sin(2 * 3.14159 * ((float)m_uSimulatedFrequency * uCurrentSampleIndex / (float)m_dSampleRate) + m_vfChannelPhases[uChannel]);
+			// The take this value, scale and convert it to a signed int
+            m_pTimeChunk->m_vvi16TimeChunks[uChannel][uCurrentSampleIndex] = (int16_t)datum*std::pow(2,15);
 		}
 	}
 
     std::cout << std::string(__PRETTY_FUNCTION__) + " TimeChunk created and fully sampled \n";
+}
+
+void SimulatorModule::SetChannelPhases(std::vector<float> &vfChannelPhases)
+{
+    m_vfChannelPhases = vfChannelPhases;
 }

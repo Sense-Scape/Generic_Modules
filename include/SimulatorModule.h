@@ -44,6 +44,12 @@ public:
      */
     void ContinuouslyTryProcess() override;
 
+    /**
+     * @brief Set the absolute phase (Rad) of each channel of simulated data
+     * @param[in]
+     */
+    void SetChannelPhases(std::vector<float> &vfChannelPhases);
+
 
 private:
     unsigned m_uNumChannels;                 ///< Number of ADC channels to simulate
@@ -51,6 +57,7 @@ private:
     double m_dSampleRate;                    ///< Sample rate in Hz
     double m_dChunkSize;                     ///< How many samples in each chunk channel
     std::shared_ptr<TimeChunk> m_pTimeChunk; ///< Pointer to member time data chunk
+    std::vector<float> m_vfChannelPhases;    ///< Vector od channel phases
 
     /**
      * @brief Initializes Time Chunk vectrs default values. Initializes according to number of ADCs and their channels

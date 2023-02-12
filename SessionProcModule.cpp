@@ -36,13 +36,8 @@ void SessionProcModule::ProcessTimeChunkSession(std::shared_ptr<BaseChunk> pBase
     //// TODO: Add ability to run sessions for each MAC Address
 
     // Extract state bytes and store in session state
-<<<<<<< HEAD
     std::shared_ptr<TimeChunkSessionMode> pTimeChunkHeaderState = std::static_pointer_cast<TimeChunkSessionMode>(m_mSessionModesStatesMap[SessionModeTypes::TimeChunkSession]);
     auto pUDPChunk = std::static_pointer_cast<UDPChunk>(pBaseChunk);
-=======
-    auto pTimeChunkHeaderState = std::dynamic_pointer_cast<TimeChunkSessionMode>(m_mSessionModesStatesMap[SessionModeTypes::TimeChunkSession]);
-    auto pUDPChunk = std::dynamic_pointer_cast<UDPChunk>(pBaseChunk);
->>>>>>> 223265697b3bb19f1f3c6bdba3e98f89a88d3d09
     pTimeChunkHeaderState->ConvertBytesToStates(pUDPChunk);
     
     unsigned uSequenceNumber = 0;
