@@ -31,25 +31,19 @@ void SimulatorModule::ContinuouslyTryProcess()
 
 void SimulatorModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-    while (true)
+    // Creating simulated data
+    ReinitializeTimeChunk();
+    SimulateADCSample();
+    
+    // Passing data on
+    std::shared_ptr<TimeChunk> pTimeChunk = std::move(m_pTimeChunk);
+    if (!TryPassChunk(std::static_pointer_cast<BaseChunk>(pTimeChunk)))
     {
-		// Creating simulated data
-        ReinitializeTimeChunk();
-        SimulateADCSample();
-        
-		// Passing data on
-		std::shared_ptr<TimeChunk> pTimeChunk = std::move(m_pTimeChunk);
-		if (!TryPassChunk(std::static_pointer_cast<BaseChunk>(pTimeChunk)))
-		{
-			std::cout << std::string(__PRETTY_FUNCTION__) + ": Next buffer full, dropping current chunk and passing \n";
-		}
-
-        // Sleeping for time equivalent to chunk period
-        std::cout << std::string(__PRETTY_FUNCTION__) + ": sleeping for " + std::to_string((1000*m_dChunkSize)/m_dSampleRate) +" milliseconds \n";
-		std::this_thread::sleep_for(std::chrono::milliseconds((unsigned)((1000*m_dChunkSize)/m_dSampleRate)));
-
-        //TODO: Add a means to exit this in the case that this thread needs to be killed
+        std::cout << std::string(__PRETTY_FUNCTION__) + ": Next buffer full, dropping current chunk and passing \n";
     }
+
+    // Sleeping for time equivalent to chunk period
+    std::this_thread::sleep_for(std::chrono::milliseconds((unsigned)((1000*m_dChunkSize)/m_dSampleRate)));
 }
 
 void SimulatorModule::ReinitializeTimeChunk()
@@ -77,11 +71,9 @@ void SimulatorModule::SimulateADCSample()
             // And create a "sampled" float value between 0 and 1 with phase offests
             auto datum = sin(2 * 3.14159 * ((float)m_uSimulatedFrequency * uCurrentSampleIndex / (float)m_dSampleRate) + m_vfChannelPhases[uChannel]);
 			// The take this value, scale and convert it to a signed int
-            m_pTimeChunk->m_vvi16TimeChunks[uChannel][uCurrentSampleIndex] = (int16_t)datum*std::pow(2,15);
+            m_pTimeChunk->m_vvi16TimeChunks[uChannel][uCurrentSampleIndex] = (int16_t)(datum*std::pow(2,15));
 		}
 	}
-
-    std::cout << std::string(__PRETTY_FUNCTION__) + " TimeChunk created and fully sampled \n";
 }
 
 void SimulatorModule::SetChannelPhases(std::vector<float> &vfChannelPhases)

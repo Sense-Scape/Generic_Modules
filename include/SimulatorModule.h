@@ -60,7 +60,7 @@ private:
     std::vector<float> m_vfChannelPhases;    ///< Vector od channel phases
 
     /**
-     * @brief Initializes Time Chunk vectrs default values. Initializes according to number of ADCs and their channels
+     * @brief Initializes Time Chunk vectors default values. Initializes according to number of ADCs and their channels
      */
     void ReinitializeTimeChunk();
 
