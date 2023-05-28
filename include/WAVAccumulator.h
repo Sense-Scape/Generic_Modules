@@ -6,10 +6,27 @@
 class WAVAccumulator :
     public BaseModule
 {
+
+public:
+    /**
+     * @brief Construct a new Base Module object
+     * @param[in] uAccumulatePeriod maximum number of seconds with which a module will make a recording
+     * @param[in] uMaxInputBufferSize size of input buffer
+     */
+    WAVAccumulator(double dAccumulatePeriod, double dContinuityThresholdFactor, unsigned uMaxInputBufferSize);
+    ~WAVAccumulator() {};
+
+    /**
+     * @brief Returns module type
+     * @param[out] ModuleType of processing module
+     */
+    ModuleType GetModuleType() override { return ModuleType::WAVAccumulatorModule; };
+
 private:
     unsigned m_dAccumulatePeriod;                                               ///< Maximum number of seconds with which a module will make a recording
     std::map<std::string, std::shared_ptr<BaseChunk>> m_mAccumulatedWAVChunks;  ///< Map of accumulated WAV chunks as a function of string mac addr
-    std::map<std::string, unsigned> m_mPreviousTimestamp;                       ///< Map of accumulated WAV chunk previous time stamps as a function of string mac addr
+    std::map<std::string, uint64_t> m_i64PreviousTimeStamps;                    ///< 
+    double m_dContinuityThresholdFactor;                                        ///< Double which defines max jitter before signal considered discontinuous
 
     /*
     * @brief Module process to accumulate WAV chunks
@@ -26,10 +43,10 @@ private:
 
     /*
     * @brief Verifies that current chunk is continuous with currently accumulated data
-    * @param[in] pAccumulatedWAVChunk pAccumulatedWAVChunk pointer to accumulated WAV chunk data
-    * @param[in] pCurrentWAVChunk pointer to current WAV chunk
+    * @param[in] pCurrentWAVChunk Pointer to current time chunk
+    * @param[in] pAccumulatedWAVChunk  Pointer to accumulated time chunk
     */
-    bool VerifyTimeContinuity(std::shared_ptr<WAVChunk> pAccumulatedWAVChunk, std::shared_ptr<WAVChunk> pCurrentWAVChunk);
+    bool VerifyTimeContinuity(std::shared_ptr<WAVChunk> pCurrentWAVChunk, std::shared_ptr<WAVChunk> pAccumulatedWAVChunk);
 
     /*
     * @brief Checks if the current WAV chunk (recording) meets time threshold and can therefore be passed on
@@ -51,21 +68,6 @@ protected:
     * @param[in] pBaseChunkpointer to base chunk
     */
     void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
-
-public:
-    /**
-     * @brief Construct a new Base Module object
-     * @param[in] uAccumulatePeriod maximum number of seconds with which a module will make a recording
-     * @param[in] uMaxInputBufferSize size of input buffer
-     */
-    WAVAccumulator(double dAccumulatePeriod, unsigned uMaxInputBufferSize);
-    ~WAVAccumulator() {};
-
-    /**
-     * @brief Returns module type
-     * @param[out] ModuleType of processing module
-     */
-    ModuleType GetModuleType() override { return ModuleType::WAVAccumulatorModule; };
 };
 
 #endif
