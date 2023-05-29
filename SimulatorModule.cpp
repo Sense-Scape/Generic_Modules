@@ -17,15 +17,10 @@ m_dChunkSize(dChunkSize)
 
 void SimulatorModule::ContinuouslyTryProcess()
 {
-    std::unique_lock<std::mutex> ProcessLock(m_ProcessStateMutex);
-
     while (!m_bShutDown)
     {
-        ProcessLock.unlock();
         auto pBaseChunk = std::make_shared<BaseChunk>();
         Process(pBaseChunk);
-
-        ProcessLock.lock();
     }
 }
 

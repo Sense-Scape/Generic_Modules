@@ -9,15 +9,10 @@ WatchdogModule::WatchdogModule(unsigned uReportTime_s, std::vector<uint8_t> &vu8
 
 void WatchdogModule::ContinuouslyTryProcess()
 {
-    std::unique_lock<std::mutex> ProcessLock(m_ProcessStateMutex);
-
     while (!m_bShutDown)
     {
-        ProcessLock.unlock();
         auto pBaseChunk = std::make_shared<BaseChunk>();
         Process(pBaseChunk);
-
-        ProcessLock.lock();
     }
 }
 
