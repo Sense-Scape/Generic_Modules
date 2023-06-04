@@ -25,8 +25,8 @@ public:
 private:
     unsigned m_dAccumulatePeriod;                                               ///< Maximum number of seconds with which a module will make a recording
     double m_dContinuityThresholdFactor;                                        ///< Double which defines max jitter before signal considered discontinuous
-    std::map<std::string, std::shared_ptr<BaseChunk>> m_mAccumulatedWAVChunks;  ///< Map of accumulated WAV chunks as a function of string mac addr
-    std::map<std::string, uint64_t> m_i64PreviousTimeStamps;                    ///< 
+    std::map<std::vector<uint8_t>, std::shared_ptr<BaseChunk>> m_mAccumulatedWAVChunks;  ///< Map of accumulated WAV chunks as a function of string mac addr
+    std::map<std::vector<uint8_t>, uint64_t> m_i64PreviousTimeStamps;                    ///< 
 
     /*
     * @brief Module process to accumulate WAV chunks

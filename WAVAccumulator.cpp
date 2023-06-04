@@ -33,7 +33,7 @@ bool WAVAccumulator::VerifyTimeContinuity(std::shared_ptr<WAVChunk> pCurrentWAVC
 	// lets now convert the accumulated period to microseconds
 	uint64_t u64MircoAccumulatedPeriod = (uint64_t)(dAccumulatedPeriod * 1e6);
 	// And then calcualte the expected time stamp
-	uint64_t u64ExpectedCurrentTimeStamp = m_i64PreviousTimeStamps[pCurrentWAVChunk->m_sMACAddress] +u64MircoAccumulatedPeriod;
+	uint64_t u64ExpectedCurrentTimeStamp = m_i64PreviousTimeStamps[pCurrentWAVChunk->GetSourceIdentifier()] +u64MircoAccumulatedPeriod;
 
 	// Lets then see what the difference between the true and expected timestamp is
 	uint64_t u64TimeDifferential = pCurrentWAVChunk->m_i64TimeStamp - u64ExpectedCurrentTimeStamp;
@@ -48,7 +48,7 @@ bool WAVAccumulator::VerifyTimeContinuity(std::shared_ptr<WAVChunk> pCurrentWAVC
 
 	// return bool whether within bound or not
 	// Now that we have completed all the checks we can update the previous timestamp to current for future checks
-	m_i64PreviousTimeStamps[pCurrentWAVChunk->m_sMACAddress] = pCurrentWAVChunk->m_i64TimeStamp;
+	m_i64PreviousTimeStamps[pCurrentWAVChunk->GetSourceIdentifier()] = pCurrentWAVChunk->m_i64TimeStamp;
 
 	if (!bContinuous)
 	{
@@ -80,15 +80,15 @@ bool WAVAccumulator::WAVHeaderChanged(std::shared_ptr<WAVChunk> pAccumulateDWAVC
 void WAVAccumulator::AccumulateWAVChunk(std::shared_ptr<WAVChunk> pWAVChunk)
 {
 	// Check if current MAC is being accumulated and store
-	if (m_mAccumulatedWAVChunks.count(pWAVChunk->m_sMACAddress) == 0)
+	if (m_mAccumulatedWAVChunks.count(pWAVChunk->GetSourceIdentifier()) == 0)
 	{
-		m_mAccumulatedWAVChunks[pWAVChunk->m_sMACAddress] = pWAVChunk;
-		m_i64PreviousTimeStamps[pWAVChunk->m_sMACAddress] = pWAVChunk->m_i64TimeStamp;
+		m_mAccumulatedWAVChunks[pWAVChunk->GetSourceIdentifier()] = pWAVChunk;
+		m_i64PreviousTimeStamps[pWAVChunk->GetSourceIdentifier()] = pWAVChunk->m_i64TimeStamp;
 	}
 	else
 	{
 		// Try accumulate data if data is continuous
-		auto pAccumulatedWAVChunk = std::static_pointer_cast<WAVChunk>(m_mAccumulatedWAVChunks[pWAVChunk->m_sMACAddress]);
+		auto pAccumulatedWAVChunk = std::static_pointer_cast<WAVChunk>(m_mAccumulatedWAVChunks[pWAVChunk->GetSourceIdentifier()]);
 		if (VerifyTimeContinuity(pWAVChunk, pAccumulatedWAVChunk) || !WAVHeaderChanged(pAccumulatedWAVChunk, pWAVChunk))
 			Accumuluate(pAccumulatedWAVChunk, pWAVChunk);
 		else
@@ -96,7 +96,7 @@ void WAVAccumulator::AccumulateWAVChunk(std::shared_ptr<WAVChunk> pWAVChunk)
 			// If we are not continuous just pass on 
 			std::cout << std::string(__FUNCTION__) + ": Passing WAV data on early \n";
 			TryPassChunk(pAccumulatedWAVChunk);
-			m_mAccumulatedWAVChunks.erase(pWAVChunk->m_sMACAddress);
+			m_mAccumulatedWAVChunks.erase(pWAVChunk->GetSourceIdentifier());
 			// and then exit function as we have nothing else to do
 			return;
 		}
@@ -105,7 +105,7 @@ void WAVAccumulator::AccumulateWAVChunk(std::shared_ptr<WAVChunk> pWAVChunk)
 		{
 			// Pass and clear
 			TryPassChunk(pAccumulatedWAVChunk);
-			m_mAccumulatedWAVChunks.erase(pWAVChunk->m_sMACAddress);
+			m_mAccumulatedWAVChunks.erase(pWAVChunk->GetSourceIdentifier());
 		}
 	}
 }
