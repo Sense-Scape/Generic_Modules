@@ -21,32 +21,32 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{5c33d809-da24-446c-b5cc-980811441d4f}</ProjectGuid>
-    <RootNamespace>GenericModules</RootNamespace>
+    <ProjectGuid>{b277820b-1dc2-42b7-b289-cbf59a7f1c3c}</ProjectGuid>
+    <RootNamespace>GenericModulesTests</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -70,21 +70,25 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/include;$(ProjectDir)/components/Base_Module/include;$(ProjectDir)/components/docTest/doctest</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/include;$(ProjectDir)/components/Base_Module/include;$(ProjectDir)/components/docTest/doctest</IncludePath>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/include;$(ProjectDir)/components/Base_Module/include;$(ProjectDir)/components/docTest/doctest</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/include;$(ProjectDir)/components/Base_Module/include;$(ProjectDir)/tests;$(ProjectDir)/components/docTest/doctest;$(ProjectDir)/components/Base_Module/components/Chunk_Types/include</IncludePath>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)_tests\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)_tests\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/include;$(ProjectDir)/components/Base_Module/include;$(ProjectDir)/components/docTest/doctest</IncludePath>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)_tests\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)_tests\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)\components\doctest\doctest;$(ProjectDir)/components/Base_Module/include;$(ProjectDir)/components/docTest/doctest;$(ProjectDir)/components/Base_Module/components/Chunk_Types/include</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)_tests\</OutDir>
+    <IntDir>$(Configuration)_tests\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)\components\doctest\doctest;$(ProjectDir)/components/Base_Module/include;$(ProjectDir)/components/docTest/doctest;$(ProjectDir)/components/Base_Module/components/Chunk_Types/include</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)_tests\</OutDir>
+    <IntDir>$(Configuration)_tests\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)\components\doctest\doctest;$(ProjectDir)/components/Base_Module/include;$(ProjectDir)/components/docTest/doctest;$(ProjectDir)/components/Base_Module/components/Chunk_Types/include</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -92,7 +96,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../Chunk_Types/include;../Base_Module/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -107,7 +110,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../Chunk_Types/include;../Base_Module/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -122,7 +124,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../Chunk_Types/include;../Base_Module/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,7 +138,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../Chunk_Types/include;../Base_Module/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,18 +147,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include/RouterModule.h" />
-    <ClInclude Include="include/SessionProcModule.h" />
-    <ClInclude Include="include\HPFModule.h" />
-    <ClInclude Include="include\TimeToWAVModule.h" />
-    <ClInclude Include="include\WAVAccumulator.h" />
+    <ClCompile Include="GenericModulesTests.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="HPFModule.cpp" />
-    <ClCompile Include="RouterModule.cpp" />
-    <ClCompile Include="SessionProcModule.cpp" />
-    <ClCompile Include="TimeToWAVModule.cpp" />
-    <ClCompile Include="WAVAccumulator.cpp" />
+    <ClInclude Include="tests\RouterModuleTests.h" />
+    <ClInclude Include="tests\SessionProcModuleTests.h" />
+    <ClInclude Include="tests\TimeToWAVModuleTests.h" />
+    <ClInclude Include="tests\WAVAccumulatorModuleTests.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Base_Module\BaseModule.vcxproj">
@@ -166,6 +161,9 @@
     </ProjectReference>
     <ProjectReference Include="..\Chunk_Types\ChunkTypes.vcxproj">
       <Project>{5583b73c-eb54-4cb6-86e1-439a4b9a9315}</Project>
+    </ProjectReference>
+    <ProjectReference Include="GenericModules.vcxproj">
+      <Project>{5c33d809-da24-446c-b5cc-980811441d4f}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -54,7 +54,7 @@ void HPFModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 	auto pWAVChunk = std::static_pointer_cast<WAVChunk>(pBaseChunk);
 
 	// Inplace operation of chunk data
-	ApplyFilter(pWAVChunk->m_vfData);
+	// ApplyFilter(pWAVChunk->m_vfData);
 
 	// Try pass on
 	TryPassChunk(pWAVChunk);
