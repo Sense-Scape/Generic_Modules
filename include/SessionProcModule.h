@@ -13,6 +13,22 @@
 class SessionProcModule :
     public BaseModule
 {
+public:
+    /**
+     * @brief Construct a new Session Processing Module to produce UDP data. responsible
+     *  for acummulating all required UDP bytes and passing on for further processing
+     * @param[in] uBufferSize size of processing input buffer
+     */
+    SessionProcModule(unsigned uBufferSize);
+    ~SessionProcModule() {};
+
+    /**
+     * @brief Returns module type
+     * @return ModuleType of processing module
+     */
+    ModuleType GetModuleType() override { return ModuleType::SessionProcModule; };
+
+
 private:
     std::map<uint32_t, std::function<void(std::shared_ptr<UDPChunk>)>> m_mFunctionCallbacksMap; ///< Map of function callbacks called according to session type
     std::map<SessionModeTypes, std::shared_ptr<SessionModeBase>> m_mSessionModesStatesMap;      ///< Map of session modes to track session mode states
@@ -39,22 +55,6 @@ private:
     *        data in the case a UDP chunk is missed
     */
     void ProcessTimeChunkSession(std::shared_ptr<BaseChunk> pBaseChunk);
-
-public:
-    /**
-     * @brief Construct a new Session Processing Module to produce UDP data. responsible
-     *  for acummulating all required UDP bytes and passing on for further processing
-     * @param[in] uBufferSize size of processing input buffer
-     */
-    SessionProcModule(unsigned uBufferSize);
-    ~SessionProcModule() {};
-
-    /**
-     * @brief Returns module type
-     * @return ModuleType of processing module
-     */
-    ModuleType GetModuleType() override { return ModuleType::SessionProcModule; };
-
 };
 
 #endif

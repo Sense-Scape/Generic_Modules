@@ -6,25 +6,10 @@
 class RouterModule : 
     public BaseModule
 {
-protected:                 
-    std::map<ChunkType, std::vector<std::shared_ptr<BaseModule>>> m_ChunkTypeModuleMap;        ///< Shared pointer to next module into which messages are passed
-
-private:
-
-    /*
-     * @brief Module process to collect and format UDP data
-     */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
-
-    /*
-    * @brief Passes chunk to relevant module
-    */
-    void RouteChunk(std::shared_ptr<BaseChunk> pBaseChunk);
-
 public:
 
     /**
-     * @brief Construct a new Router Module forward data into different pipeline streams. 
+     * @brief Construct a new Router Module forward data into different pipeline streams.
      *
      * @param uBufferSize size of processing input buffer
      */
@@ -43,6 +28,21 @@ public:
     // */
     ModuleType GetModuleType() override { return ModuleType::RouterModule; };
 
+
+protected:                 
+    std::map<ChunkType, std::vector<std::shared_ptr<BaseModule>>> m_ChunkTypeModuleMap;        ///< Shared pointer to next module into which messages are passed
+
+private:
+
+    /*
+     * @brief Module process to collect and format UDP data
+     */
+    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+
+    /*
+    * @brief Passes chunk to relevant module
+    */
+    void RouteChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 };
 
 #endif
