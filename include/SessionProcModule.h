@@ -31,30 +31,19 @@ public:
 
 private:
     std::map<uint32_t, std::function<void(std::shared_ptr<UDPChunk>)>> m_mFunctionCallbacksMap; ///< Map of function callbacks called according to session type
-    std::map<SessionModeTypes, std::shared_ptr<SessionModeBase>> m_mSessionModesStatesMap;      ///< Map of session modes to track session mode states
-    std::map<SessionModeTypes, std::shared_ptr<std::vector<char>>> m_mSessionBytes;             ///< Map of session mode intermediate bytes prior ro session completion
-
+    std::map<std::vector<uint8_t>, std::map<ChunkType, std::shared_ptr<std::vector<char>>>> m_mSessionBytes;             ///< Map of session mode intermediate bytes prior ro session completion
+    std::map<std::vector<uint8_t>, std::map<ChunkType, std::shared_ptr<SessionModeBase>>> m_mSessionModesStatesMap;
     /*
      * @brief Module process to collect and format UDP data
      */
     void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
 
     /*
-    * @brief Registers all UDP Chunk function callbacks according rx'ed chunk type
-    */
-    void RegisterFunctionHandlers();
-
-    /*
     * @brief Registers all used session types for use
     */
     void RegisterSessionStates();
 
-    /*
-    * @brief WAV Session callback. Extracts data and converts to a wav recording.
-    *        when recording complete passes on otherwise if it will clear all
-    *        data in the case a UDP chunk is missed
-    */
-    void ProcessTimeChunkSession(std::shared_ptr<BaseChunk> pBaseChunk);
+    std::shared_ptr<TimeChunkSessionMode> GetPreviousSessionState(std::shared_ptr<BaseChunk> pBaseChunk, ChunkType chunkType);
 };
 
 #endif
