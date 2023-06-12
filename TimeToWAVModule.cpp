@@ -42,7 +42,5 @@ void TimeToWAVModule::ConvertTimeToWAV(std::shared_ptr<TimeChunk> pTimeChunk, st
         // Iterating through each audio channel
         for (auto vADCChannelData = pTimeChunk->m_vvi16TimeChunks.begin(); vADCChannelData != pTimeChunk->m_vvi16TimeChunks.end(); ++vADCChannelData)
             pWAVChunk->m_vi16Data.push_back((*vADCChannelData)[uSampleIndex]);
-
     }
-
 }

@@ -10,8 +10,7 @@ public:
 
     /**
      * @brief Construct a new Router Module forward data into different pipeline streams.
-     *
-     * @param uBufferSize size of processing input buffer
+     * @param[in] uBufferSize size of processing input buffer
      */
     RouterModule(unsigned uBufferSize);
     ~RouterModule() {};
@@ -24,7 +23,7 @@ public:
 
     ///**
     // * @brief Returns module type
-    // * @param[out] ModuleType of processing module
+    // * @return ModuleType of processing module
     // */
     ModuleType GetModuleType() override { return ModuleType::RouterModule; };
 
@@ -36,11 +35,13 @@ private:
 
     /*
      * @brief Module process to collect and format UDP data
+     * @param[in] pBaseChunk pointer to chunk that shall be routed
      */
     void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
 
     /*
     * @brief Passes chunk to relevant module
+    * @param[in] pBaseChunk pointer to chunk that shall be routed
     */
     void RouteChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 };
