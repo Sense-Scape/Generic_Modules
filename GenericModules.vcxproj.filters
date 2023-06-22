@@ -32,19 +32,19 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RouterModule.cpp">
+    <ClCompile Include="source\HPFModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SessionProcModule.cpp">
+    <ClCompile Include="source\RouterModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WAVAccumulator.cpp">
+    <ClCompile Include="source\SessionProcModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TimeToWAVModule.cpp">
+    <ClCompile Include="source\TimeToWAVModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HPFModule.cpp">
+    <ClCompile Include="source\WAVAccumulator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
