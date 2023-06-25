@@ -3,11 +3,19 @@
 # Min CMake version
 cmake_minimum_required(VERSION 3.20)
 
-idf_component_register(SRCS "RouterModule.cpp" 
-							"SessionProcModule.cpp"
-							"WavAccumulator.cpp"
-							"SimulatorModule.cpp"
-							"WatchdogModule.cpp"
-						INCLUDE_DIRS "./include"
-						REQUIRES Chunk_Types Base_Module
-						)
+set(SOURCE_DIR "source")
+set(INCLUDE_DIR "include")
+
+idf_component_register(
+	SRCS
+		${SOURCE_DIR}/RouterModule.cpp
+		${SOURCE_DIR}/SessionProcModule.cpp
+		${SOURCE_DIR}/WavAccumulator.cpp
+		${SOURCE_DIR}/SimulatorModule.cpp
+		${SOURCE_DIR}/WatchdogModule.cpp
+	INCLUDE_DIRS
+		${INCLUDE_DIR}
+	REQUIRES 
+		Chunk_Types 
+		Base_Module
+)
