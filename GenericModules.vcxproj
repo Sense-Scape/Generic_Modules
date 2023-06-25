@@ -154,6 +154,7 @@
     <ClInclude Include="include/RouterModule.h" />
     <ClInclude Include="include/SessionProcModule.h" />
     <ClInclude Include="include\HPFModule.h" />
+    <ClInclude Include="include\SimulatorModule.h" />
     <ClInclude Include="include\TimeToWAVModule.h" />
     <ClInclude Include="include\WAVAccumulator.h" />
   </ItemGroup>
@@ -166,6 +167,7 @@
     <ClCompile Include="source\HPFModule.cpp" />
     <ClCompile Include="source\RouterModule.cpp" />
     <ClCompile Include="source\SessionProcModule.cpp" />
+    <ClCompile Include="source\SimulatorModule.cpp" />
     <ClCompile Include="source\TimeToWAVModule.cpp" />
     <ClCompile Include="source\WAVAccumulator.cpp" />
   </ItemGroup>

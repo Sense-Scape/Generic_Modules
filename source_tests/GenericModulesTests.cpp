@@ -3,4 +3,5 @@
 //#include "RouterModuleTests.h"
 //#include "SessionProcModuleTests.h"
 #include "TimeToWAVModuleTests.h"
+#include "SimulatorModuleTests.h"
 //#include "WAVAccumulatorModuleTests.h"

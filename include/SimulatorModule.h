@@ -54,6 +54,7 @@ public:
 private:
     unsigned m_uNumChannels;                 ///< Number of ADC channels to simulate
     unsigned m_uSimulatedFrequency;          ///< Sinusoid frequency to simulate
+    uint64_t m_uSampleCount;                 ///< Count to track index of simulated sinusoid
     double m_dSampleRate;                    ///< Sample rate in Hz
     double m_dChunkSize;                     ///< How many samples in each chunk channel
     std::shared_ptr<TimeChunk> m_pTimeChunk; ///< Pointer to member time data chunk
