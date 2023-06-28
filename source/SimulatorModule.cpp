@@ -1,12 +1,13 @@
 #include "SimulatorModule.h"
 
-SimulatorModule::SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, unsigned uBufferSize) : 
+SimulatorModule::SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, std::vector<uint8_t> &vu8SourceIdentifier, unsigned uBufferSize) : 
 BaseModule(uBufferSize),                                                                                                                                                                                                                                            
 m_uNumChannels(uNumChannels),
 m_u64SampleCount(0),
 m_uSimulatedFrequency(uSimulatedFrequency),
 m_dSampleRate(dSampleRate),
-m_dChunkSize(dChunkSize)
+m_dChunkSize(dChunkSize),
+vu8SourceIdentifier(vu8SourceIdentifier)
 {
     // Set all channel phases to zero with angle of arrival = 0 
     m_vfChannelPhases.resize(m_uNumChannels);
@@ -90,5 +91,5 @@ void SimulatorModule::SimulateUpdatedTimeStamp()
 void SimulatorModule::SimulateTimeStampMetaData()
 {
     m_pTimeChunk->m_i64TimeStamp = m_u64CurrentTimeStamp;
-    m_pTimeChunk->SetSourceIdentifier({1,1});
+    m_pTimeChunk->SetSourceIdentifier(vu8SourceIdentifier);
 }
