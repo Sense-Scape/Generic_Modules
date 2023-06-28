@@ -157,6 +157,7 @@
   <ItemGroup>
     <ClInclude Include="include/RouterModule.h" />
     <ClInclude Include="include/SessionProcModule.h" />
+    <ClInclude Include="include\ChunkToBytesModule.h" />
     <ClInclude Include="include\HPFModule.h" />
     <ClInclude Include="include\SimulatorModule.h" />
     <ClInclude Include="include\TimeToWAVModule.h" />
@@ -168,6 +169,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\ChunkToBytesModule.cpp" />
     <ClCompile Include="source\HPFModule.cpp" />
     <ClCompile Include="source\RouterModule.cpp" />
     <ClCompile Include="source\SessionProcModule.cpp" />
