@@ -18,7 +18,6 @@ class SimulatorModule : public BaseModule
 public:
     /**
      * @brief Construct a new ADCInterface object
-     *
      * @param[in] dSampleRate simulated sample rate in Hz
      * @param[in] dChunkSize Number of sampels in a single channel of chunk data
      * @param[in] uNumChannels Number of data channels to simulate
@@ -50,11 +49,11 @@ public:
      */
     void SetChannelPhases(std::vector<float> &vfChannelPhases);
 
-
 private:
     unsigned m_uNumChannels;                 ///< Number of ADC channels to simulate
     unsigned m_uSimulatedFrequency;          ///< Sinusoid frequency to simulate
-    uint64_t m_uSampleCount;                 ///< Count to track index of simulated sinusoid
+    uint64_t m_u64SampleCount;               ///< Count to track index of simulated sinusoid
+    uint64_t m_u64CurrentTimeStamp;          ///< Simulated timestamp of the module
     double m_dSampleRate;                    ///< Sample rate in Hz
     double m_dChunkSize;                     ///< How many samples in each chunk channel
     std::shared_ptr<TimeChunk> m_pTimeChunk; ///< Pointer to member time data chunk
@@ -69,6 +68,16 @@ private:
      * @brief Emulates Sampling of ADC. Stores a simulated sample accoriding to member sampling frequency
      */
     void SimulateADCSample();
+
+    /**
+     * @brief Simulates and updates change in timestamp as a function of sample rate and chunk size in microseconds
+     */
+    void SimulateUpdatedTimeStamp();
+
+    /**
+     * @brief Updates timechuink meta data including timestamp and source identifier
+     */
+    void SimulateTimeStampMetaData();
 
 };
 

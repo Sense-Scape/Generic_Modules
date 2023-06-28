@@ -3,7 +3,7 @@
 SimulatorModule::SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, unsigned uBufferSize) : 
 BaseModule(uBufferSize),                                                                                                                                                                                                                                            
 m_uNumChannels(uNumChannels),
-m_uSampleCount(0),
+m_u64SampleCount(0),
 m_uSimulatedFrequency(uSimulatedFrequency),
 m_dSampleRate(dSampleRate),
 m_dChunkSize(dChunkSize)
@@ -29,6 +29,8 @@ void SimulatorModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     // Creating simulated data
     ReinitializeTimeChunk();
     SimulateADCSample();
+    SimulateTimeStampMetaData();
+    SimulateUpdatedTimeStamp();
     
     // Passing data on
     std::shared_ptr<TimeChunk> pTimeChunk = std::move(m_pTimeChunk);
@@ -64,18 +66,29 @@ void SimulatorModule::SimulateADCSample()
         for (unsigned uChannel = 0; uChannel < m_uNumChannels; uChannel++)
         {
             // And create a "sampled" float value between 0 and 1 with phase offests
-            int16_t datum = std::pow(2, 15) * sin(2 * 3.14159 * ((float)m_uSimulatedFrequency * m_uSampleCount / (float)m_dSampleRate) + m_vfChannelPhases[uChannel]);
+            int16_t datum = std::pow(2, 15) * sin(2 * 3.14159 * ((float)m_uSimulatedFrequency * m_u64SampleCount / (float)m_dSampleRate) + m_vfChannelPhases[uChannel]);
             // The take this value, scale and convert it to a signed int
             m_pTimeChunk->m_vvi16TimeChunks[uChannel][uCurrentSampleIndex] = datum;
         }
 
         // Now lets check if we are at the end of the
         // sinusoid and have to reset the counter
-        m_uSampleCount += 1;   
+        m_u64SampleCount += 1;   
 	}
 }
 
 void SimulatorModule::SetChannelPhases(std::vector<float> &vfChannelPhases)
 {
     m_vfChannelPhases = vfChannelPhases;
+}
+
+void SimulatorModule::SimulateUpdatedTimeStamp()
+{
+    m_u64CurrentTimeStamp += (uint64_t)(m_dChunkSize * ((1/ (double)m_dSampleRate) * 1e6));
+}
+
+void SimulatorModule::SimulateTimeStampMetaData()
+{
+    m_pTimeChunk->m_i64TimeStamp = m_u64CurrentTimeStamp;
+    m_pTimeChunk->SetSourceIdentifier({1,1});
 }
