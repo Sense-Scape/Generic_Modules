@@ -1,4 +1,4 @@
-#ifndef SIMULATORMODULE
+#ifndef SIMULATOR_MODULE
 #define SIMULATOR_MODULE
 
 #include <map>
