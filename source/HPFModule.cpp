@@ -51,11 +51,13 @@ void HPFModule::ApplyFilter(std::vector<uint16_t>& vfData)
 
 void HPFModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-	auto pWAVChunk = std::static_pointer_cast<WAVChunk>(pBaseChunk);
+	//auto pWAVChunk = std::static_pointer_cast<WAVChunk>(pBaseChunk);
 
 	// Inplace operation of chunk data
 	// ApplyFilter(pWAVChunk->m_vfData);
 
 	// Try pass on
-	TryPassChunk(pWAVChunk);
+	//TryPassChunk(pWAVChunk);
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	std::cout << "HPFModule remains unimplemented" << std::endl;
 }

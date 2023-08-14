@@ -12,10 +12,9 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     static uint8_t m_uSessionNumber = 0;
 
     // Bytes to transmit is equal to number of bytes in derived object (e.g TimeChunk)
-    auto a = static_cast<TimeChunk&>(*pBaseChunk);
-    auto pvcByteData = a.Serialise();
+    auto pvcByteData = pBaseChunk->Serialise();
     uint32_t u32TransmittableDataBytes = pvcByteData->size();
-    uint32_t u32ChunkType = ChunkTypesUtility::ToU32(pBaseChunk->GetChunkType());
+    uint32_t u32ChunkType = ChunkTypesNamingUtility::ToU32(pBaseChunk->GetChunkType());
 
     // Intra-transmission state information
     unsigned uDatagramHeaderSize = 24;      // NEEDS TO RESULT IN DATA WITH MULTIPLE OF 4 BYTES

@@ -14,7 +14,7 @@ void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     memcpy(&u32ChunkType, &pUDPChunk->m_vcDataChunk[9], sizeof(u32ChunkType));
 
     // Then we can map keys
-    ChunkType SessionChunkType = ChunkTypesUtility::FromU32(u32ChunkType);
+    ChunkType SessionChunkType = ChunkTypesNamingUtility::FromU32(u32ChunkType);
     auto vu8SourceIdentifier = pUDPChunk->GetSourceIdentifier();
     auto  pChunkHeaderState = GetPreviousSessionState(pUDPChunk, SessionChunkType);
 

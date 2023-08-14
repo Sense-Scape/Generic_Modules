@@ -2,6 +2,7 @@
 #define WAV_ACCUMULATOR
 
 #include "BaseModule.h"
+#include "WAVChunk.h"
 
 class WAVAccumulator :
     public BaseModule

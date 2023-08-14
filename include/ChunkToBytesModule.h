@@ -2,6 +2,9 @@
 #define CHUNK_TO_BYTES_MODULE
 
 #include "BaseModule.h"
+#include "ChunkTypesNamingUtility.h"
+#include "UDPChunk.h"
+
 #include <cmath>
 
 /*

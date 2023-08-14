@@ -36,12 +36,12 @@ void RouterModule::RouteChunk(std::shared_ptr<BaseChunk> pBaseChunk)
         {
             // Copying data and passing down multiple pipeline connections
             // Duplicating to prevent two modules trying to access data
-           auto pDuplicateBaseChunk  = ChunkTypesUtility::DuplicateDerivedChunk(pBaseChunk);
+           auto pDuplicateBaseChunk  = ChunkDuplicatorUtility::DuplicateDerivedChunk(pBaseChunk);
            vpNextModules[uNextModuleIndex]->TakeChunkFromModule(pDuplicateBaseChunk);
         }     
     }
     else
-        std::cout << std::string(__FUNCTION__) + ": " + ChunkTypesUtility::toString(pBaseChunk->GetChunkType())  + " not registered chunk type, dropping \n";
+        std::cout << std::string(__FUNCTION__) + ": " + ChunkTypesNamingUtility::toString(pBaseChunk->GetChunkType())  + " not registered chunk type, dropping \n";
 }
 
 void RouterModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)

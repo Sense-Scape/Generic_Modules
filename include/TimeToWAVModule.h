@@ -3,6 +3,8 @@
 
 /* Custom Includes */
 #include "BaseModule.h"
+#include "WAVChunk.h"
+#include "TimeChunk.h"
 
 class TimeToWAVModule :
     public BaseModule

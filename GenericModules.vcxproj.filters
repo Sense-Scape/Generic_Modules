@@ -36,6 +36,9 @@
     <ClInclude Include="include\ChunkToBytesModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\ToJSONModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\HPFModule.cpp">
@@ -57,6 +60,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\ChunkToBytesModule.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ToJSONModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

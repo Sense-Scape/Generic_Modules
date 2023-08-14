@@ -5,9 +5,13 @@
 
 /* Custom Includes */
 #include "BaseModule.h"
+#include "SessionModeTypes.h"
+#include "ChunkTypesNamingUtility.h"
+#include "ChunkDuplicatorUtility.h"
+
 #include "UDPChunk.h"
 #include "WAVChunk.h"
-#include "SessionModeTypes.h"
+
 
 
 class SessionProcModule :
