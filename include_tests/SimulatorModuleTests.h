@@ -11,8 +11,9 @@ TEST_CASE("Simulator Module Test")
     double dChunkSize = 512;
     unsigned uNumChannels = 2;
     unsigned uSimulatedFrequency = 10000;
+    std::vector<uint8_t> vuSourceIdentifier = {10, 10};
 
-    SimulatorModule simulatorModule(dSampleRate, dChunkSize, uNumChannels, uSimulatedFrequency, uBufferSize);
+    SimulatorModule simulatorModule(dSampleRate, dChunkSize, uNumChannels, uSimulatedFrequency, vuSourceIdentifier, uBufferSize);
 
 
     CHECK(simulatorModule.GetModuleType() == ModuleType::SimulatorModule);
@@ -33,10 +34,10 @@ TEST_CASE("Simulator Module Test")
 
 
    SUBCASE("Checking simulation functionality") {
+
        // Then lets check first chunk
        int16_t u16FirstSampleFirstChunk = 0;
        CHECK(*pTimeChunkOut0->m_vvi16TimeChunks[0].begin() == u16FirstSampleFirstChunk);
-       std::cout << std::to_string(dChunkSize - 1) << std::endl;
        int16_t u16LastSampleFirstChunk = (std::pow(2, 15) * sin(2 * 3.14159 * ((float)uSimulatedFrequency * (dChunkSize - 1) / (float)dSampleRate)));
        CHECK(*pTimeChunkOut0->m_vvi16TimeChunks[0].end() == u16LastSampleFirstChunk);
 
