@@ -2,9 +2,8 @@
 #define TO_JSON_MODULE
 
 #include "BaseModule.h"
-
-#include "TimeChunk.h"
 #include "JSONChunk.h"
+#include "ChunkToJSONConverter.h"
 
 /**
  * @brief Converts just to the JSON Chunk type
@@ -27,7 +26,7 @@ public:
      * @brief Returns module type
      * @param[out] ModuleType of processing module
      */
-    ModuleType GetModuleType() override { return ModuleType::HPFModule; };
+    ModuleType GetModuleType() override { return ModuleType::ToJSONModule; };
 
 private:
     
