@@ -67,7 +67,7 @@ void SimulatorModule::SimulateADCSample()
         for (unsigned uChannel = 0; uChannel < m_uNumChannels; uChannel++)
         {
             // And create a "sampled" float value between 0 and 1 with phase offests
-            int16_t datum = std::pow(2, 15) * sin((double)2.0 * 3.141592653589793238462643383279502884197 * ((double)m_uSimulatedFrequency * (double)m_u64SampleCount / (double)m_dSampleRate) + (double)m_vfChannelPhases[uChannel]);
+            int16_t datum = (std::pow(2, 15) - 1)* sin((double)2.0 * 3.141592653589793238462643383279502884197 * ((double)m_uSimulatedFrequency * (double)m_u64SampleCount / (double)m_dSampleRate) + (double)m_vfChannelPhases[uChannel]);
             // The take this value, scale and convert it to a signed int
             m_pTimeChunk->m_vvi16TimeChunks[uChannel][uCurrentSampleIndex] = datum;
         }
