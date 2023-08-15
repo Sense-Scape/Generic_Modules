@@ -30,6 +30,9 @@
     <ClInclude Include="include_tests\WAVAccumulatorModuleTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include_tests\ToJSONModuleTests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source_tests\GenericModulesTests.cpp">

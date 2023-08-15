@@ -61,21 +61,25 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="GenericModulesTests.props" />
     <Import Project="GenericModules.props" />
+    <Import Project="components\Base_Module\components\Chunk_Types\components\Nlohmann_JSON\Nlohmann_JSON.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="GenericModulesTests.props" />
     <Import Project="GenericModules.props" />
+    <Import Project="components\Base_Module\components\Chunk_Types\components\Nlohmann_JSON\Nlohmann_JSON.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="GenericModulesTests.props" />
     <Import Project="GenericModules.props" />
+    <Import Project="components\Base_Module\components\Chunk_Types\components\Nlohmann_JSON\Nlohmann_JSON.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="GenericModulesTests.props" />
     <Import Project="GenericModules.props" />
+    <Import Project="components\Base_Module\components\Chunk_Types\components\Nlohmann_JSON\Nlohmann_JSON.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -161,6 +165,7 @@
     <ClInclude Include="include_tests\SessionProcModuleTests.h" />
     <ClInclude Include="include_tests\SimulatorModuleTests.h" />
     <ClInclude Include="include_tests\TimeToWAVModuleTests.h" />
+    <ClInclude Include="include_tests\ToJSONModuleTests.h" />
     <ClInclude Include="include_tests\WAVAccumulatorModuleTests.h" />
   </ItemGroup>
   <ItemGroup>

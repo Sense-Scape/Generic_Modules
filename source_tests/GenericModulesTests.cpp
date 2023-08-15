@@ -4,4 +4,5 @@
 //#include "SessionProcModuleTests.h"
 #include "TimeToWAVModuleTests.h"
 #include "SimulatorModuleTests.h"
+#include "ToJSONModuleTests.h"
 //#include "WAVAccumulatorModuleTests.h"

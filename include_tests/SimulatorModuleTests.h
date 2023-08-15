@@ -37,15 +37,16 @@ TEST_CASE("Simulator Module Test")
 
        // Then lets check first chunk
        int16_t u16FirstSampleFirstChunk = 0;
+
        CHECK(*pTimeChunkOut0->m_vvi16TimeChunks[0].begin() == u16FirstSampleFirstChunk);
-       int16_t u16LastSampleFirstChunk = (std::pow(2, 15) * sin(2 * 3.14159 * ((float)uSimulatedFrequency * (dChunkSize - 1) / (float)dSampleRate)));
-       CHECK(*pTimeChunkOut0->m_vvi16TimeChunks[0].end() == u16LastSampleFirstChunk);
+       int16_t u16LastSampleFirstChunk = (std::pow(2, 15) - 1) * sin((double)2.0 * 3.141592653589793238462643383279502884197 * ((double)uSimulatedFrequency * (double)(dChunkSize-1) / (double)dSampleRate));
+       CHECK(*(pTimeChunkOut0->m_vvi16TimeChunks[0].end()-1) == u16LastSampleFirstChunk);
 
        // And then the second
-       int16_t u16FirstSampleSecondChunk = std::pow(2, 15) * sin((2 * 3.14159 * (float)uSimulatedFrequency * dChunkSize) / (float)dSampleRate);
+       int16_t u16FirstSampleSecondChunk = (std::pow(2, 15) - 1) * sin(((double)2 * 3.141592653589793238462643383279502884197 * (double)uSimulatedFrequency * (dChunkSize)) / (double)dSampleRate);
        CHECK(*pTimeChunkOut1->m_vvi16TimeChunks[0].begin() == u16FirstSampleSecondChunk);
-       int16_t u16LastSampleSecondChunk = (std::pow(2, 15) * sin((2 * 3.14159 * (float)uSimulatedFrequency * ((2 * dChunkSize) - 1)) / (float)dSampleRate));
-       CHECK(*pTimeChunkOut1->m_vvi16TimeChunks[0].end() == u16LastSampleSecondChunk);
+       int16_t u16LastSampleSecondChunk = (std::pow(2, 15) - 1) * sin(((double)2 * 3.141592653589793238462643383279502884197 * (double)uSimulatedFrequency * ((2 * dChunkSize - 1) )) / (double)dSampleRate);
+       CHECK(*(pTimeChunkOut1->m_vvi16TimeChunks[0].end()-1) == u16LastSampleSecondChunk);
    }
 
 }
