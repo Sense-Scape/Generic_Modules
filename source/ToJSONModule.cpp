@@ -7,7 +7,7 @@ ToJSONModule::ToJSONModule()
 
 void ToJSONModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-	// Assuming we are just processing time chunks at the moment
+	// Check if chunk type IS A ChunkToJSONConverter, otherwise drop processing
 	if (ChunkToJSONConverter* pChunkToJSONConverter = dynamic_cast<ChunkToJSONConverter*>(pBaseChunk.get()))
 	{
 		auto pJSONChunk = std::make_shared<JSONChunk>();
