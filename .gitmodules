@@ -4,6 +4,3 @@
 [submodule "components/docTest"]
 	path = components/docTest
 	url = https://github.com/Sense-Scape/doctest.git
-[submodule "components/websocketpp"]
-	path = components/websocketpp
-	url = https://github.com/Sense-Scape/websocketpp.git
