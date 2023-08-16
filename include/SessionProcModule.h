@@ -6,11 +6,8 @@
 /* Custom Includes */
 #include "BaseModule.h"
 #include "SessionModeTypes.h"
-#include "ChunkDuplicatorUtility.h"
-
 #include "UDPChunk.h"
-#include "WAVChunk.h"
-
+#include "TimeChunk.h"
 
 
 class SessionProcModule :

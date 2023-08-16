@@ -2,6 +2,7 @@
 #define CHUNK_ROUTER
 
 #include "BaseModule.h"
+#include "ChunkDuplicatorUtility.h"
 
 class RouterModule : 
     public BaseModule
