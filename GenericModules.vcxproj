@@ -178,6 +178,14 @@
     <ClCompile Include="source\ToJSONModule.cpp" />
     <ClCompile Include="source\WAVAccumulator.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="components\Base_Module\BaseModule.vcxproj">
+      <Project>{36fd5345-1eb3-4a92-8f96-a07cc3fa8e32}</Project>
+    </ProjectReference>
+    <ProjectReference Include="components\Base_Module\components\Chunk_Types\ChunkTypes.vcxproj">
+      <Project>{5583b73c-eb54-4cb6-86e1-439a4b9a9315}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
