@@ -56,7 +56,7 @@ void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         std::copy(DataStart, DataEnd, std::back_inserter(*m_mSessionBytes[vu8SourceIdentifier][SessionChunkType]));
 
         // Creating a TimeChunk into which data shall go
-        auto pByteData = std::make_shared<std::vector<char>>(&(pUDPChunk->m_vcDataChunk));
+        auto pByteData = std::make_shared<std::vector<char>>(pUDPChunk->m_vcDataChunk);
         auto pBaseChunk = ChunkDuplicatorUtility::DeserialiseDerivedChunk(pByteData, SessionChunkType);
 
         // Pass pointer to data on and clear stored data and state information for current session
