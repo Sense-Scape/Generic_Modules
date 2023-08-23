@@ -3,6 +3,7 @@
 
 #include "BaseModule.h"
 #include "UDPChunk.h"
+#include "SessionModeTypes.h"
 
 #include <cmath>
 

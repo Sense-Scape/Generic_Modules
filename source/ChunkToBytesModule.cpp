@@ -1,5 +1,6 @@
 #include "ChunkToBytesModule.h"
 
+
 ChunkToBytesModule::ChunkToBytesModule(unsigned uBufferSize, unsigned uTransmissionSize) :
 	BaseModule(uBufferSize),
     m_uTransmissionSize(uTransmissionSize)
