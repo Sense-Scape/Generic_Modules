@@ -8,6 +8,7 @@
 #include "SessionModeTypes.h"
 #include "UDPChunk.h"
 #include "TimeChunk.h"
+#include "ChunkDuplicatorUtility.h"
 
 
 class SessionProcModule :
@@ -43,7 +44,7 @@ private:
     */
     void RegisterSessionStates();
 
-    std::shared_ptr<TimeChunkSessionMode> GetPreviousSessionState(std::shared_ptr<BaseChunk> pBaseChunk, ChunkType chunkType);
+    std::shared_ptr<ReliableSessionSessionMode> GetPreviousSessionState(std::shared_ptr<BaseChunk> pBaseChunk, ChunkType chunkType);
 };
 
 #endif
