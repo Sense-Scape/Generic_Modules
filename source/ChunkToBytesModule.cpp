@@ -3,7 +3,8 @@
 
 ChunkToBytesModule::ChunkToBytesModule(unsigned uBufferSize, unsigned uTransmissionSize) :
 	BaseModule(uBufferSize),
-    m_uTransmissionSize(uTransmissionSize)
+    m_uTransmissionSize(uTransmissionSize),
+    m_MapOfIndentifiersToChunkTypeSessions()
 {
 
 }
@@ -12,24 +13,31 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     static uint8_t m_uSessionNumber = 0;
 
+    // Lets first ensure that this chiunk is in the source identifers map
+    auto vu8SourceIdnetifier = pBaseChunk->GetSourceIdentifier();
+    auto eChunkType = pBaseChunk->GetChunkType();
+    // By first checking if the source identider has been seen
+    if (m_MapOfIndentifiersToChunkTypeSessions.find(vu8SourceIdnetifier) == m_MapOfIndentifiersToChunkTypeSessions.end())
+        // And then if the chunk type has been seen for this source
+        if (m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdnetifier].find(eChunkType) ==
+            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdnetifier].end())
+            // If not the create one
+            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdnetifier][eChunkType] = ReliableSessionSessionMode();
+
+    // Then we extract the current session state for the current chunk type and source identifier
+    auto SessionModeHeader = m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdnetifier][eChunkType];
+
     // Bytes to transmit is equal to number of bytes in derived object (e.g TimeChunk)
     auto pvcByteData = pBaseChunk->Serialise();
     uint32_t u32TransmittableDataBytes = pvcByteData->size();
-    uint32_t u32ChunkType = ChunkTypesNamingUtility::ToU32(pBaseChunk->GetChunkType());
 
-    // Intra-transmission state information
-    unsigned uDatagramHeaderSize = 24;      // NEEDS TO RESULT IN DATA WITH MULTIPLE OF 4 BYTES
+    
     uint16_t uSessionDataHeaderSize = 2;          // size of the footer in bytes. '\0' denotes finish if this structure
     uint16_t uSessionTransmissionSize = m_uTransmissionSize;
-    uint8_t uTransmissionState = 0;         // 0 - Transmitting; 1 - finished
-
-    // Inter-transmission state information
     bool bTransmit = true;
-    unsigned uSequenceNumber = 0;           // sequence 0 indicated error, 1 is starting
     unsigned uDataBytesTransmitted = 0;     // Current count of how many bytes have been transmitted
-    unsigned uDataBytesToTransmit = m_uTransmissionSize - uSessionDataHeaderSize - uDatagramHeaderSize;
+    unsigned uDataBytesToTransmit = m_uTransmissionSize - uSessionDataHeaderSize - SessionModeHeader.m_uDataStartPosition;
     unsigned uMaxTransmissionSize = m_uTransmissionSize; // Largest buffer size that can be request for transmission
-    uint32_t uSessionNumber = m_uSessionNumber;
 
     // Now that we have configured meta data, lets start transmitting
     while (bTransmit)
@@ -39,36 +47,37 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         {
             // Then adjust to how many data bytes shall be transmitted to the remaining number
             uDataBytesToTransmit = u32TransmittableDataBytes - uDataBytesTransmitted;
-            uSessionTransmissionSize = uDataBytesToTransmit + uDatagramHeaderSize + uSessionDataHeaderSize;
+            uSessionTransmissionSize = uDataBytesToTransmit + uSessionDataHeaderSize + SessionModeHeader.m_uDataStartPosition;
             // And then inform process to finish up
-            uTransmissionState = 1;
+            SessionModeHeader.m_pcTransmissionState.second = 1;
             bTransmit = false;
         }
 
-        // Lets first insert the header transmission state information into the bytes array
+        // Transmission Structure is shown below
+        // { | DataHeaderSize | DatagramHeader | Data | }
         std::vector<char> vuUDPData;
         vuUDPData.resize(uSessionTransmissionSize);
-
+        
+        // Add in the transmission header
         memcpy(&vuUDPData[0], &uSessionTransmissionSize, uSessionDataHeaderSize);
-        memcpy(&vuUDPData[0 + uSessionDataHeaderSize], &uSequenceNumber, sizeof(uSequenceNumber)); // 4 bytes
-        memcpy(&vuUDPData[4 + uSessionDataHeaderSize], &uTransmissionState, sizeof(uTransmissionState));
-        memcpy(&vuUDPData[5 + uSessionDataHeaderSize], &uDataBytesToTransmit, sizeof(uDataBytesToTransmit));
-        memcpy(&vuUDPData[9 + uSessionDataHeaderSize], &u32ChunkType, sizeof(u32ChunkType));
-        memcpy(&vuUDPData[13 + uSessionDataHeaderSize], &uSessionNumber, sizeof(uSessionNumber));
+        
+        // We then add the session state info
+        auto pHeaderBytes = SessionModeHeader.Serialise();
+        memcpy(&vuUDPData[uSessionDataHeaderSize], &((*pHeaderBytes)), SessionModeHeader.m_uDataStartPosition);
 
         // Then lets insert the actual data byte data to transmit after the header
         // While keeping in mind that we have to send unset bits from out data byte array
-        // { | DataHeaderSize | DatagramHeader | Data | }
-        memcpy(&vuUDPData[uSessionDataHeaderSize + uDatagramHeaderSize], &((*pvcByteData)[uDataBytesTransmitted]), uDataBytesToTransmit);
+        memcpy(&vuUDPData[uSessionDataHeaderSize + SessionModeHeader.m_uDataStartPosition], &((*pvcByteData)[uDataBytesTransmitted]), uDataBytesToTransmit);
         
         auto pUDPChunk = std::make_shared<UDPChunk>(uSessionTransmissionSize);
         pUDPChunk->m_vcDataChunk = vuUDPData;
         pUDPChunk->m_uChunkLength = uSessionTransmissionSize;
+
         TryPassChunk(pUDPChunk);
 
         // Updating transmission states
         uDataBytesTransmitted += uDataBytesToTransmit;
-        uSequenceNumber++;
+        SessionModeHeader.IncrementSequence();
     }
-    m_uSessionNumber++;
+    SessionModeHeader.IncrementSession();
 }

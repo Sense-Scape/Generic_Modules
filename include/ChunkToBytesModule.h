@@ -31,6 +31,7 @@ public:
 
 private:
     unsigned m_uTransmissionSize;   ///< size of transmisison in bytes
+    std::map<std::vector<uint8_t>, std::map<ChunkType, ReliableSessionSessionMode>> m_MapOfIndentifiersToChunkTypeSessions;
 
     /*
      * @brief Module process to collect and format UDP data
