@@ -44,7 +44,9 @@ private:
     */
     void RegisterSessionStates();
 
-    std::shared_ptr<ReliableSessionSessionMode> GetPreviousSessionState(std::shared_ptr<BaseChunk> pBaseChunk, ChunkType chunkType);
+    std::shared_ptr<ReliableSessionSessionMode> GetPreviousSessionState(std::vector<uint8_t> &vu8SourceIdentifier, ChunkType chunkType);
+
+    void UpdatePreviousSessionState(std::vector<uint8_t>& vu8SourceIdentifier, ChunkType chunkType, ReliableSessionSessionMode reliableSessionMode);
 };
 
 #endif
