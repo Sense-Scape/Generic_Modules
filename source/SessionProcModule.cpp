@@ -12,16 +12,13 @@ void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     uint32_t u32ChunkType;
     auto pUDPChunk = std::static_pointer_cast<UDPChunk>(pBaseChunk);
 
-    uint16_t uSessionTransmissionSize;
-    memcpy(&uSessionTransmissionSize, &pUDPChunk->m_vcDataChunk[0], sizeof(uSessionTransmissionSize));
-
-    auto pvcByteData = std::make_shared<std::vector<char>>(pUDPChunk->m_vcDataChunk.begin() + 2, pUDPChunk->m_vcDataChunk.end());
+    auto pvcByteData = std::make_shared<std::vector<char>>(pUDPChunk->m_vcDataChunk.begin(), pUDPChunk->m_vcDataChunk.end());
     auto pChunkHeaderState = std::make_shared<ReliableSessionSessionMode>();
     pChunkHeaderState->Deserialise(pvcByteData);
 
     // Then we can map keys
     ChunkType SessionChunkType = ChunkTypesNamingUtility::FromU32(pChunkHeaderState->m_u32uChunkType);
-    auto vu8SourceIdentifier = pUDPChunk->GetSourceIdentifier();
+    auto vu8SourceIdentifier = pChunkHeaderState->m_usUID;
 
     auto  pPreviousChunkHeaderState = GetPreviousSessionState(vu8SourceIdentifier, SessionChunkType);
 
@@ -51,20 +48,21 @@ void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 
         // lets get the start and end of the data and store the bytes
         auto DataStart = pUDPChunk->m_vcDataChunk.begin() + pChunkHeaderState->GetSize();
-        auto DataEnd = pUDPChunk->m_vcDataChunk.begin() + pChunkHeaderState->GetSize() + uSessionTransmissionSize;
+        auto DataEnd = pUDPChunk->m_vcDataChunk.end() - 2;
         std::copy(DataStart, DataEnd, std::back_inserter(*m_mSessionBytes[vu8SourceIdentifier][SessionChunkType]));
     }
     else if (bLastInSequence && SameSesession && bSequenceContinuous)
     {
         // lets get the start and end of the data and store the bytes
         auto DataStart = pUDPChunk->m_vcDataChunk.begin() + pChunkHeaderState->GetSize();
-        auto DataEnd = pUDPChunk->m_vcDataChunk.begin() + pChunkHeaderState->GetSize() + uSessionTransmissionSize; 
+        auto DataEnd = pUDPChunk->m_vcDataChunk.end() - 2; 
         std::copy(DataStart, DataEnd, std::back_inserter(*m_mSessionBytes[vu8SourceIdentifier][SessionChunkType]));
 
         // Creating a TimeChunk into which data shall go
-        auto pByteData = std::make_shared<std::vector<char>>(pUDPChunk->m_vcDataChunk);
+        auto pByteData = m_mSessionBytes[vu8SourceIdentifier][SessionChunkType];
         auto pBaseChunk = ChunkDuplicatorUtility::DeserialiseDerivedChunk(pByteData, SessionChunkType);
 
+        auto a = std::static_pointer_cast<TimeChunk>(pBaseChunk);
         // Pass pointer to data on and clear stored data and state information for current session
         TryPassChunk(pBaseChunk);
         m_mSessionModesStatesMap[vu8SourceIdentifier][SessionChunkType] = std::make_shared<ReliableSessionSessionMode>();
