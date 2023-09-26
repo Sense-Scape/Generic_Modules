@@ -18,7 +18,6 @@ public:
      * @brief Construct a new FFTModule object
      */
     FFTModule();
-    //~FFTModule(){};
 
     /**
      * @brief Generate and fill complex time data chunk and pass on to next module
@@ -27,7 +26,7 @@ public:
 
     /**
      * @brief Returns module type
-     * @param[out] ModuleType of processing module
+     * @return ModuleType of processing module
      */
     ModuleType GetModuleType() override { return ModuleType::FFTModule; };
 
