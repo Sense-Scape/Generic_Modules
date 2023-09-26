@@ -65,5 +65,11 @@
     <ClCompile Include="source\ToJSONModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="include\FFTModule.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FFTModule.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

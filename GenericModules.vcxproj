@@ -173,7 +173,9 @@
     <ClInclude Include="include\WAVAccumulator.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="include\FFTModule.h" />
     <ClCompile Include="source\ChunkToBytesModule.cpp" />
+    <ClCompile Include="source\FFTModule.cpp" />
     <ClCompile Include="source\HPFModule.cpp" />
     <ClCompile Include="source\RouterModule.cpp" />
     <ClCompile Include="source\SessionProcModule.cpp" />
