@@ -7,6 +7,7 @@
 #include "BaseModule.h"
 #include "TimeChunk.h"
 #include "FFTChunk.h"
+#include "kiss_fft.h"
 
 /**
  * @brief Converts just to the JSON Chunk type
