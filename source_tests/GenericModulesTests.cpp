@@ -1,8 +1,19 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
-//#include "RouterModuleTests.h"
-//#include "SessionProcModuleTests.h"
-#include "TimeToWAVModuleTests.h"
+
+// F
+#include "FFTModuleTests.h"
+
+// R
+#include "RouterModuleTests.h"
+
+// S
 #include "SimulatorModuleTests.h"
+#include "SessionProcModuleTests.h"
+
+// T
+#include "TimeToWAVModuleTests.h"
 #include "ToJSONModuleTests.h"
-//#include "WAVAccumulatorModuleTests.h"
+
+// W
+#include "WAVAccumulatorModuleTests.h"
