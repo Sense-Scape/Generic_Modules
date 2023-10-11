@@ -190,6 +190,9 @@
     <ProjectReference Include="components\Base_Module\BaseModule.vcxproj">
       <Project>{36fd5345-1eb3-4a92-8f96-a07cc3fa8e32}</Project>
     </ProjectReference>
+    <ProjectReference Include="components\kissfft\kissfft.vcxproj">
+      <Project>{2dd1b9c9-929b-427d-95e5-8d749921e040}</Project>
+    </ProjectReference>
     <ProjectReference Include="GenericModules.vcxproj">
       <Project>{5c33d809-da24-446c-b5cc-980811441d4f}</Project>
     </ProjectReference>
