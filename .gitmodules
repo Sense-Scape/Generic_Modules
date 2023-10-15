@@ -4,3 +4,6 @@
 [submodule "components/docTest"]
 	path = components/docTest
 	url = https://github.com/Sense-Scape/doctest.git
+[submodule "components/kissfft"]
+	path = components/kissfft
+	url = https://github.com/Sense-Scape/kissfft

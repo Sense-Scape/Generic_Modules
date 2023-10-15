@@ -62,24 +62,32 @@
     <Import Project="GenericModulesTests.props" />
     <Import Project="GenericModules.props" />
     <Import Project="components\Base_Module\components\Chunk_Types\components\Nlohmann_JSON\Nlohmann_JSON.props" />
+    <Import Project="components\Base_Module\components\plog\plog.props" />
+    <Import Project="components\kissfft\KissFFT.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="GenericModulesTests.props" />
     <Import Project="GenericModules.props" />
     <Import Project="components\Base_Module\components\Chunk_Types\components\Nlohmann_JSON\Nlohmann_JSON.props" />
+    <Import Project="components\Base_Module\components\plog\plog.props" />
+    <Import Project="components\kissfft\KissFFT.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="GenericModulesTests.props" />
     <Import Project="GenericModules.props" />
+    <Import Project="GenericModulesTests.props" />
     <Import Project="components\Base_Module\components\Chunk_Types\components\Nlohmann_JSON\Nlohmann_JSON.props" />
+    <Import Project="components\Base_Module\components\plog\plog.props" />
+    <Import Project="components\kissfft\KissFFT.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="GenericModulesTests.props" />
     <Import Project="GenericModules.props" />
     <Import Project="components\Base_Module\components\Chunk_Types\components\Nlohmann_JSON\Nlohmann_JSON.props" />
+    <Import Project="components\Base_Module\components\plog\plog.props" />
+    <Import Project="components\kissfft\KissFFT.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -108,12 +116,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -124,12 +132,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -138,10 +148,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -152,15 +164,18 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include_tests\FFTModuleTests.h" />
     <ClInclude Include="include_tests\RouterModuleTests.h" />
     <ClInclude Include="include_tests\SessionProcModuleTests.h" />
     <ClInclude Include="include_tests\SimulatorModuleTests.h" />
@@ -174,6 +189,9 @@
     </ProjectReference>
     <ProjectReference Include="components\Base_Module\BaseModule.vcxproj">
       <Project>{36fd5345-1eb3-4a92-8f96-a07cc3fa8e32}</Project>
+    </ProjectReference>
+    <ProjectReference Include="components\kissfft\kissfft.vcxproj">
+      <Project>{2dd1b9c9-929b-427d-95e5-8d749921e040}</Project>
     </ProjectReference>
     <ProjectReference Include="GenericModules.vcxproj">
       <Project>{5c33d809-da24-446c-b5cc-980811441d4f}</Project>
