@@ -12,7 +12,9 @@ vu8SourceIdentifier(vu8SourceIdentifier)
     // Set all channel phases to zero with angle of arrival = 0 
     m_vfChannelPhases.resize(m_uNumChannels);
 
-    std::cout << "SimulatorModule::" + std::string(__FUNCTION__) + "  ADC module created with m_dSampleRate [ " + std::to_string(m_dSampleRate) + " ] Hz and m_dChunkSize [ " + std::to_string(m_dChunkSize) + " ] \n";
+    std::string strInfo = std::string(__FUNCTION__) + "  ADC module created with m_dSampleRate [ " + std::to_string(m_dSampleRate) + " ] Hz and m_dChunkSize [ " + std::to_string(m_dChunkSize) + " ] \n";
+    PLOG_INFO << strInfo;
+
     m_pTimeChunk = std::make_shared<TimeChunk>(m_dChunkSize, m_dSampleRate, 0, 12, sizeof(float),1);
 }
 
@@ -37,7 +39,8 @@ void SimulatorModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     std::shared_ptr<TimeChunk> pTimeChunk = std::move(m_pTimeChunk);
     if (!TryPassChunk(std::static_pointer_cast<BaseChunk>(pTimeChunk)))
     {
-        std::cout << "SimulatorModule::" + std::string(__FUNCTION__) + ": Next buffer full, dropping current chunk and passing \n";
+        std::string strWarning = std::string(__FUNCTION__) + ": Next buffer full, dropping current chunk and passing \n";
+        PLOG_WARNING << strWarning;
     }
 
     // Sleeping for time equivalent to chunk period

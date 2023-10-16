@@ -16,4 +16,10 @@ void ToJSONModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		// Try pass on
 		TryPassChunk(pJSONChunk);
 	}
+	else
+	{
+		auto strChunkType = ChunkTypesNamingUtility::toString(pBaseChunk->GetChunkType());
+		std::string strWarning = std::string(__FUNCTION__) + ": " + strChunkType + " has no JSON conversionn, droppong chunk \n";
+		PLOG_WARNING << strWarning;
+	}
 }

@@ -15,8 +15,10 @@ void RouterModule::RegisterOutputModule(std::shared_ptr<BaseModule> pNextModule,
         for (unsigned uNextModuleIndex = 0; uNextModuleIndex < vpNextModules.size(); uNextModuleIndex++)
         {
             if (vpNextModules[uNextModuleIndex]->GetModuleType() == pNextModule->GetModuleType())
-            {
-                std::cout << std::string(__FUNCTION__) + ": " + ModuleTypeStrings::toString(pNextModule->GetModuleType()) + " already registered, replacing \n";
+            {  		
+		        std::string strWarning = std::string(__FUNCTION__) + ": " + ModuleTypeStrings::toString(pNextModule->GetModuleType()) + " already registered, replacing \n";
+		        PLOG_WARNING << strWarning;
+
                 vpNextModules[uNextModuleIndex] = pNextModule;
                 return;
             }
@@ -41,7 +43,10 @@ void RouterModule::RouteChunk(std::shared_ptr<BaseChunk> pBaseChunk)
         }     
     }
     else
-        std::cout << std::string(__FUNCTION__) + ": " + ChunkTypesNamingUtility::toString(pBaseChunk->GetChunkType())  + " not registered chunk type, dropping \n";
+    {
+        std::string strWarning = std::string(__FUNCTION__) + ": " + ChunkTypesNamingUtility::toString(pBaseChunk->GetChunkType()) + " not registered chunk type, dropping \n";
+        PLOG_WARNING << strWarning;
+    }
 }
 
 void RouterModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
