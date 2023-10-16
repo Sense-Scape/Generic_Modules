@@ -46,7 +46,7 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     while (bTransmit)
     {
         // If our next transmission exceeds the number of data bytes available to be transmitted
-        if (uDataBytesTransmitted + uDataBytesToTransmit > u32TransmittableDataBytes)
+        if (uDataBytesTransmitted + uDataBytesToTransmit >= u32TransmittableDataBytes)
         {
             // Then adjust to how many data bytes shall be transmitted to the remaining number
             uDataBytesToTransmit = u32TransmittableDataBytes - uDataBytesTransmitted;
