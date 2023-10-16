@@ -10,7 +10,7 @@
 #include "kiss_fft.h"
 
 /**
- * @brief Converts just to the JSON Chunk type
+ * @brief Converts time chunks to FFT chunks and computes FFT
  */
 class FFTModule : 
     public BaseModule
