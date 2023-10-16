@@ -52,7 +52,8 @@ bool WAVAccumulator::VerifyTimeContinuity(std::shared_ptr<WAVChunk> pCurrentWAVC
 
 	if (!bContinuous)
 	{
-		std::cout << std::string(__FUNCTION__) + ": Discontinuity found in WAV stream \n";
+		std::string strWarning = std::string(__FUNCTION__) + ": Discontinuity found in WAV stream \n";
+		PLOG_WARNING << strWarning;
 	}
 
 	return bContinuous;
@@ -64,7 +65,8 @@ bool WAVAccumulator::CheckMaxTimeThreshold(std::shared_ptr<WAVChunk> pAccumulate
 
 	if (dAccumulatedPeriod > m_dAccumulatePeriod)
 	{
-		std::cout << std::string(__FUNCTION__) + ": WAV recoding of " + std::to_string(dAccumulatedPeriod) + " seconds made \n";
+		std::string strInfo = std::string(__FUNCTION__) + ": WAV recoding of " + std::to_string(dAccumulatedPeriod) + " seconds made \n";
+		PLOG_INFO << strInfo;
 		return true;
 	}
 	else
@@ -94,9 +96,12 @@ void WAVAccumulator::AccumulateWAVChunk(std::shared_ptr<WAVChunk> pWAVChunk)
 		else
 		{
 			// If we are not continuous just pass on 
-			std::cout << std::string(__FUNCTION__) + ": Passing WAV data on early \n";
+			std::string strWarning = std::string(__FUNCTION__) + ": Passing WAV data on early \n";
+			PLOG_WARNING << strWarning;
+
 			TryPassChunk(pAccumulatedWAVChunk);
 			m_mAccumulatedWAVChunks.erase(pWAVChunk->GetSourceIdentifier());
+
 			// and then exit function as we have nothing else to do
 			return;
 		}
