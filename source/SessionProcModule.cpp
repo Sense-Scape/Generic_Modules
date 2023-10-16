@@ -70,7 +70,9 @@ void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     }
     else
     {
-        std::cout << std::string(__FUNCTION__) + " - WAV session chunk missed, resetting [" + std::to_string(pChunkHeaderState->m_uSessionNumber) + ":" + std::to_string(pChunkHeaderState->m_uSequenceNumber) + "->" + std::to_string(pPreviousChunkHeaderState->m_uSequenceNumber) + "] \n";
+        std::string strWarning = std::string(__FUNCTION__) + " - WAV session chunk missed, resetting [" + std::to_string(pChunkHeaderState->m_uSessionNumber) + ":" + std::to_string(pChunkHeaderState->m_uSequenceNumber) + "->" + std::to_string(pPreviousChunkHeaderState->m_uSequenceNumber) + "] \n";
+        PLOG_WARNING << strWarning;
+
         pChunkHeaderState = std::make_shared<ReliableSessionSessionMode>();
         m_mSessionBytes[vu8SourceIdentifier][SessionChunkType] = std::make_shared<std::vector<char>>();
     }
