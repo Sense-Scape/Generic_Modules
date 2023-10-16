@@ -1,11 +1,13 @@
 #ifndef CHUNK_TO_BYTES_MODULE
 #define CHUNK_TO_BYTES_MODULE
 
+/*Standard Includes*/
+#include <cmath>
+
+/* Custom Includes */
 #include "BaseModule.h"
 #include "UDPChunk.h"
 #include "SessionModeTypes.h"
-
-#include <cmath>
 
 /*
 * @brief Module process converts all chunks into multiple UDP chunks
