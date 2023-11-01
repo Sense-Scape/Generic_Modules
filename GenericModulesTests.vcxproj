@@ -93,21 +93,21 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/include;$(ProjectDir)/components/Base_Module/include;$(ProjectDir)/tests;$(ProjectDir)/components/docTest/doctest;$(ProjectDir)/components/Base_Module/components/Chunk_Types/include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)_tests\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)_tests\</IntDir>
+    <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)_tests\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)_tests\</IntDir>
+    <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)\components\doctest\doctest;$(ProjectDir)/components/Base_Module/include;$(ProjectDir)/components/docTest/doctest;$(ProjectDir)/components/Base_Module/components/Chunk_Types/include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)_tests\</OutDir>
-    <IntDir>$(Configuration)_tests\</IntDir>
+    <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)\components\doctest\doctest;$(ProjectDir)/components/Base_Module/include;$(ProjectDir)/components/docTest/doctest;$(ProjectDir)/components/Base_Module/components/Chunk_Types/include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)_tests\</OutDir>
-    <IntDir>$(Configuration)_tests\</IntDir>
+    <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)\components\doctest\doctest;$(ProjectDir)/components/Base_Module/include;$(ProjectDir)/components/docTest/doctest;$(ProjectDir)/components/Base_Module/components/Chunk_Types/include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
