@@ -10,7 +10,7 @@ m_dChunkSize(dChunkSize),
 vu8SourceIdentifier(vu8SourceIdentifier)
 {
     // Set all channel phases to zero with angle of arrival = 0 
-    m_vfChannelPhases.resize(m_uNumChannels);
+    m_vfChannelPhases_rad.resize(m_uNumChannels);
 
     std::string strInfo = std::string(__FUNCTION__) + "  ADC module created with m_dSampleRate [ " + std::to_string(m_dSampleRate) + " ] Hz and m_dChunkSize [ " + std::to_string(m_dChunkSize) + " ] \n";
     PLOG_INFO << strInfo;
@@ -70,7 +70,7 @@ void SimulatorModule::SimulateADCSample()
         for (unsigned uChannel = 0; uChannel < m_uNumChannels; uChannel++)
         {
             // And create a "sampled" float value between 0 and 1 with phase offests
-            int16_t datum = (std::pow(2, 15) - 1)* sin((double)2.0 * 3.141592653589793238462643383279502884197 * ((double)m_uSimulatedFrequency * (double)m_u64SampleCount / (double)m_dSampleRate) + (double)m_vfChannelPhases[uChannel]);
+            int16_t datum = (std::pow(2, 15) - 1)* sin((double)2.0 * M_PI * ((double)m_uSimulatedFrequency * (double)m_u64SampleCount / (double)m_dSampleRate) + (double)m_vfChannelPhases_rad[uChannel]);
             // The take this value, scale and convert it to a signed int
             m_pTimeChunk->m_vvi16TimeChunks[uChannel][uCurrentSampleIndex] = datum;
         }
@@ -81,9 +81,12 @@ void SimulatorModule::SimulateADCSample()
 	}
 }
 
-void SimulatorModule::SetChannelPhases(std::vector<float> &vfChannelPhases)
+void SimulatorModule::SetChannelPhases(std::vector<float> &vfChannelPhases, std::string strPhaseType)
 {
-    m_vfChannelPhases = vfChannelPhases;
+    if (strPhaseType == "Degrees")
+        std::transform(vfChannelPhases.begin(), vfChannelPhases.end(), vfChannelPhases.begin(), [](auto& val) {return val * M_PI/180; });
+
+    m_vfChannelPhases_rad = vfChannelPhases;
 }
 
 void SimulatorModule::SimulateUpdatedTimeStamp()
