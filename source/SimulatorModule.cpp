@@ -7,12 +7,19 @@ m_u64SampleCount(0),
 m_uSimulatedFrequency(uSimulatedFrequency),
 m_dSampleRate(dSampleRate),
 m_dChunkSize(dChunkSize),
-vu8SourceIdentifier(vu8SourceIdentifier)
+m_vu8SourceIdentifier(vu8SourceIdentifier)
 {
     // Set all channel phases to zero with angle of arrival = 0 
     m_vfChannelPhases_rad.resize(m_uNumChannels);
 
-    std::string strInfo = std::string(__FUNCTION__) + "  ADC module created with m_dSampleRate [ " + std::to_string(m_dSampleRate) + " ] Hz and m_dChunkSize [ " + std::to_string(m_dChunkSize) + " ] \n";
+    std::string strSourceIdentifier = std::accumulate(m_vu8SourceIdentifier.begin(), m_vu8SourceIdentifier.end(), std::string(""),
+        [](std::string str, int element) { return str + std::to_string(element) + " "; });
+    std::string strInfo = std::string(__FUNCTION__) + " Simulator Module create:\n" 
+        + "=========\n" +
+        + "SourceIdentifier [ " + strSourceIdentifier + "] \n" 
+        + "SampleRate [ " + std::to_string(m_dSampleRate) + " ] Hz \n"
+        + "ChunkSize [ " + std::to_string(m_dChunkSize) + " ]\n" 
+        + "=========";
     PLOG_INFO << strInfo;
 
     m_pTimeChunk = std::make_shared<TimeChunk>(m_dChunkSize, m_dSampleRate, 0, 12, sizeof(float),1);
@@ -97,5 +104,5 @@ void SimulatorModule::SimulateUpdatedTimeStamp()
 void SimulatorModule::SimulateTimeStampMetaData()
 {
     m_pTimeChunk->m_i64TimeStamp = m_u64CurrentTimeStamp;
-    m_pTimeChunk->SetSourceIdentifier(vu8SourceIdentifier);
+    m_pTimeChunk->SetSourceIdentifier(m_vu8SourceIdentifier);
 }
