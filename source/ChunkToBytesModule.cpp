@@ -14,21 +14,22 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     static uint8_t m_uSessionNumber = 0;
 
     // Lets first ensure that this chiunk is in the source identifers map
-    auto vu8SourceIdnetifier = pBaseChunk->GetSourceIdentifier();
+    auto vu8SourceIdentifier = pBaseChunk->GetSourceIdentifier();
     auto eChunkType = pBaseChunk->GetChunkType();
     // By first checking if the source identider has been seen
-    if (m_MapOfIndentifiersToChunkTypeSessions.find(vu8SourceIdnetifier) == m_MapOfIndentifiersToChunkTypeSessions.end())
+    if (m_MapOfIndentifiersToChunkTypeSessions.find(vu8SourceIdentifier) == m_MapOfIndentifiersToChunkTypeSessions.end())
         // And then if the chunk type has been seen for this source
-        if (m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdnetifier].find(eChunkType) ==
-            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdnetifier].end())
+        if (m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier].find(eChunkType) ==
+            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier].end())
             // If not the create one
         {
-            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdnetifier][eChunkType] = std::make_shared<ReliableSessionSessionMode>();
-            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdnetifier][eChunkType]->m_u32uChunkType = ChunkTypesNamingUtility::ToU32(eChunkType);
+            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType] = std::make_shared<ReliableSessionSessionMode>();
+            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType]->m_u32uChunkType = ChunkTypesNamingUtility::ToU32(eChunkType);
+            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType]->m_usUID = vu8SourceIdentifier;
         }
                                             
     // Then we extract the current session state for the current chunk type and source identifier
-    auto pSessionModeHeader = m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdnetifier][eChunkType];
+    auto pSessionModeHeader = m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType];
 
     // Bytes to transmit is equal to number of bytes in derived object (e.g TimeChunk)
     auto pvcByteData = pBaseChunk->Serialise();
