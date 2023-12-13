@@ -6,6 +6,9 @@
 #include <cmath>
 #include <thread>
 
+#define _USE_MATH_DEFINES // Allows the use of math constants
+#include <math.h>
+
 #include "BaseModule.h"
 #include "TimeChunk.h"
 
@@ -45,20 +48,21 @@ public:
 
     /**
      * @brief Set the absolute phase (Rad) of each channel of simulated data
-     * @param[in]
+     * @param vfChannelPhases set of channel phases which to apply to channels
+     * @param strPhaseType specify "Degree" otherwise assumed to be radian
      */
-    void SetChannelPhases(std::vector<float> &vfChannelPhases);
+    void SetChannelPhases(std::vector<float> &vfChannelPhases, std::string strPhaseType);
 
 private:
-    unsigned m_uNumChannels;                 ///< Number of ADC channels to simulate
-    unsigned m_uSimulatedFrequency;          ///< Sinusoid frequency to simulate
-    uint64_t m_u64SampleCount;               ///< Count to track index of simulated sinusoid
-    uint64_t m_u64CurrentTimeStamp;          ///< Simulated timestamp of the module
-    double m_dSampleRate;                    ///< Sample rate in Hz
-    double m_dChunkSize;                     ///< How many samples in each chunk channel
-    std::shared_ptr<TimeChunk> m_pTimeChunk; ///< Pointer to member time data chunk
-    std::vector<float> m_vfChannelPhases;    ///< Vector od channel phases
-    std::vector<uint8_t> vu8SourceIdentifier;///< Source identifier of generated chunks
+    unsigned m_uNumChannels;                    ///< Number of ADC channels to simulate
+    unsigned m_uSimulatedFrequency;             ///< Sinusoid frequency to simulate
+    uint64_t m_u64SampleCount;                  ///< Count to track index of simulated sinusoid
+    uint64_t m_u64CurrentTimeStamp;             ///< Simulated timestamp of the module
+    double m_dSampleRate;                       ///< Sample rate in Hz
+    double m_dChunkSize;                        ///< How many samples in each chunk channel
+    std::shared_ptr<TimeChunk> m_pTimeChunk;    ///< Pointer to member time data chunk
+    std::vector<float> m_vfChannelPhases_rad;   ///< Vector od channel phases
+    std::vector<uint8_t> m_vu8SourceIdentifier; ///< Source identifier of generated chunks
 
     /**
      * @brief Initializes Time Chunk vectors default values. Initializes according to number of ADCs and their channels

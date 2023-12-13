@@ -7,6 +7,7 @@
 #include "BaseModule.h"
 #include "TimeChunk.h"
 #include "FFTChunk.h"
+#include "FFTMagnitudeChunk.h"
 #include "kiss_fft.h"
 
 /**
@@ -32,6 +33,15 @@ class FFTModule :
      * @return ModuleType of processing module
      */
     ModuleType GetModuleType() override { return ModuleType::FFTModule; };
+
+    /**
+    * @brief Determines whether the module will genreate FFT magnitude data
+    */
+    void SetGenerateMagnitudeData(bool bGenerateMagnitudeData) { m_bGenerateMagnitudeData = bGenerateMagnitudeData; }
+
+    private:
+
+    std::atomic<bool> m_bGenerateMagnitudeData = false; ///< Whether fft magnitude chunks will be produced
 };
 
 #endif
