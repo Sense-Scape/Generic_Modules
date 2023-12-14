@@ -16,9 +16,9 @@ void FFTModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 
     // Convert to complex vector
     pFFTChunk->m_vvcfFFTChunks.resize(pTimeChunk->m_uNumChannels);
-    
+
     // Iterate through data channel
-    for (uint16_t uChannelIndex = 0; uChannelIndex  < pTimeChunk->m_uNumChannels; uChannelIndex++)
+    for (uint16_t uChannelIndex = 0; uChannelIndex < pTimeChunk->m_uNumChannels; uChannelIndex++)
     {
 
         std::vector<std::complex<float>> vcfForwardFFTInput;
@@ -35,9 +35,26 @@ void FFTModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         // And store data
         pFFTChunk->m_vvcfFFTChunks[uChannelIndex] = vcfForwardFFTOutput;
     }
-    
+
     // Now free up memory
     kiss_fft_free(ForwardFFTConfig);
 
-	TryPassChunk(pFFTChunk);
+
+    if (m_bGenerateMagnitudeData) {
+
+        // Create the chunk with attention to soruce identifier
+        auto pFFTMagnitudeChunk = std::make_shared<FFTMagnitudeChunk>(pTimeChunk->m_dChunkSize, pTimeChunk->m_dSampleRate, pTimeChunk->m_i64TimeStamp, pTimeChunk->m_uNumChannels);
+        pFFTMagnitudeChunk->SetSourceIdentifier(pTimeChunk->GetSourceIdentifier());
+
+        // Compute FFT magnitudes
+        for (uint16_t uChannelIndex = 0; uChannelIndex < pTimeChunk->m_uNumChannels; ++uChannelIndex) {
+            std::transform(pFFTChunk->m_vvcfFFTChunks[uChannelIndex].begin(), pFFTChunk->m_vvcfFFTChunks[uChannelIndex].end(), pFFTMagnitudeChunk->m_vvfFFTMagnitudeChunks[uChannelIndex].begin(),
+                [](std::complex<float> x) { return std::abs(x); });
+        }
+
+        TryPassChunk(pFFTMagnitudeChunk);
+    }
+    
+
+    TryPassChunk(pFFTChunk);
 }
