@@ -9,6 +9,7 @@ void FFTModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     auto pTimeChunk = std::static_pointer_cast<TimeChunk>(pBaseChunk);
     auto pFFTChunk = std::make_shared<FFTChunk>(pTimeChunk->m_dChunkSize, pTimeChunk->m_dSampleRate, pTimeChunk->m_i64TimeStamp, pTimeChunk->m_uNumChannels);
+    pFFTChunk->SetSourceIdentifier(pTimeChunk->GetSourceIdentifier());
 
     // Forward FFT configuration
     kiss_fft_cfg ForwardFFTConfig = kiss_fft_alloc(pTimeChunk->m_dChunkSize, 1, NULL, NULL);
