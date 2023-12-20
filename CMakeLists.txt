@@ -1,6 +1,6 @@
 # Min CMake version
 cmake_minimum_required(VERSION 3.18)
-project(BaseModuleProject CXX)
+project(GenericModulesProject CXX)
 
 # Set directory vars
 set(SOURCE_DIR "source")
@@ -42,7 +42,11 @@ else()
         ${SOURCE_TESTS_DIR}/GenericModulesTests.cpp 
     )
 
-    add_subdirectory(components/Base_Module)
+
+    if (NOT TARGET BaseModuleLib)
+    	add_subdirectory(components/Base_Module)
+    endif()
+
     add_subdirectory(components/kissfft)
 
     # Include directories for main code and tests
