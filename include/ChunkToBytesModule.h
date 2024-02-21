@@ -6,8 +6,8 @@
 
 /* Custom Includes */
 #include "BaseModule.h"
-#include "UDPChunk.h"
-#include "SessionModeTypes.h"
+#include "ByteChunk.h"
+#include "SessionController.h"
 
 /*
 * @brief Module process converts all chunks into multiple UDP chunks
@@ -33,7 +33,7 @@ public:
 
 private:
     unsigned m_uTransmissionSize;   ///< size of transmisison in bytes
-    std::map<std::vector<uint8_t>, std::map<ChunkType, std::shared_ptr<ReliableSessionSessionMode>>> m_MapOfIndentifiersToChunkTypeSessions; ///< Map of each source identifier to specific chunk type being processed
+    std::map<std::vector<uint8_t>, std::map<ChunkType, std::shared_ptr<SessionController>>> m_MapOfIndentifiersToChunkTypeSessions; ///< Map of each source identifier to specific chunk type being processed
 
     /*
      * @brief Module process to collect and format UDP data
