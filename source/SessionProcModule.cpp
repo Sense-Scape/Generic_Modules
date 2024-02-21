@@ -10,10 +10,10 @@ void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     // Lets first check what chunk has been transmitted in this UDP chunk
     uint32_t u32ChunkType;
-    auto pUDPChunk = std::static_pointer_cast<UDPChunk>(pBaseChunk);
+    auto pByteChunk = std::static_pointer_cast<ByteChunk>(pBaseChunk);
 
-    auto pvcByteData = std::make_shared<std::vector<char>>(pUDPChunk->m_vcDataChunk.begin(), pUDPChunk->m_vcDataChunk.end());
-    auto pChunkHeaderState = std::make_shared<ReliableSessionSessionMode>();
+    auto pvcByteData = std::make_shared<std::vector<char>>(pByteChunk->m_vcDataChunk.begin(), pByteChunk->m_vcDataChunk.end());
+    auto pChunkHeaderState = std::make_shared<SessionController>();
     pChunkHeaderState->Deserialise(pvcByteData);
 
     // Then we can map keys
@@ -47,15 +47,15 @@ void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
             m_mSessionBytes[vu8SourceIdentifier][SessionChunkType] = std::make_shared<std::vector<char>>();
 
         // lets get the start and end of the data and store the bytes
-        auto DataStart = pUDPChunk->m_vcDataChunk.begin() + pChunkHeaderState->GetSize();
-        auto DataEnd = pUDPChunk->m_vcDataChunk.end() - 2;
+        auto DataStart = pByteChunk->m_vcDataChunk.begin() + pChunkHeaderState->GetSize();
+        auto DataEnd = pByteChunk->m_vcDataChunk.end() - 2;
         std::copy(DataStart, DataEnd, std::back_inserter(*m_mSessionBytes[vu8SourceIdentifier][SessionChunkType]));
     }
     else if (bLastInSequence && SameSesession && bSequenceContinuous)
     {
         // lets get the start and end of the data and store the bytes
-        auto DataStart = pUDPChunk->m_vcDataChunk.begin() + pChunkHeaderState->GetSize();
-        auto DataEnd = pUDPChunk->m_vcDataChunk.end() - 2; 
+        auto DataStart = pByteChunk->m_vcDataChunk.begin() + pChunkHeaderState->GetSize();
+        auto DataEnd = pByteChunk->m_vcDataChunk.end() - 2; 
         std::copy(DataStart, DataEnd, std::back_inserter(*m_mSessionBytes[vu8SourceIdentifier][SessionChunkType]));
 
         // Creating a TimeChunk into which data shall go
@@ -65,7 +65,7 @@ void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         auto a = std::static_pointer_cast<TimeChunk>(pBaseChunk);
         // Pass pointer to data on and clear stored data and state information for current session
         TryPassChunk(pBaseChunk);
-        m_mSessionModesStatesMap[vu8SourceIdentifier][SessionChunkType] = std::make_shared<ReliableSessionSessionMode>();
+        m_mSessionModesStatesMap[vu8SourceIdentifier][SessionChunkType] = std::make_shared<SessionController>();
         m_mSessionBytes[vu8SourceIdentifier][SessionChunkType] = std::make_shared<std::vector<char>>();
     }
     else
@@ -73,14 +73,14 @@ void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         std::string strWarning = std::string(__FUNCTION__) + " - WAV session chunk missed, resetting [" + std::to_string(pChunkHeaderState->m_uSessionNumber) + ":" + std::to_string(pChunkHeaderState->m_uSequenceNumber) + "->" + std::to_string(pPreviousChunkHeaderState->m_uSequenceNumber) + "] \n";
         PLOG_WARNING << strWarning;
 
-        pChunkHeaderState = std::make_shared<ReliableSessionSessionMode>();
+        pChunkHeaderState = std::make_shared<SessionController>();
         m_mSessionBytes[vu8SourceIdentifier][SessionChunkType] = std::make_shared<std::vector<char>>();
     }
 
     UpdatePreviousSessionState(vu8SourceIdentifier, SessionChunkType, *pChunkHeaderState);
 }
 
-std::shared_ptr<ReliableSessionSessionMode> SessionProcModule::GetPreviousSessionState(std::vector<uint8_t>& vu8SourceIdentifier, ChunkType chunkType)
+std::shared_ptr<SessionController> SessionProcModule::GetPreviousSessionState(std::vector<uint8_t>& vu8SourceIdentifier, ChunkType chunkType)
 {
     bool bProcessedBefore = false;
 
@@ -90,16 +90,16 @@ std::shared_ptr<ReliableSessionSessionMode> SessionProcModule::GetPreviousSessio
         // And the chunk type has been processed before
         if (m_mSessionModesStatesMap[vu8SourceIdentifier].count(chunkType))
             // We can then return its session state
-            return std::static_pointer_cast<ReliableSessionSessionMode>(m_mSessionModesStatesMap[vu8SourceIdentifier][chunkType]);
+            return std::static_pointer_cast<SessionController>(m_mSessionModesStatesMap[vu8SourceIdentifier][chunkType]);
     }
 
     // If we have never seen this source identifier and chunk type 
     // then lets establish a session mode for it
-    m_mSessionModesStatesMap[vu8SourceIdentifier][chunkType] = std::make_shared<ReliableSessionSessionMode>();
-    return std::static_pointer_cast<ReliableSessionSessionMode>(m_mSessionModesStatesMap[vu8SourceIdentifier][chunkType]);
+    m_mSessionModesStatesMap[vu8SourceIdentifier][chunkType] = std::make_shared<SessionController>();
+    return std::static_pointer_cast<SessionController>(m_mSessionModesStatesMap[vu8SourceIdentifier][chunkType]);
 }
 
-void SessionProcModule::UpdatePreviousSessionState(std::vector<uint8_t>& vu8SourceIdentifier, ChunkType chunkType, ReliableSessionSessionMode reliableSessionMode)
+void SessionProcModule::UpdatePreviousSessionState(std::vector<uint8_t>& vu8SourceIdentifier, ChunkType chunkType, SessionController reliableSessionMode)
 {
-    m_mSessionModesStatesMap[vu8SourceIdentifier][chunkType] = std::make_shared<ReliableSessionSessionMode>(reliableSessionMode);
+    m_mSessionModesStatesMap[vu8SourceIdentifier][chunkType] = std::make_shared<SessionController>(reliableSessionMode);
 }

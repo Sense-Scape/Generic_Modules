@@ -23,7 +23,7 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
             m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier].end())
             // If not the create one
         {
-            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType] = std::make_shared<ReliableSessionSessionMode>();
+            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType] = std::make_shared<SessionController>();
             m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType]->m_u32uChunkType = ChunkTypesNamingUtility::ToU32(eChunkType);
             
             for (size_t i = 0; i < vu8SourceIdentifier.size(); i++)
@@ -78,11 +78,11 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         // While keeping in mind that we have to send unset bits from out data byte array
         memcpy(&vuUDPData[uSessionDataHeaderSize + pSessionModeHeader->GetSize()], &((*pvcByteData)[uDataBytesTransmitted]), uDataBytesToTransmit);
 
-        auto pUDPChunk = std::make_shared<UDPChunk>(uSessionTransmissionSize);
-        pUDPChunk->m_vcDataChunk = vuUDPData;
-        pUDPChunk->m_uChunkLength = uSessionTransmissionSize;
+        auto pByteChunk = std::make_shared<ByteChunk>(uSessionTransmissionSize);
+        pByteChunk->m_vcDataChunk = vuUDPData;
+        pByteChunk->m_uChunkLength = uSessionTransmissionSize;
 
-        TryPassChunk(pUDPChunk);
+        TryPassChunk(pByteChunk);
 
         // Updating transmission states
         uDataBytesTransmitted += uDataBytesToTransmit;
