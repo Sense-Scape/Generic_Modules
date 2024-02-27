@@ -28,7 +28,7 @@ public:
      * @brief Returns module type
      * @return ModuleType of processing module
      */
-    ModuleType GetModuleType() override { return ModuleType::"ChunkToBytesModule"; };
+    std::string GetModuleType() override { return "ChunkToBytesModule"; };
 
 private:
     unsigned m_uTransmissionSize;                                                                                                   ///< size of transmisison in bytes
