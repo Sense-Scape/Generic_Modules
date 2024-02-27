@@ -13,10 +13,9 @@
 /**
  * @brief Converts time chunks to FFT chunks and computes FFT
  */
-class FFTModule : 
-    public BaseModule
+class FFTModule : public BaseModule
 {
-    public:
+public:
     /**
      * @brief Construct a new FFTModule object
      * @param uBufferSize size of processing input buffer
@@ -32,15 +31,14 @@ class FFTModule :
      * @brief Returns module type
      * @return ModuleType of processing module
      */
-    ModuleType GetModuleType() override { return ModuleType::FFTModule; };
+    std::string GetModuleType() override { return "FFTModule"; };
 
     /**
-    * @brief Determines whether the module will genreate FFT magnitude data
-    */
+     * @brief Determines whether the module will genreate FFT magnitude data
+     */
     void SetGenerateMagnitudeData(bool bGenerateMagnitudeData) { m_bGenerateMagnitudeData = bGenerateMagnitudeData; }
 
-    private:
-
+private:
     std::atomic<bool> m_bGenerateMagnitudeData = false; ///< Whether fft magnitude chunks will be produced
 };
 

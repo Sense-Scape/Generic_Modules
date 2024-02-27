@@ -26,11 +26,9 @@ public:
      * @brief Returns module type
      * @param[out] ModuleType of processing module
      */
-    ModuleType GetModuleType() override { return ModuleType::ToJSONModule; };
+    std::string GetModuleType() override { return "ToJSONModule"; };
 
 private:
-    
-
 };
 
 #endif

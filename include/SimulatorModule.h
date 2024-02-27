@@ -12,7 +12,6 @@
 #include "BaseModule.h"
 #include "TimeChunk.h"
 
-
 /**
  * @brief Class that simulates and ADC sampling pure tones
  */
@@ -35,11 +34,11 @@ public:
      */
     void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
 
-	/**
+    /**
      * @brief Returns module type
      * @param[out] ModuleType of processing module
      */
-    ModuleType GetModuleType() override { return ModuleType::SimulatorModule; };
+    std::string GetModuleType() override { return "SimulatorModule"; };
 
     /**
      * @brief Check input buffer and try process data
@@ -83,7 +82,6 @@ private:
      * @brief Updates timechuink meta data including timestamp and source identifier
      */
     void SimulateTimeStampMetaData();
-
 };
 
 #endif

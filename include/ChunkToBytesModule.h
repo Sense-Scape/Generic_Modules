@@ -10,11 +10,10 @@
 #include "SessionController.h"
 
 /*
-* @brief Module process converts all chunks into multiple UDP chunks
-*   to pass onto transmission modules
-*/
-class ChunkToBytesModule :
-    public BaseModule
+ * @brief Module process converts all chunks into multiple UDP chunks
+ *   to pass onto transmission modules
+ */
+class ChunkToBytesModule : public BaseModule
 {
 public:
     /**
@@ -23,16 +22,16 @@ public:
      * @param[in] uTransmissionSize size of transmisison in bytes
      */
     ChunkToBytesModule(unsigned uBufferSize, unsigned uTransmissionSize);
-    ~ChunkToBytesModule() {};
+    ~ChunkToBytesModule(){};
 
     /**
      * @brief Returns module type
      * @return ModuleType of processing module
      */
-    ModuleType GetModuleType() override { return ModuleType::ChunkToBytesModule; };
+    ModuleType GetModuleType() override { return ModuleType::"ChunkToBytesModule"; };
 
 private:
-    unsigned m_uTransmissionSize;   ///< size of transmisison in bytes
+    unsigned m_uTransmissionSize;                                                                                                   ///< size of transmisison in bytes
     std::map<std::vector<uint8_t>, std::map<ChunkType, std::shared_ptr<SessionController>>> m_MapOfIndentifiersToChunkTypeSessions; ///< Map of each source identifier to specific chunk type being processed
 
     /*

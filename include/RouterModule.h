@@ -4,17 +4,15 @@
 #include "BaseModule.h"
 #include "ChunkDuplicatorUtility.h"
 
-class RouterModule : 
-    public BaseModule
+class RouterModule : public BaseModule
 {
 public:
-
     /**
      * @brief Construct a new Router Module forward data into different pipeline streams.
      * @param[in] uBufferSize size of processing input buffer
      */
     RouterModule(unsigned uBufferSize);
-    ~RouterModule() {};
+    ~RouterModule(){};
 
     /*
      * @brief Allows on to connect multiple modules to the ouput of this router
@@ -26,14 +24,12 @@ public:
     // * @brief Returns module type
     // * @return ModuleType of processing module
     // */
-    ModuleType GetModuleType() override { return ModuleType::RouterModule; };
+    std::string GetModuleType() override { return "RouterModule"; };
 
-
-protected:                 
-    std::map<ChunkType, std::vector<std::shared_ptr<BaseModule>>> m_ChunkTypeModuleMap;        ///< Shared pointer to next module into which messages are passed
+protected:
+    std::map<ChunkType, std::vector<std::shared_ptr<BaseModule>>> m_ChunkTypeModuleMap; ///< Shared pointer to next module into which messages are passed
 
 private:
-
     /*
      * @brief Module process to collect and format UDP data
      * @param[in] pBaseChunk pointer to chunk that shall be routed
@@ -41,9 +37,9 @@ private:
     void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
 
     /*
-    * @brief Passes chunk to relevant module
-    * @param[in] pBaseChunk pointer to chunk that shall be routed
-    */
+     * @brief Passes chunk to relevant module
+     * @param[in] pBaseChunk pointer to chunk that shall be routed
+     */
     void RouteChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 };
 
