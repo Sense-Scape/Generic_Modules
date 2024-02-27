@@ -11,7 +11,7 @@ TEST_CASE("SessionProcModule Test")
 	SessionProcModule SessionProcModuleTestClass(uBufferSize);
 	SessionProcModuleTestClass.SetTestMode(true);
 
-	CHECK(SessionProcModuleTestClass.GetModuleType() == ModuleType::SessionProcModule);
+	CHECK(SessionProcModuleTestClass.GetModuleType() == "SessionProcModule");
 
 	// Create a JSON Chunk
 	auto pJSONChunk = std::make_shared<JSONChunk>();

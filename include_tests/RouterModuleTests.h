@@ -9,10 +9,10 @@ TEST_CASE("BaseModule Test")
     unsigned uBufferSize = 10;
     RouterModule routerModule(uBufferSize);
 
-    SUBCASE("Checking default constructor") {
-        CHECK(routerModule.GetModuleType() == ModuleType::RouterModule);
+    SUBCASE("Checking default constructor")
+    {
+        CHECK(routerModule.GetModuleType() == "RouterModule");
     }
-
 }
 
 #endif

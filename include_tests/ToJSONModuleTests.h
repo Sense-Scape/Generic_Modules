@@ -12,10 +12,8 @@ TEST_CASE("ToJSONModule Test")
     ToJSONModule toJSONModule;
     toJSONModule.SetTestMode(true);
 
+    CHECK(toJSONModule.GetModuleType() == "ToJSONModule");
 
-    CHECK(toJSONModule.GetModuleType() == ModuleType::ToJSONModule);
-
- 
     // Constructor Parameters
     double dChunkSize = 512;
     double dSampleRate = 44100;
@@ -33,7 +31,7 @@ TEST_CASE("ToJSONModule Test")
     // Size of header info, size of channels and size of base class
     unsigned uClassSize_bytes = 36 + dChunkSize * uNumChannels * uNumBytes + baseChunk.GetSize();
     // Lets just start by creating a Timechunk
-    std::shared_ptr<TimeChunk>  pTimeChunkTestClass = std::make_shared<TimeChunk>(dChunkSize, dSampleRate, i64TimeStamp, uBits, uNumBytes, uNumChannels);
+    std::shared_ptr<TimeChunk> pTimeChunkTestClass = std::make_shared<TimeChunk>(dChunkSize, dSampleRate, i64TimeStamp, uBits, uNumBytes, uNumChannels);
     pTimeChunkTestClass->m_vvi16TimeChunks[0] = vu16ChannelOne;
     pTimeChunkTestClass->m_vvi16TimeChunks[1] = vu16ChannelTwo;
 
@@ -57,17 +55,17 @@ TEST_CASE("ToJSONModule Test")
     auto pJSONChunkOut = std::static_pointer_cast<JSONChunk>(pBaseChunkOut);
 
     // Lets also check what happens if the class does not have the ToJSON conversion
-    std::shared_ptr<BaseChunk>  pBaseChunkTestClass = std::make_shared<BaseChunk>();
+    std::shared_ptr<BaseChunk> pBaseChunkTestClass = std::make_shared<BaseChunk>();
     toJSONModule.TestProcess(pBaseChunkTestClass);
-    //auto pBaseChunkOut2 = toJSONModule.GetTestOutput();
+    // auto pBaseChunkOut2 = toJSONModule.GetTestOutput();
 
-    SUBCASE("Checking ToJSON Converter") {
+    SUBCASE("Checking ToJSON Converter")
+    {
         // Assuming ToJSON implemented, check that processing is correct
         /*CHECK(pJSONChunkOut->m_JSONDocument == JSONDocument);*/
         // Check that no processing takes place if the chunk does not have ToJSON implemented
         // CHECK(pBaseChunkOut2 == nullptr);
     }
-
 }
 
 #endif
