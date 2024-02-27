@@ -12,7 +12,7 @@ TEST_CASE("WAVAccumulatorModule Test")
 
     WAVAccumulator WAVAccumulator(dAccumulatePeriod, dContinuityThresholdFactor, uMaxInputBufferSize);
 
-    CHECK(WAVAccumulator.GetModuleType() == ModuleType::WAVAccumulatorModule);
+    CHECK(WAVAccumulator.GetModuleType() == "WAVAccumulatorModule");
 }
 
 #endif

@@ -5,10 +5,9 @@
 #include <cmath>
 
 /*
-* @brief Module process that will take data and low pass filter it
-*/
-class HPFModule :
-    public BaseModule
+ * @brief Module process that will take data and low pass filter it
+ */
+class HPFModule : public BaseModule
 {
 public:
     /**
@@ -16,20 +15,20 @@ public:
      * @param uBufferSize size of processing input buffer
      */
     HPFModule(unsigned uBufferSize, double dCutOffFrequency, double dSamplingRate, unsigned uFilterOrder);
-    ~HPFModule() {};
+    ~HPFModule(){};
 
     ///**
     // * @brief Returns module type
     // * @return ModuleType of processing module
     // */
-    ModuleType GetModuleType() override { return ModuleType::HPFModule; };
+    std::string GetModuleType() override { return "HPFModule"; };
 
 private:
-    std::vector<double> m_vdInputCoefficients;  ///< Difference equatio input coefficient values (b[n])
-    std::vector<double> m_vdOuputCoefficients;  ///< Difference equatio output coefficient values (a[n])
-    double m_dCutOffFrequency;                  ///< Desired filter HPFF cure off frequency
-    double m_dSamplingRate;                     ///< Data sampling rate
-    double m_uFilterOrder;                      ///< Desired order of filter
+    std::vector<double> m_vdInputCoefficients; ///< Difference equatio input coefficient values (b[n])
+    std::vector<double> m_vdOuputCoefficients; ///< Difference equatio output coefficient values (a[n])
+    double m_dCutOffFrequency;                 ///< Desired filter HPFF cure off frequency
+    double m_dSamplingRate;                    ///< Data sampling rate
+    double m_uFilterOrder;                     ///< Desired order of filter
 
     /*
      * @brief Module process to collect and format UDP data
@@ -42,10 +41,9 @@ private:
     void CalculateButterWorthCoefficients();
 
     /*
-    * @brief Applies the filter using difference equation onto data vector
-    */
+     * @brief Applies the filter using difference equation onto data vector
+     */
     void ApplyFilter(std::vector<uint16_t> &vfData);
-
 };
 
 #endif
