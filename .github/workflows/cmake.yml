@@ -23,6 +23,14 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Install ALSA
+      run: sudo apt-get install libasound2-dev
+
+    - name: Install SNDFile
+      run: |
+        sudo apt-get install libsndfile1
+        sudo apt-get install libsndfile1-dev
+
     - name: Generate
       run: cmake -B build -S . -D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"
 
