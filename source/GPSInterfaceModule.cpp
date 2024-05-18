@@ -2,7 +2,8 @@
 
 GPSInterfaceModule::GPSInterfaceModule(std::string strInterfaceName, std::vector<uint8_t> &vu8SourceIdentifier, unsigned uBufferSize, bool bSimulateData) : BaseModule(uBufferSize),
                                                                                                                                                             m_vu8SourceIdentifier(vu8SourceIdentifier),
-                                                                                                                                                            m_strInterfaceName(strInterfaceName)
+                                                                                                                                                            m_strInterfaceName(strInterfaceName),
+                                                                                                                                                            m_bSimulateData(bSimulateData)
 
 {
     // If we dont simulate then try open an interface
@@ -175,13 +176,13 @@ void GPSInterfaceModule::SetSimulationPosition(double dLong, double dLat)
         m_bSimulatedIsWest = true;
     else
         m_bSimulatedIsWest = false;
-    m_dSimulatedLongitude = std::fabs(dLong);
+    m_dSimulatedLongitude = std::abs(dLong);
 
     if (dLat > 0)
         m_bSimulatedIsNorth = true;
     else
         m_bSimulatedIsNorth = false;
-    m_dSimulatedLatitude = std::fabs(dLat);
+    m_dSimulatedLatitude = std::abs(dLat);
 }
 
 void GPSInterfaceModule::TrySimulatedPositionData()

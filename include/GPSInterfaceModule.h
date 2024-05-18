@@ -47,11 +47,11 @@ private:
     std::string m_strInterfaceName;             ///< The string in the /dev directory
     std::vector<uint8_t> m_vu8SourceIdentifier; ///< Source identifier of generated chunks
     // Simulation Data
-    bool m_bSimulateData;           ///< Whether GPS should try simulate Data
-    bool m_bSimulatedIsNorth;       ///< Whether the simualted position is north
-    bool m_bSimulatedIsWest;        ///< Whether the simualted position is West
-    bool m_dSimulatedLatitude = 0;  ///< The simulated latitide
-    bool m_dSimulatedLongitude = 0; ///< The simulated longitude
+    bool m_bSimulateData;             ///< Whether GPS should try simulate Data
+    bool m_bSimulatedIsNorth;         ///< Whether the simualted position is north
+    bool m_bSimulatedIsWest;          ///< Whether the simualted position is West
+    double m_dSimulatedLatitude = 0;  ///< The simulated latitide
+    double m_dSimulatedLongitude = 0; ///< The simulated longitude
     /**
      * @brief Attempt to open a serial interace from the /dev directory
      * @return True or False as to whether the interface was opened
