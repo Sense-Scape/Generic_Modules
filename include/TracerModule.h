@@ -14,7 +14,7 @@ public:
     /**
      * @brief Construct a new TracerModule object
      */
-    TracerModule();
+    TracerModule(std::string strPipelinePosition);
     //~TracerModule(){};
 
     /**
@@ -29,6 +29,7 @@ public:
     std::string GetModuleType() override { return "TracerModule"; };
 
 private:
+    std::string m_strPipelinePosition; ///< Name printed with tracer
 };
 
 #endif
