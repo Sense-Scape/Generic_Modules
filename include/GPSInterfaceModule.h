@@ -31,7 +31,7 @@ public:
 
     /**
      * @brief Returns module type
-     * @param[out] ModuleType of processing module
+     * @return ModuleType of processing module as a string
      */
     std::string GetModuleType() override { return "GPSInterfaceModule"; };
 
@@ -40,6 +40,11 @@ public:
      */
     void ContinuouslyTryProcess() override;
 
+    /**
+     * @brief Set position when in simulation mode
+     * @param dLong Simulated longitude position
+     * @param dLat Simulated latitude position
+     */
     void SetSimulationPosition(double dLong, double dLat);
 
 private:
@@ -71,14 +76,12 @@ private:
     void TryTransmitPositionData();
 
     /**
-     * @brief
-     * @return
+     * @brief Generates GPS chunk using simulated position
      */
     void TrySimulatedPositionData();
 
     /**
-     * @brief
-     * @return
+     * @brief Checks and logs if the GPS position has been set
      */
     void CheckIfSimulationPositionSet();
 
@@ -88,6 +91,10 @@ private:
      */
     unsigned char CalculateChecksum(const std::string &sentence);
 
+    /**
+     * @brief Extracts gps position from NMEA0813 from string
+     * @return returns GPS chunk
+     */
     std::shared_ptr<GPSChunk> ExtractGSPData(const std::string &sentence);
 };
 
