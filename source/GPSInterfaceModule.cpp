@@ -1,15 +1,21 @@
 #include "GPSInterfaceModule.h"
 
-GPSInterfaceModule::GPSInterfaceModule(std::string strInterfaceName, std::vector<uint8_t> &vu8SourceIdentifier, unsigned uBufferSize) : BaseModule(uBufferSize),
-                                                                                                                                        m_vu8SourceIdentifier(vu8SourceIdentifier),
-                                                                                                                                        m_strInterfaceName(strInterfaceName)
+GPSInterfaceModule::GPSInterfaceModule(std::string strInterfaceName, std::vector<uint8_t> &vu8SourceIdentifier, unsigned uBufferSize, bool bSimulateData) : BaseModule(uBufferSize),
+                                                                                                                                                            m_vu8SourceIdentifier(vu8SourceIdentifier),
+                                                                                                                                                            m_strInterfaceName(strInterfaceName)
 
 {
-    TryOpenSerialInterface();
+    // If we dont simulate then try open an interface
+    if (!bSimulateData)
+        TryOpenSerialInterface();
 }
 
 void GPSInterfaceModule::ContinuouslyTryProcess()
 {
+
+    if (m_bSimulateData)
+        CheckIfSimulationPositionSet();
+
     while (!m_bShutDown)
     {
         auto pBaseChunk = std::make_shared<BaseChunk>();
@@ -22,7 +28,12 @@ void GPSInterfaceModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     while (!m_bShutDown)
     {
         // Are connected
-        if (IsSerialInterfaceOpen())
+        if (m_bSimulateData)
+        {
+            TrySimulatedPositionData();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        else if (IsSerialInterfaceOpen())
         {
             TryTransmitPositionData();
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -153,4 +164,50 @@ std::shared_ptr<GPSChunk> GPSInterfaceModule::ExtractGSPData(const std::string &
     pGPSChunk->m_dLongitude = std::stod(result[3]);
 
     return pGPSChunk;
+}
+
+void GPSInterfaceModule::SetSimulationPosition(double dLong, double dLat)
+{
+    if (!m_bSimulateData)
+        PLOG_WARNING << "Setting simulated position but not in simulation mode";
+
+    if (dLong > 0)
+        m_bSimulatedIsWest = true;
+    else
+        m_bSimulatedIsWest = false;
+    m_dSimulatedLongitude = std::fabs(dLong);
+
+    if (dLat > 0)
+        m_bSimulatedIsNorth = true;
+    else
+        m_bSimulatedIsNorth = false;
+    m_dSimulatedLatitude = std::fabs(dLat);
+}
+
+void GPSInterfaceModule::TrySimulatedPositionData()
+{
+
+    auto pGPSChunk = std::make_shared<GPSChunk>();
+    pGPSChunk->SetSourceIdentifier(m_vu8SourceIdentifier);
+
+    // Get the current time point using system clock
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    std::time_t epochTime = std::chrono::system_clock::to_time_t(now);
+    pGPSChunk->m_i64TimeStamp = static_cast<uint64_t>(epochTime);
+
+    pGPSChunk->m_bIsNorth = m_bSimulatedIsNorth;
+    pGPSChunk->m_bIsWest = m_bSimulatedIsWest;
+    pGPSChunk->m_dLatitude = m_dSimulatedLatitude;
+    pGPSChunk->m_dLongitude = m_dSimulatedLongitude;
+
+    TryPassChunk(pGPSChunk);
+}
+
+void GPSInterfaceModule::CheckIfSimulationPositionSet()
+{
+    if (!m_bSimulateData)
+        return;
+
+    if (m_dSimulatedLatitude == 0 && m_dSimulatedLongitude == 0)
+        PLOG_WARNING << "GPS in simulation mode but no position has beens set";
 }
