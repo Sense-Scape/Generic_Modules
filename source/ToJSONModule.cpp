@@ -6,7 +6,6 @@ ToJSONModule::ToJSONModule()
 
 void ToJSONModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-	std::cout << "ff" << std::endl;
 	// Check if chunk type IS A ChunkToJSONConverter, otherwise drop processing
 	if (ChunkToJSONConverter *pChunkToJSONConverter = dynamic_cast<ChunkToJSONConverter *>(pBaseChunk.get()))
 	{
