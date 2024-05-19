@@ -22,11 +22,16 @@ void LinuxMultiClientTCPTxModule::ConnectTCPSocket(int &sock, uint16_t u16TCPPor
 		// throw or return an error code
 	}
 
+	// Allow for multiple binds to single address
 	int optval = 1;
 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&optval, sizeof(optval));
 
+	// Forces socket to not timeout
 	int optlen = sizeof(optval);
 	setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *)&optval, optlen);
+
+	// Prevents crashes when server closes ubruptly and casues sends to fail
+	signal(SIGPIPE, SIG_IGN);
 
 	sockaddr_in sockaddr;
 	sockaddr.sin_family = AF_INET;
