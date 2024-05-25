@@ -1,12 +1,9 @@
 #include "ChunkToBytesModule.h"
 
-
-ChunkToBytesModule::ChunkToBytesModule(unsigned uBufferSize, unsigned uTransmissionSize) :
-    BaseModule(uBufferSize),
-    m_uTransmissionSize(uTransmissionSize),
-    m_MapOfIndentifiersToChunkTypeSessions()
+ChunkToBytesModule::ChunkToBytesModule(unsigned uBufferSize, unsigned uTransmissionSize) : BaseModule(uBufferSize),
+                                                                                           m_uTransmissionSize(uTransmissionSize),
+                                                                                           m_MapOfIndentifiersToChunkTypeSessions()
 {
-
 }
 
 void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
@@ -16,34 +13,36 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     // Lets first ensure that this chiunk is in the source identifers map
     auto vu8SourceIdentifier = pBaseChunk->GetSourceIdentifier();
     auto eChunkType = pBaseChunk->GetChunkType();
+
+    bool bSourceIdentifierNotSeen = (m_MapOfIndentifiersToChunkTypeSessions.find(vu8SourceIdentifier) == m_MapOfIndentifiersToChunkTypeSessions.end());
+    bool bChunkTypeNotSeen = true;
+
+    if (bSourceIdentifierNotSeen)
+        bChunkTypeNotSeen = (m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier].find(eChunkType) ==
+                             m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier].end());
+
     // By first checking if the source identider has been seen
-    if (m_MapOfIndentifiersToChunkTypeSessions.find(vu8SourceIdentifier) == m_MapOfIndentifiersToChunkTypeSessions.end())
-        // And then if the chunk type has been seen for this source
-        if (m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier].find(eChunkType) ==
-            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier].end())
-            // If not the create one
-        {
-            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType] = std::make_shared<SessionController>();
-            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType]->m_u32uChunkType = ChunkTypesNamingUtility::ToU32(eChunkType);
-            
-            for (size_t i = 0; i < vu8SourceIdentifier.size(); i++)
-            {
-                m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType]->m_usUID[i] = vu8SourceIdentifier[i];
-            }
-        }
+    if (bSourceIdentifierNotSeen || bChunkTypeNotSeen)
+    {
+        m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType] = std::make_shared<SessionController>();
+        m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType]->m_u32uChunkType = ChunkTypesNamingUtility::ToU32(eChunkType);
+
+        for (size_t i = 0; i < vu8SourceIdentifier.size(); i++)
+            m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType]->m_usUID[i] = vu8SourceIdentifier[i];
+    }
 
     // Then we extract the current session state for the current chunk type and source identifier
     auto pSessionModeHeader = m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType];
 
-    // Bytes to transmit is equal to number of bytes in derived object (e.g TimeChunk)
+    // PLOG_FATAL << std::to_string(pSessionModeHeader->m_u32uChunkType);
+    //  Bytes to transmit is equal to number of bytes in derived object (e.g TimeChunk)
     auto pvcByteData = pBaseChunk->Serialise();
     uint32_t u32TransmittableDataBytes = pvcByteData->size();
 
-
-    uint16_t uSessionDataHeaderSize = 2;          // size of the footer in bytes. '\0' denotes finish if this structure
+    uint16_t uSessionDataHeaderSize = 2; // size of the footer in bytes. '\0' denotes finish if this structure
     uint16_t uSessionTransmissionSize = m_uTransmissionSize;
     bool bTransmit = true;
-    unsigned uDataBytesTransmitted = 0;     // Current count of how many bytes have been transmitted
+    unsigned uDataBytesTransmitted = 0; // Current count of how many bytes have been transmitted
     unsigned uDataBytesToTransmit = m_uTransmissionSize - uSessionDataHeaderSize - pSessionModeHeader->GetSize();
     unsigned uMaxTransmissionSize = m_uTransmissionSize; // Largest buffer size that can be request for transmission
 
@@ -63,23 +62,22 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 
         // Transmission Structure is shown below
         // { | DataHeaderSize | DatagramHeader | Data | }
-        std::vector<char> vuUDPData;
-        vuUDPData.resize(uSessionTransmissionSize);
+        std::vector<char> vuByteData;
+        vuByteData.resize(uSessionTransmissionSize);
 
         // Add in the transmission header
-        memcpy(&vuUDPData[0], &uSessionTransmissionSize, uSessionDataHeaderSize);
+        memcpy(&vuByteData[0], &uSessionTransmissionSize, uSessionDataHeaderSize);
 
         // We then add the session state info
         auto pHeaderBytes = pSessionModeHeader->Serialise();
-        memcpy(&vuUDPData[uSessionDataHeaderSize], &((*pHeaderBytes)[0]), pSessionModeHeader->GetSize());
-
+        memcpy(&vuByteData[uSessionDataHeaderSize], &((*pHeaderBytes)[0]), pSessionModeHeader->GetSize());
 
         // Then lets insert the actual data byte data to transmit after the header
         // While keeping in mind that we have to send unset bits from out data byte array
-        memcpy(&vuUDPData[uSessionDataHeaderSize + pSessionModeHeader->GetSize()], &((*pvcByteData)[uDataBytesTransmitted]), uDataBytesToTransmit);
+        memcpy(&vuByteData[uSessionDataHeaderSize + pSessionModeHeader->GetSize()], &((*pvcByteData)[uDataBytesTransmitted]), uDataBytesToTransmit);
 
         auto pByteChunk = std::make_shared<ByteChunk>(uSessionTransmissionSize);
-        pByteChunk->m_vcDataChunk = vuUDPData;
+        pByteChunk->m_vcDataChunk = vuByteData;
         pByteChunk->m_uChunkLength = uSessionTransmissionSize;
 
         TryPassChunk(pByteChunk);

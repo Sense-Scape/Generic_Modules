@@ -32,12 +32,12 @@ void GPSInterfaceModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         if (m_bSimulateData)
         {
             TrySimulatedPositionData();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
         else if (IsSerialInterfaceOpen())
         {
             TryTransmitPositionData();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
         else
         {
@@ -170,7 +170,10 @@ std::shared_ptr<GPSChunk> GPSInterfaceModule::ExtractGSPData(const std::string &
 void GPSInterfaceModule::SetSimulationPosition(double dLong, double dLat)
 {
     if (!m_bSimulateData)
-        PLOG_WARNING << "Setting simulated position but not in simulation mode";
+    {
+        PLOG_INFO << "GPS is in live mode";
+        return;
+    }
 
     if (dLong > 0)
         m_bSimulatedIsWest = true;
@@ -183,6 +186,8 @@ void GPSInterfaceModule::SetSimulationPosition(double dLong, double dLat)
     else
         m_bSimulatedIsNorth = false;
     m_dSimulatedLatitude = std::abs(dLat);
+
+    PLOG_INFO << "GPS in simulated mode: long = " + std::to_string(dLong) + " lat = " + std::to_string(dLat);
 }
 
 void GPSInterfaceModule::TrySimulatedPositionData()

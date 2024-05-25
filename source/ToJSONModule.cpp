@@ -11,8 +11,6 @@ void ToJSONModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 	{
 		auto pJSONChunk = std::make_shared<JSONChunk>();
 		pJSONChunk->m_JSONDocument = *pChunkToJSONConverter->ToJSON();
-
-		std::cout << pJSONChunk->m_JSONDocument.dump() << std::endl;
 		// Try pass on
 		TryPassChunk(pJSONChunk);
 	}
