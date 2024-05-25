@@ -37,6 +37,9 @@ void LinuxTCPTxModule::ConnectTCPSocket()
     {
         return;
     }
+
+    // Prevents crashes when server closes ubruptly and casues sends to fail
+    signal(SIGPIPE, SIG_IGN);
 }
 
 void LinuxTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)

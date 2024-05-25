@@ -175,7 +175,7 @@ void LinuxMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNum
         if (FD_ISSET(clientSocket, &readfds))
         {
             // Arbitrarily using 2048 and 512
-            while (vcAccumulatedBytes.size() < 2048)
+            while (vcAccumulatedBytes.size() < 512)
             {
                 std::vector<char> vcByteData;
                 vcByteData.resize(512);
