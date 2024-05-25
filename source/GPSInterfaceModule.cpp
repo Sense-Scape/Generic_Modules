@@ -32,12 +32,12 @@ void GPSInterfaceModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         if (m_bSimulateData)
         {
             TrySimulatedPositionData();
-            std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
         else if (IsSerialInterfaceOpen())
         {
             TryTransmitPositionData();
-            std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
         else
         {
