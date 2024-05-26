@@ -61,7 +61,6 @@ void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     }
     else if (bStartSequence || (SameSesession && !bLastInSequence && bSequenceContinuous))
     {
-        PLOG_INFO << std::to_string(pChunkHeaderState->GetSize());
         // If this is the start create a vector to store data
         if (bStartSequence)
             m_mSessionBytes[vu8SourceIdentifier][SessionChunkType] = std::make_shared<std::vector<char>>();
@@ -73,7 +72,6 @@ void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     }
     else if (bLastInSequence && SameSesession && bSequenceContinuous)
     {
-        PLOG_INFO << "here2";
         // lets get the start and end of the data and store the bytes
         auto DataStart = pByteChunk->m_vcDataChunk.begin() + pChunkHeaderState->GetSize();
         auto DataEnd = pByteChunk->m_vcDataChunk.end() - 2;
