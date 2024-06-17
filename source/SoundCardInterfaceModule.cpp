@@ -62,13 +62,11 @@ void SoundCardInterfaceModule::ReinitializeTimeChunk()
 
 void SoundCardInterfaceModule::UpdatePCMSamples()
 {
-
-    int i;
     int err;
     char *pcBuffer;
     int iBufferFrames = 512;
 
-    pcBuffer = (char *)malloc(512 * snd_pcm_format_width(m_format) / 8 * 4);
+    pcBuffer = (char *)malloc(512 * snd_pcm_format_width(m_format) / 8 * m_uNumChannels);
     if (pcBuffer == NULL)
     {
         fprintf(stderr, "Failed to allocate memory for buffer\n");
@@ -84,14 +82,14 @@ void SoundCardInterfaceModule::UpdatePCMSamples()
         exit(1);
     }
 
+    // Iterate through each sample capture
+    int16_t *samples = (int16_t*)pcBuffer;
     for (unsigned uCurrentSampleIndex = 0; uCurrentSampleIndex < m_dChunkSize; uCurrentSampleIndex++)
     {
+        // Then go through each channel per capture
         for (unsigned uCurrentChannelIndex = 0; uCurrentChannelIndex < m_uNumChannels; uCurrentChannelIndex++)
-        {
-            unsigned uBufferOffset = uCurrentSampleIndex * m_uNumChannels * 2;
-            unsigned uChannelOffset = 2 * uCurrentChannelIndex;
-            m_pTimeChunk->m_vvi16TimeChunks[uCurrentChannelIndex][uCurrentSampleIndex] = ((*pcBuffer + uBufferOffset + uChannelOffset) | ((*(pcBuffer + uBufferOffset + (uChannelOffset + 1))) << 8));
-        }
+            m_pTimeChunk->m_vvi16TimeChunks[uCurrentChannelIndex][uCurrentSampleIndex] = samples[uCurrentSampleIndex * m_uNumChannels + uCurrentChannelIndex];
+
     }
 
     free(pcBuffer);
