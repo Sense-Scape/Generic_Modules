@@ -5,6 +5,7 @@
 #include <time.h>
 #include <iostream>
 #include <filesystem>
+#include <fstream>
 
 /*Custom Includes*/
 #include "BaseModule.h"
