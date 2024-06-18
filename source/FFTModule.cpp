@@ -32,6 +32,10 @@ void FFTModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         // And then take FFT
         kiss_fft(ForwardFFTConfig, (kiss_fft_cpx*)&vcfForwardFFTInput[0], (kiss_fft_cpx*)&vcfForwardFFTOutput[0]);
 
+        // Rescale according to FFT gain
+        for (size_t i = 0; i < vcfForwardFFTOutput.size(); ++i)
+            vcfForwardFFTOutput[i] /= vcfForwardFFTOutput.size(); // Scale each element by 5
+
         // And store data
         pFFTChunk->m_vvcfFFTChunks[uChannelIndex] = vcfForwardFFTOutput;
     }
