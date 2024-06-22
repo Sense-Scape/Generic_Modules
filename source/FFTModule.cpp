@@ -59,6 +59,6 @@ void FFTModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         TryPassChunk(pFFTMagnitudeChunk);
     }
     
-
+    TryPassChunk(pTimeChunk);
     TryPassChunk(pFFTChunk);
 }

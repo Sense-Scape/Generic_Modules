@@ -1,6 +1,6 @@
 #include "TracerModule.h"
 
-TracerModule::TracerModule(std::string strPipelinePosition) : BaseModule(),
+TracerModule::TracerModule(std::string strPipelinePosition) : BaseModule(1000),
                                                               m_strPipelinePosition(strPipelinePosition)
 {
 }
