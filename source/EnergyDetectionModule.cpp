@@ -43,23 +43,32 @@ void EnergyDetectionModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         (*pvvDetectionThreshold_db)[uCurrentChannelIndex] = (*pvdAveragePower_db)[uCurrentChannelIndex] +  m_fThresholdAboveNoiseFoor_db;
     }
 
-   // Iterate and store indicies of threshold
+    // try pass
+    std::vector<std::vector<uint16_t>> vvu16DetectionBins;
+    vvu16DetectionBins.resize(pFFTMagnitudeChunk->m_uNumChannels);
+
+    // try pass
+    // Iterate and store indicies of threshold
     for (unsigned uCurrentChannelIndex = 0; uCurrentChannelIndex < pFFTMagnitudeChunk->m_uNumChannels; uCurrentChannelIndex++)
     {
+
         for (unsigned uCurrentSampleIndex = 0; uCurrentSampleIndex < pFFTMagnitudeChunk->m_dChunkSize; uCurrentSampleIndex++)
         {
 
             auto mag = pFFTMagnitudeChunk->m_vvfFFTMagnitudeChunks[uCurrentChannelIndex][uCurrentSampleIndex];
             auto pow = std::log(std::pow(mag, 2.0))/std::log(10);
 
+            // Now check and store
             if (pow > (*pvvDetectionThreshold_db)[uCurrentChannelIndex])
-            {
-                PLOG_INFO << std::to_string(uCurrentSampleIndex);
-            }
+                vvu16DetectionBins[uCurrentChannelIndex].emplace_back(uCurrentSampleIndex);
             
         }
     }
 
-   // try pass
-   TryPassChunk(pFFTMagnitudeChunk);
+    auto pDetecionChunk = std::make_shared<DetectionBinChunk>();
+    pDetecionChunk->SetDetectionBins(vvu16DetectionBins);
+
+    // try pass
+    TryPassChunk(pDetecionChunk);
+    TryPassChunk(pFFTMagnitudeChunk);
 }

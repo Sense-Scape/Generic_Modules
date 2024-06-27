@@ -6,8 +6,7 @@
 
 /* Custom Includes */
 #include "BaseModule.h"
-#include "TimeChunk.h"
-#include "FFTChunk.h"
+#include "DetectionBinChunk.h"
 #include "FFTMagnitudeChunk.h"
 #include "kiss_fft.h"
 
