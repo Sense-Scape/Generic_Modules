@@ -8,7 +8,7 @@
 #include "TimeChunk.h"
 #include "FFTChunk.h"
 #include "FFTMagnitudeChunk.h"
-#include "kiss_fft.h"
+#include "kiss_fftr.h"
 
 /**
  * @brief Converts time chunks to FFT chunks and computes FFT
