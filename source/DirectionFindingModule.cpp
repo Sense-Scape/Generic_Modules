@@ -52,6 +52,12 @@ void DirectionFindingModule::ProcessFFTChunk(std::shared_ptr<BaseChunk> pBaseChu
     assert(pFFTChunk->m_vvcfFFTChunks.size() != 0);
     assert(pFFTChunk->m_dSampleRate != 0);
 
+    if (pFFTChunk->m_vvcfFFTChunks.size() <= 1)
+    {
+        TryPassChunk(pFFTChunk);
+        return;
+    }
+    
     // Prep the data to process
     std::vector<float> vfAngleOfArrivals;
     auto vu16DetectionBins0 = m_vvu16DetectionBins[0];
