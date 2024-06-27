@@ -7,6 +7,7 @@
 /* Custom Includes */
 #include "BaseModule.h"
 #include "DetectionBinChunk.h"
+#include "DirectionBinChunk.h"
 #include "FFTChunk.h"
 #include "kiss_fft.h"
 
@@ -54,7 +55,7 @@ private:
      */
     double AngleOfArrivalToDifferentialPhase(double f_hz, double differentialPhase_rad);
 
-    float differential_phase(const std::complex<float>& z1, const std::complex<float>& z2) {
+    float CalculateDifferentialPhase(const std::complex<float>& z1, const std::complex<float>& z2) {
         // Ensure non-zero magnitude to avoid division by zero
         if (std::abs(z2) < std::numeric_limits<float>::epsilon()) {
             throw std::invalid_argument("Second complex number (z2) cannot have zero magnitude");

@@ -47,25 +47,33 @@ void DirectionFindingModule::ProcessDetectionBinChunk(std::shared_ptr<BaseChunk>
 void DirectionFindingModule::ProcessFFTChunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     auto pFFTChunk = std::static_pointer_cast<FFTChunk>(pBaseChunk);
+    
+    // First we start with checks in debug mode
+    assert(pFFTChunk->m_vvcfFFTChunks.size() != 0);
+    assert(pFFTChunk->m_dSampleRate != 0);
 
-    // Use active bins to index FFT chunk
-    for (unsigned uCurrentChannelIndex = 0; uCurrentChannelIndex < m_vvu16DetectionBins.size()-1; uCurrentChannelIndex++)
+    // Prep the data to process
+    std::vector<float> vfAngleOfArrivals;
+    auto vu16DetectionBins0 = m_vvu16DetectionBins[0];
+    auto vu16DetectionBins1 = m_vvu16DetectionBins[1];
+
+    // Then calculate the AOA
+    for (const auto& uDetectionIndex : vu16DetectionBins0)
     {
-        auto vu16DetectionBins0 = m_vvu16DetectionBins[uCurrentChannelIndex];
-        auto vu16DetectionBins1 = m_vvu16DetectionBins[uCurrentChannelIndex+1];
-
-        for (const auto& uDetectionIndex : vu16DetectionBins0)
-        {
-            // calcaulte differential phase
-            auto A0 = pFFTChunk->m_vvcfFFTChunks[uCurrentChannelIndex][uDetectionIndex];
-            auto A1 = pFFTChunk->m_vvcfFFTChunks[uCurrentChannelIndex+1][uDetectionIndex];
-            auto a = differential_phase(A0, A1);
+        // calcaulte differential phase
+        auto cfA0 = pFFTChunk->m_vvcfFFTChunks[0][uDetectionIndex];
+        auto cfA1 = pFFTChunk->m_vvcfFFTChunks[1][uDetectionIndex];
+        auto fDeltaA = CalculateDifferentialPhase(cfA0, cfA1);
             
-            ///PLOG_ERROR << std::to_string(a);
-
-            // calculate AOA
-
-            //  Print
-        }
+        vfAngleOfArrivals.emplace_back(fDeltaA);
     }
+
+    // And store said data
+    auto pDirectionChunk = std::make_shared<DirectionBinChunk>();
+    pDirectionChunk->SetSourceIdentifier(pFFTChunk->GetSourceIdentifier());
+    pDirectionChunk->SetDirectionData(m_vvu16DetectionBins[0].size(), m_vvu16DetectionBins[0], vfAngleOfArrivals, pFFTChunk->m_dSampleRate);
+
+    // Once complete, pass on the data
+    TryPassChunk(pFFTChunk);
+    TryPassChunk(pDirectionChunk);
 }
