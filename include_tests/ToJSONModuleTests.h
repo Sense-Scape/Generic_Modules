@@ -9,7 +9,7 @@ TEST_CASE("ToJSONModule Test")
 {
     unsigned uBufferSize = 10;
 
-    ToJSONModule toJSONModule;
+    ToJSONModule toJSONModule(uBufferSize);
     toJSONModule.SetTestMode(true);
 
     CHECK(toJSONModule.GetModuleType() == "ToJSONModule");
