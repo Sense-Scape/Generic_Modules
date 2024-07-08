@@ -1,6 +1,6 @@
 #include "ToJSONModule.h"
 
-ToJSONModule::ToJSONModule()
+ToJSONModule::ToJSONModule(unsigned uBufferSize) : BaseModule(uBufferSize) 
 {
 }
 

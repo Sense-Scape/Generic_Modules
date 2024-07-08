@@ -14,7 +14,7 @@ public:
     /**
      * @brief Construct a new ToJSONModule object
      */
-    ToJSONModule();
+    ToJSONModule(unsigned uBufferSize);
     //~ToJSONModule(){};
 
     /**

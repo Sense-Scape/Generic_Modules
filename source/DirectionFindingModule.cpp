@@ -24,17 +24,14 @@ void DirectionFindingModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     TryPassChunk(pBaseChunk);
 }
 
-double DirectionFindingModule::AngleOfArrivalToDifferentialPhase(double f_hz, double differentialPhase_rads) {
+double DirectionFindingModule::CalculateAngleOfArrival(double differentialPhase_rads,double f_hz, double v_mps, double l_m) {
     
-    double lambda_m = m_dPropogationVelocity_mps / f_hz;
-    double IntermediateCoefficient = 2 * M_PI * m_dBaselineLength_m / lambda_m;
+    double lambda_m = v_mps / f_hz;
 
     // Differential phase before scaling and wrapping
-    double differentialPhase_rad = std::sin(differentialPhase_rad) * IntermediateCoefficient;
-    // Scaled and wrapped differential phase
-    differentialPhase_rad = std::fmod(differentialPhase_rad + M_PI, 2 * M_PI) - M_PI;
-
-    return differentialPhase_rad;
+    double dAOA_rad = std::asin((lambda_m*differentialPhase_rads/(2*M_PI))/l_m);
+    
+    return dAOA_rad;
 }
 
 void DirectionFindingModule::ProcessDetectionBinChunk(std::shared_ptr<BaseChunk> pBaseChunk)
@@ -42,6 +39,23 @@ void DirectionFindingModule::ProcessDetectionBinChunk(std::shared_ptr<BaseChunk>
     // Store data for a single client
     auto pDetectionBinChunk = std::static_pointer_cast<DetectionBinChunk>(pBaseChunk);
     m_vvu16DetectionBins = *pDetectionBinChunk->GetDetectionBins();
+}
+
+float DirectionFindingModule::CalculateDifferentialPhase(const std::complex<float>& z1, const std::complex<float>& z2)
+{
+        // Ensure non-zero magnitude to avoid division by zero
+        if (std::abs(z2) < std::numeric_limits<float>::epsilon()) {
+            throw std::invalid_argument("Second complex number (z2) cannot have zero magnitude");
+        }
+
+        // Calculate the phase difference
+        float phase_diff = std::atan2(std::imag(z1), std::real(z1)) -
+                            std::atan2(std::imag(z2), std::real(z2));
+
+        // Wrap the phase difference to the range (-pi, pi]
+        phase_diff = std::fmod(phase_diff + M_PI, 2.0f * M_PI) - M_PI;
+
+        return phase_diff;
 }
 
 void DirectionFindingModule::ProcessFFTChunk(std::shared_ptr<BaseChunk> pBaseChunk)
@@ -69,9 +83,14 @@ void DirectionFindingModule::ProcessFFTChunk(std::shared_ptr<BaseChunk> pBaseChu
         // calcaulte differential phase
         auto cfA0 = pFFTChunk->m_vvcfFFTChunks[0][uDetectionIndex];
         auto cfA1 = pFFTChunk->m_vvcfFFTChunks[1][uDetectionIndex];
-        auto fDeltaA = CalculateDifferentialPhase(cfA0, cfA1);
-            
-        vfAngleOfArrivals.emplace_back(fDeltaA);
+
+        auto fDeltaA_rad = CalculateDifferentialPhase(cfA0, cfA1);
+        auto dFrequencyOfInterest_hz = uDetectionIndex*pFFTChunk->m_dSampleRate/(2.0f*(pFFTChunk->m_dChunkSize-1));
+
+        auto dAOA_rad = CalculateAngleOfArrival(fDeltaA_rad, dFrequencyOfInterest_hz, m_dPropogationVelocity_mps, m_dBaselineLength_m);
+        auto dAOA_deg = dAOA_rad*180/M_PI;
+
+        vfAngleOfArrivals.emplace_back(dAOA_deg);
     }
 
     // And store said data
