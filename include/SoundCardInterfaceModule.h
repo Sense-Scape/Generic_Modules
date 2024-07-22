@@ -51,12 +51,13 @@ public:
     void ContinuouslyTryProcess() override;
 
 private:
-    unsigned m_uNumChannels;                    ///< Number of ADC channels to simulate
-    uint64_t m_u64CurrentTimeStamp;             ///< Simulated timestamp of the module
-    double m_dSampleRate;                       ///< Sample rate in Hz
-    double m_dChunkSize;                        ///< How many samples in each chunk channel
-    std::shared_ptr<TimeChunk> m_pTimeChunk;    ///< Pointer to member time data chunk
-    std::vector<uint8_t> m_vu8SourceIdentifier; ///< Source identifier of generated chunks
+    unsigned m_uNumChannels;                            ///< Number of ADC channels to simulate
+    uint64_t m_u64CurrentTimeStamp;                     ///< Simulated timestamp of the module
+    double m_dSampleRate;                               ///< Sample rate in Hz
+    double m_dChunkSize;                                ///< How many samples in each chunk channel
+    std::shared_ptr<TimeChunk> m_pTimeChunk;            ///< Pointer to member time data chunk
+    std::vector<uint8_t> m_vu8SourceIdentifier;         ///< Source identifier of generated chunks
+    std::shared_ptr<std::vector<char>> m_pvcAudioData;  ///< Pointer to vector to store audio data
 
     snd_pcm_t *m_capture_handle;
     snd_pcm_hw_params_t *m_hw_params;
@@ -85,12 +86,17 @@ private:
     /**
      * @brief Updates the current set of PCM samples to most recent from driver
      */
-    void UpdatePCMSamples();
+    bool UpdatePCMSamples();
 
     /**
      * @brief Configures the linux sound interface driver
      */
     void InitALSA();
+
+    /**
+     * @brief Clean Up alsa config
+     */
+    void Cleanup(); 
 };
 
 #endif
