@@ -38,7 +38,8 @@ void DirectionFindingModule::ProcessDetectionBinChunk(std::shared_ptr<BaseChunk>
 {
     // Store data for a single client
     auto pDetectionBinChunk = std::static_pointer_cast<DetectionBinChunk>(pBaseChunk);
-    m_vvu16DetectionBins = *pDetectionBinChunk->GetDetectionBins();
+    auto vu8SourceIdentifier = pDetectionBinChunk->GetSourceIdentifier();
+    m_mSourceIdentierToDetectionBins[vu8SourceIdentifier] = *pDetectionBinChunk->GetDetectionBins();
 }
 
 float DirectionFindingModule::CalculateDifferentialPhase(const std::complex<float>& z1, const std::complex<float>& z2)
@@ -72,10 +73,22 @@ void DirectionFindingModule::ProcessFFTChunk(std::shared_ptr<BaseChunk> pBaseChu
         return;
     }
     
+
+    // Try find detection bins otherwise dont process
+    auto vu8SourceIdentifier = pFFTChunk->GetSourceIdentifier();
+    bool bSourceIdentifierNotSeen = (m_mSourceIdentierToDetectionBins.find(vu8SourceIdentifier) == m_mSourceIdentierToDetectionBins.end());
+    if(bSourceIdentifierNotSeen)
+    {
+        std::cout << "aaa" << std::endl;
+        TryPassChunk(pFFTChunk);
+        return;
+    }
+
     // Prep the data to process
+    auto vu16DetectionBins0 = m_mSourceIdentierToDetectionBins[vu8SourceIdentifier][0];
+    auto vu16DetectionBins1 = m_mSourceIdentierToDetectionBins[vu8SourceIdentifier][1];
+
     std::vector<float> vfAngleOfArrivals;
-    auto vu16DetectionBins0 = m_vvu16DetectionBins[0];
-    auto vu16DetectionBins1 = m_vvu16DetectionBins[1];
 
     // Then calculate the AOA
     for (const auto& uDetectionIndex : vu16DetectionBins0)
@@ -96,7 +109,7 @@ void DirectionFindingModule::ProcessFFTChunk(std::shared_ptr<BaseChunk> pBaseChu
     // And store said data
     auto pDirectionChunk = std::make_shared<DirectionBinChunk>();
     pDirectionChunk->SetSourceIdentifier(pFFTChunk->GetSourceIdentifier());
-    pDirectionChunk->SetDirectionData(m_vvu16DetectionBins[0].size(), m_vvu16DetectionBins[0], vfAngleOfArrivals, pFFTChunk->m_dSampleRate);
+    pDirectionChunk->SetDirectionData(vu16DetectionBins0.size(), vu16DetectionBins0, vfAngleOfArrivals, pFFTChunk->m_dSampleRate);
 
     // Once complete, pass on the data
     TryPassChunk(pFFTChunk);

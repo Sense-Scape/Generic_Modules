@@ -9,14 +9,32 @@ EnergyDetectionModule::EnergyDetectionModule(unsigned uBufferSize, float fThresh
 void EnergyDetectionModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     // Check if it a chunk we are interested in otherwise try pass
-    if(pBaseChunk->GetChunkType() != ChunkType::FFTMagnitudeChunk)
-    {
+    if(pBaseChunk->GetChunkType() != ChunkType::FFTMagnitudeChunk) {
         TryPassChunk(pBaseChunk);
         return;
     }
+
+    // Now we prepare the chunk for processing
     auto pFFTMagnitudeChunk = std::static_pointer_cast<FFTMagnitudeChunk>(pBaseChunk);
 
-    // Calculate power (square of magnitude) in DBx?
+    // Run detection algorithim
+    auto pvvdPower_db = CalculateBinPowerInDBX(pFFTMagnitudeChunk);
+    auto pvdAveragePower_db = CalculateAverageBinPowerInDBX(pvvdPower_db);
+    auto dDetectionThreshold = CalculateThresholdInDBX(pvdAveragePower_db->at(0), m_fThresholdAboveNoiseFoor_db);
+    auto pvvu16DetectionBins = GetDetectionBinIndicies(pFFTMagnitudeChunk, dDetectionThreshold);
+
+    // Generate chunk
+    auto pDetecionChunk = std::make_shared<DetectionBinChunk>();
+    pDetecionChunk->SetSourceIdentifier(pFFTMagnitudeChunk->GetSourceIdentifier());
+    pDetecionChunk->SetDetectionBins((*pvvu16DetectionBins) );
+
+    // try pass
+    TryPassChunk(pDetecionChunk);
+    TryPassChunk(pFFTMagnitudeChunk);
+}
+
+std::shared_ptr<std::vector<std::vector<double>>> EnergyDetectionModule::CalculateBinPowerInDBX(std::shared_ptr<FFTMagnitudeChunk> pFFTMagnitudeChunk)
+{
     auto pvvdPower_db = std::make_shared<std::vector<std::vector<double>>>(pFFTMagnitudeChunk->m_uNumChannels);
     for (unsigned uCurrentChannelIndex = 0; uCurrentChannelIndex < pFFTMagnitudeChunk->m_uNumChannels; uCurrentChannelIndex++)
     {
@@ -27,25 +45,32 @@ void EnergyDetectionModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         }
     }
 
-    // Then calculate average power in dBx
-    auto pvdAveragePower_db = std::make_shared<std::vector<double>>(pFFTMagnitudeChunk->m_uNumChannels);
-    for (unsigned uCurrentChannelIndex = 0; uCurrentChannelIndex < pFFTMagnitudeChunk->m_uNumChannels; uCurrentChannelIndex++)
+    return pvvdPower_db;
+}
+
+std::shared_ptr<std::vector<double>> EnergyDetectionModule::CalculateAverageBinPowerInDBX(std::shared_ptr<std::vector<std::vector<double>>> pvvdPower_db)
+{
+    auto pvdAveragePower_db = std::make_shared<std::vector<double>>(pvvdPower_db->size());
+    for (unsigned uCurrentChannelIndex = 0; uCurrentChannelIndex < pvvdPower_db->size(); uCurrentChannelIndex++)
     {
         // divide becomes minus in log
         auto dAveragePower_db = std::log(std::accumulate((*pvvdPower_db)[uCurrentChannelIndex].begin(), (*pvvdPower_db)[uCurrentChannelIndex].end(), 0.0))/std::log(10) - std::log((*pvvdPower_db)[uCurrentChannelIndex].size())/std::log(10);
         (*pvdAveragePower_db)[uCurrentChannelIndex] = dAveragePower_db;
     }
 
-    // Calculate detection threshold in dBx
-    auto pvvDetectionThreshold_db = std::make_shared<std::vector<double>>(pFFTMagnitudeChunk->m_uNumChannels);
-    for (unsigned uCurrentChannelIndex = 0; uCurrentChannelIndex < pFFTMagnitudeChunk->m_uNumChannels; uCurrentChannelIndex++)
-    {
-        (*pvvDetectionThreshold_db)[uCurrentChannelIndex] = (*pvdAveragePower_db)[uCurrentChannelIndex] +  m_fThresholdAboveNoiseFoor_db;
-    }
+    return pvdAveragePower_db;
+}
 
-    // try pass
-    std::vector<std::vector<uint16_t>> vvu16DetectionBins;
-    vvu16DetectionBins.resize(pFFTMagnitudeChunk->m_uNumChannels);
+double EnergyDetectionModule::CalculateThresholdInDBX(double dAveragePower_db, double dLevelAboveFloor)
+{
+    // Wrapper for simple calculation at this point. more complex implementations coming in future
+    return dAveragePower_db + dLevelAboveFloor;
+}
+
+std::shared_ptr<std::vector<std::vector<uint16_t>>> EnergyDetectionModule::GetDetectionBinIndicies(std::shared_ptr<FFTMagnitudeChunk> pFFTMagnitudeChunk, double dDetectionThreshold)
+{
+    auto pvvu16DetectionBins = std::make_shared<std::vector<std::vector<uint16_t>>>();
+    pvvu16DetectionBins->resize(pFFTMagnitudeChunk->m_uNumChannels);
 
     // try pass
     // Iterate and store indicies of threshold
@@ -59,16 +84,11 @@ void EnergyDetectionModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
             auto pow = std::log(std::pow(mag, 2.0))/std::log(10);
 
             // Now check and store
-            if (pow > (*pvvDetectionThreshold_db)[uCurrentChannelIndex])
-                vvu16DetectionBins[uCurrentChannelIndex].emplace_back(uCurrentSampleIndex);
+            if (pow > dDetectionThreshold)
+                (*pvvu16DetectionBins)[uCurrentChannelIndex].emplace_back(uCurrentSampleIndex);
             
         }
     }
 
-    auto pDetecionChunk = std::make_shared<DetectionBinChunk>();
-    pDetecionChunk->SetDetectionBins(vvu16DetectionBins);
-
-    // try pass
-    TryPassChunk(pDetecionChunk);
-    TryPassChunk(pFFTMagnitudeChunk);
+    return pvvu16DetectionBins;
 }
