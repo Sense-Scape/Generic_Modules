@@ -6,7 +6,7 @@
 #include "ChunkToJSONConverter.h"
 
 /**
- * @brief Converts just to the JSON Chunk type
+ * @brief Prints out all chunks or chunk data passing through
  */
 class TracerModule : public BaseModule
 {
@@ -28,8 +28,15 @@ public:
      */
     std::string GetModuleType() override { return "TracerModule"; };
 
+    /**
+     * @brief Sets Whether to print JSON data or not
+     * @param[out] bPrintJSONIfPossible Whether to print JSON data or not
+     */
+    void SetPrintJSON(bool bPrintJSONIfPossible) { m_bPrintJSONIfPossible = bPrintJSONIfPossible; };
+
 private:
-    std::string m_strPipelinePosition; ///< Name printed with tracer
+    std::string m_strPipelinePosition;  ///< Name printed with tracer
+    bool m_bPrintJSONIfPossible;        ///< If json availablle, will be printed
 };
 
 #endif

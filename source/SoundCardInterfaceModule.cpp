@@ -78,7 +78,6 @@ bool SoundCardInterfaceModule::UpdatePCMSamples()
             fprintf(stderr, "Error getting available frames: %s\n", snd_strerror(frames_available));
             exit(1);
         }
-        fprintf(stderr, "Frames available: %d\n", frames_available);
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         frames_available = snd_pcm_avail_update(m_capture_handle);
     } 
