@@ -9,6 +9,8 @@ GPSInterfaceModule::GPSInterfaceModule(std::string strInterfaceName, std::vector
     // If we dont simulate then try open an interface
     if (!bSimulateData)
         TryOpenSerialInterface();
+    else 
+        PLOG_INFO << "Simulating position";
 }
 
 void GPSInterfaceModule::ContinuouslyTryProcess()
@@ -129,10 +131,11 @@ unsigned char GPSInterfaceModule::CalculateChecksum(const std::string &sentence)
     return checksum;
 }
 
-std::shared_ptr<GPSChunk> GPSInterfaceModule::ExtractGSPData(const std::string &sentence)
+std::shared_ptr<GPSChunk> GPSInterfaceModule::ExtractGSPData(const std::string sentence)
 {
     std::vector<std::string> result;
     size_t start = 0, end = 0;
+    std::cout << sentence << std::endl;
 
     // split on commas to get all items in the string
     while (end != std::string::npos)
@@ -161,8 +164,8 @@ std::shared_ptr<GPSChunk> GPSInterfaceModule::ExtractGSPData(const std::string &
 
     pGPSChunk->m_bIsNorth = result[2] == "N";
     pGPSChunk->m_bIsWest = result[4] == "W";
-    pGPSChunk->m_dLatitude = std::stod(result[1]);
-    pGPSChunk->m_dLongitude = std::stod(result[3]);
+    pGPSChunk->m_dLatitude = std::stod(result[1])/100.f;
+    pGPSChunk->m_dLongitude = std::stod(result[3])/100.f;
 
     return pGPSChunk;
 }
