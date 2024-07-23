@@ -8,18 +8,21 @@ RateLimitingModule::RateLimitingModule(unsigned uBufferSize) : BaseModule(uBuffe
 void RateLimitingModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     // First check if we need to rate limit this chunk
+    auto vu8SourceIdentifier = pBaseChunk->GetSourceIdentifier();
     auto eChunkType = pBaseChunk->GetChunkType();
+
+
     if(m_mapChunkTypeToRatePeriod.find(eChunkType) == m_mapChunkTypeToRatePeriod.end())
         TryPassChunk(pBaseChunk);
 
     // If we do then check the period
     auto u64Now = std::chrono::system_clock::now().time_since_epoch().count();
-    auto u64elapsedTime_ns = u64Now - m_mapChunkTypeToLastReportTime[eChunkType];
+    auto u64elapsedTime_ns = u64Now - m_mapChunkTypeToLastReportTime[vu8SourceIdentifier][eChunkType];
 
     // and see when last we sent it
     if(u64elapsedTime_ns >= m_mapChunkTypeToRatePeriod[eChunkType])
     {
-        m_mapChunkTypeToLastReportTime[eChunkType] = u64Now;
+        m_mapChunkTypeToLastReportTime[vu8SourceIdentifier][eChunkType] = u64Now;
         TryPassChunk(pBaseChunk);
     }
 }
