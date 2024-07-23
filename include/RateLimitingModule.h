@@ -5,11 +5,13 @@
 #include "chrono"
 
 /**
- * @brief Converts just to the JSON Chunk type
+ * @brief Limits transmission of chunks according to chunk type and source identifier
  */
 class RateLimitingModule : public BaseModule
 {
+
 public:
+
     /**
      * @brief Construct a new RateLimitingModule object
      */
@@ -18,9 +20,15 @@ public:
 
     /**
      * @brief Generate and fill complex time data chunk and pass on to next module
+     * @param pBaseChunk pointer to chunk to process
      */
     void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
 
+    /**
+     * @brief Sets the limiting rate for chunk type
+     * @param eChunkType enumerated chunk to to limit
+     * @param u32ReportPeriod how often the chunk is allowed to propogate in the pipeline
+     */
     void SetChunkRateLimitInUsec(ChunkType eChunkType, uint32_t u32ReportPeriod);
 
     /**
@@ -32,7 +40,7 @@ public:
 private:
 
     std::map<ChunkType,uint64_t> m_mapChunkTypeToRatePeriod;    ///< Map which stores which chunk should be rate limited
-    std::map<ChunkType,uint64_t> m_mapChunkTypeToLastReportTime;  ///< Map which stores when the last chunk was sent 
+    std::map<std::vector<uint8_t>,std::map<ChunkType,uint64_t>> m_mapChunkTypeToLastReportTime;  ///< Map which stores when the last chunk was sent 
 
 };
 
