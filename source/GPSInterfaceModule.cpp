@@ -237,4 +237,6 @@ bool GPSInterfaceModule::VerifyGPSData(const std::string strReceivedData)
             PLOG_WARNING << strWarning;
             return false;
         }
+
+        return true;
 }
