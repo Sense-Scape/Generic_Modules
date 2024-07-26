@@ -223,13 +223,13 @@ bool GPSInterfaceModule::VerifyGPSData(const std::string strReceivedData)
         {
             std::string strWarning = "GPS Checksum is invalid: " + strReceivedData;
             PLOG_WARNING << strWarning;
-            return;
+            return false;
         }
 
         // Now check it is position string   
         std::string strGPSMessageType = strReceivedData.substr(strReceivedData.find('$') + 1, 5);
         if (strGPSMessageType != "GPGLL" )
-            return;
+            return false;
 
         if (strGPSMessageType.size() <= 18)
         {
