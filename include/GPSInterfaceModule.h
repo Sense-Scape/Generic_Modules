@@ -93,9 +93,17 @@ private:
 
     /**
      * @brief Extracts gps position from NMEA0813 from string
+     * @param sentence string of GPS data
      * @return returns GPS chunk
      */
     std::shared_ptr<GPSChunk> ExtractGSPData(const std::string sentence);
+
+    /**
+     * @brief Verify the GPS string has valid data
+     * @param sentence string of GPS data
+     * @return returns GPS chunk
+     */
+    bool VerifyGPSData(const std::string strReceivedData);
 };
 
 #endif

@@ -86,26 +86,8 @@ void GPSInterfaceModule::TryTransmitPositionData()
         std::string strReceivedData;
         std::getline(m_fsSerialInterface, strReceivedData);
 
-        // Print the received data
-        if (strReceivedData.empty())
-            return;
-
-        // Extract and check the checksum provided in the sentence
-        unsigned char ucExpectedChecksum = CalculateChecksum(strReceivedData);
-        std::string strProvidedChecksumStr = strReceivedData.substr(strReceivedData.find('*') + 1, 2);
-        unsigned char ucProvidedChecksum = std::stoul(strProvidedChecksumStr, nullptr, 16); // Convert hex string to unsigned char
-
-        // Compare the calculated checksum with the provided checksum
-        if (ucExpectedChecksum != ucProvidedChecksum)
-        {
-            std::string strWarning = "GPS Checksum is invalid: " + strReceivedData;
-            PLOG_WARNING << strWarning;
-            return;
-        }
-
-        // Now check it is position information
-        std::string strGPSMessageType = strReceivedData.substr(strReceivedData.find('$') + 1, 5);
-        if (strGPSMessageType != "GPGLL")
+        bool bGPSStringValid = VerifyGPSData(strReceivedData);
+        if(!bGPSStringValid)
             return;
 
         // Read latitude, latitude direction, longitude, and longitude direction
@@ -219,4 +201,29 @@ void GPSInterfaceModule::CheckIfSimulationPositionSet()
 
     if (m_dSimulatedLatitude == 0 && m_dSimulatedLongitude == 0)
         PLOG_WARNING << "GPS in simulation mode but no position has beens set";
+}
+
+bool GPSInterfaceModule::VerifyGPSData(const std::string strReceivedData)
+{
+        // Print the received data
+        if (strReceivedData.empty())
+            return false;
+
+        // Extract and check the checksum provided in the sentence
+        unsigned char ucExpectedChecksum = CalculateChecksum(strReceivedData);
+        std::string strProvidedChecksumStr = strReceivedData.substr(strReceivedData.find('*') + 1, 2);
+        unsigned char ucProvidedChecksum = std::stoul(strProvidedChecksumStr, nullptr, 16); // Convert hex string to unsigned char
+
+        // Compare the calculated checksum with the provided checksum
+        if (ucExpectedChecksum != ucProvidedChecksum)
+        {
+            std::string strWarning = "GPS Checksum is invalid: " + strReceivedData;
+            PLOG_WARNING << strWarning;
+            return false;
+        }
+
+        // Now check it is position information and that there is data within it    
+        std::string strGPSMessageType = strReceivedData.substr(strReceivedData.find('$') + 1, 5);
+        if (strGPSMessageType != "GPGLL")
+            return false;
 }
