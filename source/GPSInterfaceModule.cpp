@@ -208,8 +208,8 @@ bool GPSInterfaceModule::VerifyGPSData(const std::string strReceivedData)
         // Print the received data
         if (strReceivedData.empty())
         {
-            std::string strWarning = "GPS string is empty";
-            PLOG_WARNING << strWarning;
+            std::string strDebug = "GPS string is empty";
+            PLOG_DEBUG << strDebug;
             return false;
         }
 
@@ -221,8 +221,8 @@ bool GPSInterfaceModule::VerifyGPSData(const std::string strReceivedData)
         // Compare the calculated checksum with the provided checksum
         if (ucExpectedChecksum != ucProvidedChecksum)
         {
-            std::string strWarning = "GPS Checksum is invalid: " + strReceivedData;
-            PLOG_WARNING << strWarning;
+            std::string strDebug = "GPS Checksum is invalid: " + strReceivedData;
+            PLOG_DEBUG << strDebug;
             return false;
         }
 
@@ -233,8 +233,8 @@ bool GPSInterfaceModule::VerifyGPSData(const std::string strReceivedData)
 
         if (strGPSMessageType.size() <= 18)
         {
-            std::string strWarning = "Position received with no position information - cant see satellite";
-            PLOG_WARNING << strWarning;
+            std::string strDebug = "Position received with no position information - cant see satellite = " + strReceivedData;
+            PLOG_DEBUG << strDebug;
             return false;
         }
 
