@@ -35,7 +35,6 @@ void WAVWriterModule::WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk)
     pWAVChunk->m_sWAVHeader.blockAlign = pWAVChunk->m_sWAVHeader.NumOfChan * 4;
 
     // Recalculate data size
-    std::cout << std::to_string(pWAVChunk->m_vi16Data.size()) << std::endl;
     uint32_t dataSize = pWAVChunk->m_vi16Data.size() * sizeof(float);
     pWAVChunk->m_sWAVHeader.Subchunk2Size = dataSize;
 
