@@ -1,17 +1,17 @@
-#include "LinuxWAVWriterModule.h"
+#include "WAVWriterModule.h"
 
-LinuxWAVWriterModule::LinuxWAVWriterModule(std::string sFileWritePath, unsigned uMaxInputBufferSize) : BaseModule(uMaxInputBufferSize),
+WAVWriterModule::WAVWriterModule(std::string sFileWritePath, unsigned uMaxInputBufferSize) : BaseModule(uMaxInputBufferSize),
                                                                                                        m_sFileWritePath(sFileWritePath)
 {
     // Creating file path for audio files if it does not exist
     CreateFilePath();
 }
 
-void LinuxWAVWriterModule::WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk)
+void WAVWriterModule::WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     auto pWAVChunk = std::dynamic_pointer_cast<WAVChunk>(pBaseChunk);
 
-   std::cout << pWAVChunk->GetHeaderString() << std::endl;
+    std::cout << pWAVChunk->GetHeaderString() << std::endl;
 
     // Creating file name
     time_t ltime;
@@ -35,7 +35,6 @@ void LinuxWAVWriterModule::WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk)
     pWAVChunk->m_sWAVHeader.blockAlign = pWAVChunk->m_sWAVHeader.NumOfChan * 4;
 
     // Recalculate data size
-    std::cout << std::to_string(pWAVChunk->m_vi16Data.size()) << std::endl;
     uint32_t dataSize = pWAVChunk->m_vi16Data.size() * sizeof(float);
     pWAVChunk->m_sWAVHeader.Subchunk2Size = dataSize;
 
@@ -57,12 +56,18 @@ void LinuxWAVWriterModule::WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk)
     outFile.write(reinterpret_cast<const char*>(&fileSize), 4);
 }
 
-void LinuxWAVWriterModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
+void WAVWriterModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-    WriteWAVFile(pBaseChunk);
+    if (IsEnoughFileSystemSpace())
+        WriteWAVFile(pBaseChunk);
+    else
+    {
+        std::string strWarning = std::string(__FUNCTION__) + "Not enough space to write wav file, data lost";
+        PLOG_WARNING << strWarning;
+    }
 }
 
-void LinuxWAVWriterModule::CreateFilePath()
+void WAVWriterModule::CreateFilePath()
 {
     if (!std::filesystem::exists(m_sFileWritePath))
     {
@@ -70,4 +75,10 @@ void LinuxWAVWriterModule::CreateFilePath()
         std::string strInfo = std::string(__FUNCTION__) + ": Folder created successfully - " + m_sFileWritePath;
         PLOG_INFO << strInfo;
     }
+}
+
+bool WAVWriterModule::IsEnoughFileSystemSpace()
+{
+    std::filesystem::space_info space = std::filesystem::space(m_sFileWritePath);
+    return space.available > 100'000'000;   
 }
