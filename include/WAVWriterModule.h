@@ -28,10 +28,10 @@ private:
     void CreateFilePath();
 
     /*
-     * @brief Will check if there is enough space (100 Mb) to write file
+     * @brief Will check if there is enough space (100Mb) to write file
      * @return boolean whether there is enough space or not
      */
-    bool CheckFileSystemForSpace();
+    bool IsEnoughFileSystemSpace();
 
 protected:
     /*

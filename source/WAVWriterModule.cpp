@@ -59,7 +59,7 @@ void WAVWriterModule::WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk)
 
 void WAVWriterModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-    if (CheckFileSystemForSpace())
+    if (IsEnoughFileSystemSpace())
         WriteWAVFile(pBaseChunk);
     else
     {
@@ -78,8 +78,8 @@ void WAVWriterModule::CreateFilePath()
     }
 }
 
-bool WAVWriterModule::CheckFileSystemForSpace()
+bool WAVWriterModule::IsEnoughFileSystemSpace()
 {
     std::filesystem::space_info space = std::filesystem::space(m_sFileWritePath);
-    return space.capacity > 100,000,000;   
+    return space.available > 100'000'000;   
 }
