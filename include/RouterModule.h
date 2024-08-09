@@ -28,6 +28,7 @@ public:
 
 protected:
     std::map<ChunkType, std::vector<std::shared_ptr<BaseModule>>> m_ChunkTypeModuleMap; ///< Shared pointer to next module into which messages are passed
+    std::vector<ChunkType> m_vChunkTypesAlreadyLogged;                                  ///< Stores whether the user has been warned about the chunk not being registered
 
 private:
     /*
