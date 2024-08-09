@@ -11,7 +11,7 @@
 #include "BaseModule.h"
 #include "WAVChunk.h"
 
-class LinuxWAVWriterModule : public BaseModule
+class WAVWriterModule : public BaseModule
 {
 
 private:
@@ -27,6 +27,12 @@ private:
      */
     void CreateFilePath();
 
+    /*
+     * @brief Will check if there is enough space (100 Mb) to write file
+     * @return boolean whether there is enough space or not
+     */
+    bool CheckFileSystemForSpace();
+
 protected:
     /*
      * @brief Module process to write WAV file
@@ -39,14 +45,14 @@ public:
      * @param[in] sFileWritePath path into which WAV files will be written
      * @param[in] uMaxInputBufferSize size of input buffer
      */
-    LinuxWAVWriterModule(std::string sFileWritePath, unsigned uMaxInputBufferSize);
-    ~LinuxWAVWriterModule(){};
+    WAVWriterModule(std::string sFileWritePath, unsigned uMaxInputBufferSize);
+    ~WAVWriterModule(){};
 
     /*
      * @brief Returns module type
      * @param[out] ModuleType of processing module
      */
-    std::string GetModuleType() override { return "LinuxWAVWriterModule"; };
+    std::string GetModuleType() override { return "WAVWriterModule"; };
 };
 
 #endif
