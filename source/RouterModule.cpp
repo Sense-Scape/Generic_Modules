@@ -32,7 +32,10 @@ void RouterModule::RouteChunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {   
     auto eCurrentChunkType = pBaseChunk->GetChunkType();
 
-    if (m_ChunkTypeModuleMap.count(eCurrentChunkType))
+    bool bChunkRegistered = m_ChunkTypeModuleMap.count(eCurrentChunkType);
+    bool bNonRegisteredChunkNotLogged = std::find(m_vChunkTypesAlreadyLogged.begin(), m_vChunkTypesAlreadyLogged.end(), eCurrentChunkType) == m_vChunkTypesAlreadyLogged.end();
+
+    if (bChunkRegistered)
     {
         auto vpNextModules = m_ChunkTypeModuleMap[pBaseChunk->GetChunkType()];
         for (unsigned uNextModuleIndex = 0; uNextModuleIndex < vpNextModules.size(); uNextModuleIndex++)
@@ -43,7 +46,8 @@ void RouterModule::RouteChunk(std::shared_ptr<BaseChunk> pBaseChunk)
             vpNextModules[uNextModuleIndex]->TakeChunkFromModule(pDuplicateBaseChunk);
         }
     }
-    if (std::find(m_vChunkTypesAlreadyLogged.begin(), m_vChunkTypesAlreadyLogged.end(), eCurrentChunkType) == m_vChunkTypesAlreadyLogged.end())
+
+    if (!bChunkRegistered && bNonRegisteredChunkNotLogged)
     {
         // Then if the chunk has not been logged yet as not registered, log it
         m_vChunkTypesAlreadyLogged.emplace_back(eCurrentChunkType);
