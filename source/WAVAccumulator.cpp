@@ -15,11 +15,11 @@ void WAVAccumulator::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 	AccumulateWAVChunk(pWAVChunk);
 }
 
-void WAVAccumulator::Accumuluate(std::shared_ptr<WAVChunk> pAccumulatedWAVChunk, std::shared_ptr<WAVChunk> pCurrentWAVChunk)
+void WAVAccumulator::Accumuluate(const std::shared_ptr<WAVChunk> &pAccumulatedWAVChunk, const std::shared_ptr<WAVChunk> &pCurrentWAVChunk)
 {
 	// Accumulate time data
 	for (unsigned uDataIndex = 0; uDataIndex < pCurrentWAVChunk->m_vi16Data.size(); uDataIndex++)
-		pAccumulatedWAVChunk->m_vi16Data.emplace_back(pCurrentWAVChunk->m_vi16Data[uDataIndex]);
+		pAccumulatedWAVChunk->m_vi16Data.push_back(pCurrentWAVChunk->m_vi16Data[uDataIndex]);
 
 	// Adjust WAV header
 	pAccumulatedWAVChunk->m_sWAVHeader.ChunkSize += (pCurrentWAVChunk->m_sWAVHeader.ChunkSize + 8 - 44); // + 8 to whole file, -44 to remove header
@@ -81,36 +81,40 @@ bool WAVAccumulator::WAVHeaderChanged(std::shared_ptr<WAVChunk> pAccumulateDWAVC
 
 void WAVAccumulator::AccumulateWAVChunk(std::shared_ptr<WAVChunk> pWAVChunk)
 {
+
+	auto vu8SourceIdentifier = pWAVChunk->GetSourceIdentifier();
+
 	// Check if current MAC is being accumulated and store
-	if (m_mAccumulatedWAVChunks.count(pWAVChunk->GetSourceIdentifier()) == 0)
+	if (m_mAccumulatedWAVChunks[vu8SourceIdentifier] == nullptr)
 	{
-		m_mAccumulatedWAVChunks[pWAVChunk->GetSourceIdentifier()] = pWAVChunk;
-		m_i64PreviousTimeStamps[pWAVChunk->GetSourceIdentifier()] = pWAVChunk->m_i64TimeStamp;
+		m_mAccumulatedWAVChunks[vu8SourceIdentifier] = pWAVChunk;
+		m_i64PreviousTimeStamps[vu8SourceIdentifier] = pWAVChunk->m_i64TimeStamp;
+		return;
 	}
+
+	// Try accumulate data if data is continuous and unchanged
+	auto pAccumulatedWAVChunk = std::static_pointer_cast<WAVChunk>(m_mAccumulatedWAVChunks[vu8SourceIdentifier]);
+	bool bChunkContinuous = VerifyTimeContinuity(pWAVChunk, pAccumulatedWAVChunk);
+	bool bWAVHeaderChanged = !WAVHeaderChanged(pAccumulatedWAVChunk, pWAVChunk);
+
+	if(bChunkContinuous || bWAVHeaderChanged)
+		Accumuluate(pAccumulatedWAVChunk, pWAVChunk);
 	else
 	{
-		// Try accumulate data if data is continuous
-		auto pAccumulatedWAVChunk = std::static_pointer_cast<WAVChunk>(m_mAccumulatedWAVChunks[pWAVChunk->GetSourceIdentifier()]);
-		if (VerifyTimeContinuity(pWAVChunk, pAccumulatedWAVChunk) || !WAVHeaderChanged(pAccumulatedWAVChunk, pWAVChunk))
-			Accumuluate(pAccumulatedWAVChunk, pWAVChunk);
-		else
-		{
-			// If we are not continuous just pass on 
-			std::string strWarning = std::string(__FUNCTION__) + ": Passing WAV data on early \n";
-			PLOG_WARNING << strWarning;
+		std::string strWarning = std::string(__FUNCTION__) + ": Passing WAV data on early \n";
+		PLOG_WARNING << strWarning;
 
-			TryPassChunk(pAccumulatedWAVChunk);
-			m_mAccumulatedWAVChunks.erase(pWAVChunk->GetSourceIdentifier());
-
-			// and then exit function as we have nothing else to do
-			return;
-		}
-		// Check to pass data on
-		if (CheckMaxTimeThreshold(pAccumulatedWAVChunk))
-		{
-			// Pass and clear
-			TryPassChunk(pAccumulatedWAVChunk);
-			m_mAccumulatedWAVChunks.erase(pWAVChunk->GetSourceIdentifier());
-		}
+		TryPassChunk(std::move(pAccumulatedWAVChunk));
+		m_mAccumulatedWAVChunks[vu8SourceIdentifier] = nullptr;
+		return;
+	}
+	
+	// Check to pass data on
+	bool bPassData = CheckMaxTimeThreshold(pAccumulatedWAVChunk);
+	if (bPassData)
+	{
+		TryPassChunk(std::move(pAccumulatedWAVChunk));
+		m_mAccumulatedWAVChunks[vu8SourceIdentifier] = nullptr;
+		return;
 	}
 }

@@ -39,7 +39,7 @@ private:
      * @param[in] pAccumulateWAVChunk pointer to accumulated WAV data
      * @param[in] pCurrentWAVChunk pointer to current WAV chunk
      */
-    void Accumuluate(std::shared_ptr<WAVChunk> pAccumulatedWAVChunk, std::shared_ptr<WAVChunk> pCurrentWAVChunk);
+    void Accumuluate(const std::shared_ptr<WAVChunk> &pAccumulatedWAVChunk,const std::shared_ptr<WAVChunk> &pCurrentWAVChunk);
 
     /*
      * @brief Verifies that current chunk is continuous with currently accumulated data
