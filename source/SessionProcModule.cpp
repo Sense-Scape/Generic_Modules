@@ -68,23 +68,31 @@ void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         // lets get the start and end of the data and store the bytes
         auto DataStart = pByteChunk->m_vcDataChunk.begin() + pChunkHeaderState->GetSize();
         auto DataEnd = pByteChunk->m_vcDataChunk.end() - 2;
-        std::copy(DataStart, DataEnd, std::back_inserter(*m_mSessionBytes[vu8SourceIdentifier][SessionChunkType]));
+
+        // Verify session has not connected to client which is already transmitting data
+        if(m_mSessionBytes[vu8SourceIdentifier][SessionChunkType])
+            std::copy(DataStart, DataEnd, std::back_inserter(*m_mSessionBytes[vu8SourceIdentifier][SessionChunkType]));
     }
     else if (bLastInSequence && SameSesession && bSequenceContinuous)
     {
         // lets get the start and end of the data and store the bytes
         auto DataStart = pByteChunk->m_vcDataChunk.begin() + pChunkHeaderState->GetSize();
         auto DataEnd = pByteChunk->m_vcDataChunk.end() - 2;
-        std::copy(DataStart, DataEnd, std::back_inserter(*m_mSessionBytes[vu8SourceIdentifier][SessionChunkType]));
 
-        // Creating a TimeChunk into which data shall go
-        auto pByteData = m_mSessionBytes[vu8SourceIdentifier][SessionChunkType];
-        auto pBaseChunk = ChunkDuplicatorUtility::DeserialiseDerivedChunk(pByteData, SessionChunkType);
+        // Verify session has not connected to client which is already transmitting data
+        if(m_mSessionBytes[vu8SourceIdentifier][SessionChunkType])
+        {
+            std::copy(DataStart, DataEnd, std::back_inserter(*m_mSessionBytes[vu8SourceIdentifier][SessionChunkType]));
 
-        // Pass pointer to data on and clear stored data and state information for current session
-        TryPassChunk(pBaseChunk);
-        m_mSessionModesStatesMap[vu8SourceIdentifier][SessionChunkType] = std::make_shared<SessionController>();
-        m_mSessionBytes[vu8SourceIdentifier][SessionChunkType] = std::make_shared<std::vector<char>>();
+            // Creating a TimeChunk into which data shall go
+            auto pByteData = m_mSessionBytes[vu8SourceIdentifier][SessionChunkType];
+            auto pBaseChunk = ChunkDuplicatorUtility::DeserialiseDerivedChunk(pByteData, SessionChunkType);
+
+            // Pass pointer to data on and clear stored data and state information for current session
+            TryPassChunk(pBaseChunk);
+            m_mSessionModesStatesMap[vu8SourceIdentifier][SessionChunkType] = std::make_shared<SessionController>();
+            m_mSessionBytes[vu8SourceIdentifier][SessionChunkType] = std::make_shared<std::vector<char>>(); 
+        } 
     }
     else
     {
