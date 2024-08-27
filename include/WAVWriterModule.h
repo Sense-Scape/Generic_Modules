@@ -11,6 +11,9 @@
 #include "BaseModule.h"
 #include "WAVChunk.h"
 
+/**
+ * @brief Checks for space and writes WAV data to file system
+ */
 class WAVWriterModule : public BaseModule
 {
 
