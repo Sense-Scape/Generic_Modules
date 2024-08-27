@@ -37,7 +37,7 @@ protected:
     /*
      * @brief Module process to write WAV file
      */
-    void Process_WAVChunk(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void Process_WAVChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 
 public:
     /*
