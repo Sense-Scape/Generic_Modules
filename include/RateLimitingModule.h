@@ -22,7 +22,7 @@ public:
      * @brief Generate and fill complex time data chunk and pass on to next module
      * @param pBaseChunk pointer to chunk to process
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void Process_Chunk(std::shared_ptr<BaseChunk> pBaseChunk);
 
     /**
      * @brief Sets the limiting rate for chunk type
