@@ -242,12 +242,12 @@ void LinuxMultiClientTCPRxModule::StartProcessing()
 {
     // passing in empty chunk that is not used
     m_thread = std::thread([this]
-                           { Process(std::shared_ptr<BaseChunk>()); });
+                           { DefaultProcess(std::shared_ptr<BaseChunk>()); });
 }
 
 void LinuxMultiClientTCPRxModule::ContinuouslyTryProcess()
 {
     // passing in empty chunk that is not used
     m_thread = std::thread([this]
-                           { Process(std::shared_ptr<BaseChunk>()); });
+                           { DefaultProcess(std::shared_ptr<BaseChunk>()); });
 }
