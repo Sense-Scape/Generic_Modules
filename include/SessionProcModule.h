@@ -34,7 +34,7 @@ private:
     /*
      * @brief Module process to collect and format UDP data
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk);
+    void Process_ByteChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 
     /*
      * @brief Registers all used session types for use

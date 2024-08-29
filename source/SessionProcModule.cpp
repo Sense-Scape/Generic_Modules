@@ -4,9 +4,10 @@ SessionProcModule::SessionProcModule(unsigned uBufferSize) : BaseModule(uBufferS
                                                              m_mFunctionCallbacksMap(),
                                                              m_mSessionBytes()
 {
+    RegisterChunkCallbackFunction(ChunkType::ByteChunk, &SessionProcModule::Process_ByteChunk);
 }
 
-void SessionProcModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
+void SessionProcModule::Process_ByteChunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     // Lets first check what chunk has been transmitted in this UDP chunk
     uint32_t u32ChunkType;
