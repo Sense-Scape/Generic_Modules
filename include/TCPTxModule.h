@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <atomic>
 
 /*Custom Includes*/
 #include "BaseModule.h"
