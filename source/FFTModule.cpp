@@ -2,7 +2,7 @@
 
 FFTModule::FFTModule(unsigned uBufferSize) : BaseModule(uBufferSize)
 {
-    RegisterChunkCallbackFunction(ChunkType::TimeChunk, &FFTModule::Process_TimeChunk); 
+    RegisterChunkCallbackFunction(ChunkType::TimeChunk, &FFTModule::Process_TimeChunk,(BaseModule*)this); 
 }
 
 void FFTModule::Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk)

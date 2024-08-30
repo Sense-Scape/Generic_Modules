@@ -5,8 +5,8 @@ DirectionFindingModule::DirectionFindingModule(unsigned uBufferSize, double dPro
                                 m_dBaselineLength_m(dBaselineLength_m),
                                 BaseModule(uBufferSize)
 {
-    RegisterChunkCallbackFunction(ChunkType::DetectionBinChunk, &DirectionFindingModule::Process_DetectionBinChunk);
-    RegisterChunkCallbackFunction(ChunkType::FFTChunk, &DirectionFindingModule::Process_FFTChunk);
+    RegisterChunkCallbackFunction(ChunkType::DetectionBinChunk, &DirectionFindingModule::Process_DetectionBinChunk, (BaseModule*)this);
+    RegisterChunkCallbackFunction(ChunkType::FFTChunk, &DirectionFindingModule::Process_FFTChunk,(BaseModule*)this);
 }
 
 double DirectionFindingModule::CalculateAngleOfArrival(double differentialPhase_rads,double f_hz, double v_mps, double l_m) {

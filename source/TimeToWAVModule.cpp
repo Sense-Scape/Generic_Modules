@@ -3,7 +3,7 @@
 TimeToWAVModule::TimeToWAVModule(unsigned uBufferSize) : 
 	BaseModule(uBufferSize)
 {
-    RegisterChunkCallbackFunction(ChunkType::TimeChunk, &TimeToWAVModule::Process_TimeChunk);
+    RegisterChunkCallbackFunction(ChunkType::TimeChunk, &TimeToWAVModule::Process_TimeChunk,(BaseModule*)this);
 }
 
 void TimeToWAVModule::Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk)

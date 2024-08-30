@@ -26,7 +26,7 @@ void RateLimitingModule::Process_Chunk(std::shared_ptr<BaseChunk> pBaseChunk)
 void RateLimitingModule::SetChunkRateLimitInUsec(ChunkType eChunkType, uint32_t u32ReportPeriod)
 {
     m_mapChunkTypeToRatePeriod[eChunkType] = u32ReportPeriod;
-    RegisterChunkCallbackFunction(eChunkType, &RateLimitingModule::Process_Chunk);
+    RegisterChunkCallbackFunction(eChunkType, &RateLimitingModule::Process_Chunk,(BaseModule*)this);
 
     std::string strInfo = ChunkTypesNamingUtility::toString(eChunkType) + " is being rate limited to ns period of " + std::to_string(u32ReportPeriod);
     PLOG_INFO << strInfo;

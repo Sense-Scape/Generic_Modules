@@ -3,7 +3,7 @@
 EnergyDetectionModule::EnergyDetectionModule(unsigned uBufferSize, float fThresholdAboveNoiseFoor) :m_fThresholdAboveNoiseFoor_db(fThresholdAboveNoiseFoor),
                                                                                                     BaseModule(uBufferSize)
 {
-    RegisterChunkCallbackFunction(ChunkType::FFTMagnitudeChunk, &EnergyDetectionModule::Process_FFTMagnitudeChunk);
+    RegisterChunkCallbackFunction(ChunkType::FFTMagnitudeChunk, &EnergyDetectionModule::Process_FFTMagnitudeChunk, (BaseModule*)this);
 }
 
 void EnergyDetectionModule::Process_FFTMagnitudeChunk(std::shared_ptr<BaseChunk> pBaseChunk)

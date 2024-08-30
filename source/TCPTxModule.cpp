@@ -110,12 +110,14 @@ void TCPTxModule::RunClientThread(int &clientSocket)
 {
     while (!m_bShutDown)
     {
+       
         try
         {
             // During processing we see if there is data (UDP Chunk) in the input buffer
             std::shared_ptr<BaseChunk> pBaseChunk;
             if (TakeFromBuffer(pBaseChunk))
             {
+                
                 // Cast it back to a UDP chunk
                 auto udpChunk = std::static_pointer_cast<ByteChunk>(pBaseChunk);
                 const auto pvcData = udpChunk->m_vcDataChunk;
@@ -159,13 +161,6 @@ void TCPTxModule::CloseTCPSocket(int &clientSocket)
 }
 
 void TCPTxModule::StartProcessing()
-{
-    // Passing in empty chunk that is not used
-    m_thread = std::thread([this]
-                           { Process(std::shared_ptr<BaseChunk>()); });
-}
-
-void TCPTxModule::ContinuouslyTryProcess()
 {
     // Passing in empty chunk that is not used
     m_thread = std::thread([this]

@@ -26,7 +26,7 @@ void RouterModule::RegisterOutputModule(std::shared_ptr<BaseModule> pNextModule,
 
     // If not, register the chunktype module pair
     m_ChunkTypeModuleMap[eChunkType].push_back(pNextModule);
-    RegisterChunkCallbackFunction(eChunkType, &RouterModule::RouteChunk);
+    RegisterChunkCallbackFunction(eChunkType, &RouterModule::RouteChunk,(BaseModule*)this);
 }
 
 void RouterModule::RouteChunk(std::shared_ptr<BaseChunk> pBaseChunk)

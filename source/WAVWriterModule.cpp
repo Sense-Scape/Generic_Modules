@@ -6,7 +6,7 @@ WAVWriterModule::WAVWriterModule(std::string sFileWritePath, unsigned uMaxInputB
     // Creating file path for audio files if it does not exist
     CreateFilePath();
 
-    RegisterChunkCallbackFunction(ChunkType::WAVChunk, &WAVWriterModule::Process_WAVChunk);
+    RegisterChunkCallbackFunction(ChunkType::WAVChunk, &WAVWriterModule::Process_WAVChunk,(BaseModule*)this);
 }
 
 void WAVWriterModule::WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk)

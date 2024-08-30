@@ -43,11 +43,6 @@ public:
     void RunClientThread(int &clientSocket);
 
     /**
-     * @brief Calls process function only wiht no buffer checks
-     */
-    void ContinuouslyTryProcess() override;
-
-    /**
      * @brief Returns module type
      * @return ModuleType of processing module
      */

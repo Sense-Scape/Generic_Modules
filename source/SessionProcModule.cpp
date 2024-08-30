@@ -4,7 +4,7 @@ SessionProcModule::SessionProcModule(unsigned uBufferSize) : BaseModule(uBufferS
                                                              m_mFunctionCallbacksMap(),
                                                              m_mSessionBytes()
 {
-    RegisterChunkCallbackFunction(ChunkType::ByteChunk, &SessionProcModule::Process_ByteChunk);
+    RegisterChunkCallbackFunction(ChunkType::ByteChunk, &SessionProcModule::Process_ByteChunk,(BaseModule*)this);
 }
 
 void SessionProcModule::Process_ByteChunk(std::shared_ptr<BaseChunk> pBaseChunk)
