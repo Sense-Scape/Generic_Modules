@@ -25,11 +25,6 @@ public:
     DirectionFindingModule(unsigned uBufferSize, double dPropogationVelocity_mps, double dBaselineLength_m);
 
     /**
-     * @brief Generate and fill complex time data chunk and pass on to next module
-     */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
-
-    /**
      * @brief Returns module type
      * @return ModuleType of processing module
      */
@@ -63,13 +58,13 @@ private:
      * @brief Will calculate AOA using detection indicies and complex FFT magnitudes
      * @param pBaseChunk pointer to FFT chunk
      */
-    void ProcessFFTChunk(std::shared_ptr<BaseChunk> pBaseChunk);
+    void Process_FFTChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 
     /**
      * @brief Will update detection indicies of current source identifier
      * @param pBaseChunk pointer to Energy Detection chunk
      */
-    void ProcessDetectionBinChunk(std::shared_ptr<BaseChunk> pBaseChunk);
+    void Process_DetectionBinChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 
 };
 

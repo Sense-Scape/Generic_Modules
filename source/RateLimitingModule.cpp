@@ -5,15 +5,11 @@ RateLimitingModule::RateLimitingModule(unsigned uBufferSize) : BaseModule(uBuffe
 {
 }
 
-void RateLimitingModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
+void RateLimitingModule::Process_Chunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     // First check if we need to rate limit this chunk
     auto vu8SourceIdentifier = pBaseChunk->GetSourceIdentifier();
     auto eChunkType = pBaseChunk->GetChunkType();
-
-
-    if(m_mapChunkTypeToRatePeriod.find(eChunkType) == m_mapChunkTypeToRatePeriod.end())
-        TryPassChunk(pBaseChunk);
 
     // If we do then check the period
     auto u64Now = std::chrono::system_clock::now().time_since_epoch().count();
@@ -30,7 +26,8 @@ void RateLimitingModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 void RateLimitingModule::SetChunkRateLimitInUsec(ChunkType eChunkType, uint32_t u32ReportPeriod)
 {
     m_mapChunkTypeToRatePeriod[eChunkType] = u32ReportPeriod;
-    
+    RegisterChunkCallbackFunction(eChunkType, &RateLimitingModule::Process_Chunk,(BaseModule*)this);
+
     std::string strInfo = ChunkTypesNamingUtility::toString(eChunkType) + " is being rate limited to ns period of " + std::to_string(u32ReportPeriod);
     PLOG_INFO << strInfo;
 }

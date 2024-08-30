@@ -2,10 +2,10 @@
 
 FFTModule::FFTModule(unsigned uBufferSize) : BaseModule(uBufferSize)
 {
-
+    RegisterChunkCallbackFunction(ChunkType::TimeChunk, &FFTModule::Process_TimeChunk,(BaseModule*)this); 
 }
 
-void FFTModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
+void FFTModule::Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     auto pTimeChunk = std::static_pointer_cast<TimeChunk>(pBaseChunk);
     auto pFFTChunk = std::make_shared<FFTChunk>(pTimeChunk->m_dChunkSize/2 + 1, pTimeChunk->m_dSampleRate, pTimeChunk->m_i64TimeStamp, pTimeChunk->m_uNumChannels);

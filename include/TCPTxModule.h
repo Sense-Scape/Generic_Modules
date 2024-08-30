@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <atomic>
 
 /*Custom Includes*/
 #include "BaseModule.h"
@@ -16,19 +17,19 @@
 /**
  * @brief Windows TCP Transmit Module to transmit data from a TCP port
  */
-class LinuxTCPTxModule : public BaseModule
+class TCPTxModule : public BaseModule
 {
 
 public:
     /**
-     * @brief LinuxTCPTxModule constructor
+     * @brief TCPTxModule constructor
      * @param[in] sIPAddress string format of host IP address
      * @param[in] sTCPPort string format of port to listen on
      * @param[in] uMaxInputBufferSize snumber of chunk that may be stores in input buffer (unused)
      * @param[in] iDatagramSize RX datagram size
      */
-    LinuxTCPTxModule(std::string sIPAddress, std::string sTCPPort, unsigned uMaxInputBufferSize, int iDatagramSize);
-    ~LinuxTCPTxModule();
+    TCPTxModule(std::string sIPAddress, std::string sTCPPort, unsigned uMaxInputBufferSize, int iDatagramSize);
+    ~TCPTxModule();
 
     /**
      * @brief Starts the  process on its own thread
@@ -42,15 +43,10 @@ public:
     void RunClientThread(int &clientSocket);
 
     /**
-     * @brief Calls process function only wiht no buffer checks
-     */
-    void ContinuouslyTryProcess() override;
-
-    /**
      * @brief Returns module type
      * @return ModuleType of processing module
      */
-    std::string GetModuleType() override { return "LinuxTCPTxModule"; };
+    std::string GetModuleType() override { return "TCPTxModule"; };
 
 private:
     std::string m_sDestinationIPAddress; ///< string format of host IP address
@@ -74,7 +70,7 @@ private:
      * @brief Module process to reveice data from TCP buffer and pass to next module
      * @param[in] Pointer to base chunk
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void Process(std::shared_ptr<BaseChunk> pBaseChunk);
 };
 
 #endif

@@ -30,6 +30,11 @@ public:
      */
     std::string GetModuleType() override { return "ChunkToBytesModule"; };
 
+    /**
+     * @brief Check input buffer and try process data
+     */
+    void ContinuouslyTryProcess() override;
+
 private:
     unsigned m_uTransmissionSize;                                                                                                   ///< size of transmisison in bytes
     std::map<std::vector<uint8_t>, std::map<ChunkType, std::shared_ptr<SessionController>>> m_MapOfIndentifiersToChunkTypeSessions; ///< Map of each source identifier to specific chunk type being processed
@@ -37,7 +42,8 @@ private:
     /*
      * @brief Module process to collect and format UDP data
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void Process(std::shared_ptr<BaseChunk> pBaseChunk);
+
 };
 
 #endif

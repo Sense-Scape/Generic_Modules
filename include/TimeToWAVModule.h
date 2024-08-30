@@ -6,6 +6,9 @@
 #include "WAVChunk.h"
 #include "TimeChunk.h"
 
+/**
+ * @brief Convert TimeChunks to WAVChunks
+ */
 class TimeToWAVModule : public BaseModule
 {
 public:
@@ -27,7 +30,7 @@ public:
      * @brief Module process to write WAV file
      * @param[in] pBaseChunkpointer to base chunk
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 
     /*
      * @brief Function that converts a time chunk into WAV chunk

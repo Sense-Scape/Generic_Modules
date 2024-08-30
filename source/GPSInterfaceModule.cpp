@@ -22,11 +22,11 @@ void GPSInterfaceModule::ContinuouslyTryProcess()
     while (!m_bShutDown)
     {
         auto pBaseChunk = std::make_shared<BaseChunk>();
-        Process(pBaseChunk);
+        DefaultProcess(pBaseChunk);
     }
 }
 
-void GPSInterfaceModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
+void GPSInterfaceModule::DefaultProcess(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     while (!m_bShutDown)
     {

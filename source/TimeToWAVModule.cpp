@@ -3,10 +3,10 @@
 TimeToWAVModule::TimeToWAVModule(unsigned uBufferSize) : 
 	BaseModule(uBufferSize)
 {
-
+    RegisterChunkCallbackFunction(ChunkType::TimeChunk, &TimeToWAVModule::Process_TimeChunk,(BaseModule*)this);
 }
 
-void TimeToWAVModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
+void TimeToWAVModule::Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {
 	// Creating/casting shared pointers to data
 	auto pTimeChunk = std::dynamic_pointer_cast<TimeChunk>(pBaseChunk);

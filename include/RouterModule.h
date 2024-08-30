@@ -31,11 +31,6 @@ protected:
     std::vector<ChunkType> m_vChunkTypesAlreadyLogged;                                  ///< Stores whether the user has been warned about the chunk not being registered
 
 private:
-    /*
-     * @brief Module process to collect and format UDP data
-     * @param[in] pBaseChunk pointer to chunk that shall be routed
-     */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
 
     /*
      * @brief Passes chunk to relevant module

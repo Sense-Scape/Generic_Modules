@@ -80,7 +80,7 @@ private:
      * @brief Module process to reveice data from TCP buffer and pass to next module
      * @param[in] Pointer to base chunk
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void Process(std::shared_ptr<BaseChunk> pBaseChunk);
 };
 
 #endif

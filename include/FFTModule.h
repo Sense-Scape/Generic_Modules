@@ -25,7 +25,7 @@ public:
     /**
      * @brief Generate and fill complex time data chunk and pass on to next module
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 
     /**
      * @brief Returns module type

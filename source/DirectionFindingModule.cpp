@@ -5,23 +5,8 @@ DirectionFindingModule::DirectionFindingModule(unsigned uBufferSize, double dPro
                                 m_dBaselineLength_m(dBaselineLength_m),
                                 BaseModule(uBufferSize)
 {
-
-}
-
-void DirectionFindingModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
-{
-    switch (pBaseChunk->GetChunkType())
-    {
-    case ChunkType::DetectionBinChunk:
-        ProcessDetectionBinChunk(pBaseChunk);
-        break;
-    
-    case ChunkType::FFTChunk:
-        ProcessFFTChunk(pBaseChunk);
-        break;
-    }
-
-    TryPassChunk(pBaseChunk);
+    RegisterChunkCallbackFunction(ChunkType::DetectionBinChunk, &DirectionFindingModule::Process_DetectionBinChunk, (BaseModule*)this);
+    RegisterChunkCallbackFunction(ChunkType::FFTChunk, &DirectionFindingModule::Process_FFTChunk,(BaseModule*)this);
 }
 
 double DirectionFindingModule::CalculateAngleOfArrival(double differentialPhase_rads,double f_hz, double v_mps, double l_m) {
@@ -34,7 +19,7 @@ double DirectionFindingModule::CalculateAngleOfArrival(double differentialPhase_
     return dAOA_rad;
 }
 
-void DirectionFindingModule::ProcessDetectionBinChunk(std::shared_ptr<BaseChunk> pBaseChunk)
+void DirectionFindingModule::Process_DetectionBinChunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     // Store data for a single client
     auto pDetectionBinChunk = std::static_pointer_cast<DetectionBinChunk>(pBaseChunk);
@@ -59,7 +44,7 @@ float DirectionFindingModule::CalculateDifferentialPhase(const std::complex<floa
         return phase_diff;
 }
 
-void DirectionFindingModule::ProcessFFTChunk(std::shared_ptr<BaseChunk> pBaseChunk)
+void DirectionFindingModule::Process_FFTChunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     auto pFFTChunk = std::static_pointer_cast<FFTChunk>(pBaseChunk);
     

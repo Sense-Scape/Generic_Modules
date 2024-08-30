@@ -6,10 +6,10 @@ WAVAccumulator::WAVAccumulator(double dAccumulatePeriod, double dContinuityThres
 	m_dContinuityThresholdFactor(dContinuityThresholdFactor),
 	m_mAccumulatedWAVChunks()
 {
-
+	RegisterChunkCallbackFunction(ChunkType::WAVChunk, &WAVAccumulator::Process_WAVChunk,(BaseModule*)this);
 }
 
-void WAVAccumulator::Process(std::shared_ptr<BaseChunk> pBaseChunk)
+void WAVAccumulator::Process_WAVChunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {
 	auto pWAVChunk = std::static_pointer_cast<WAVChunk>(pBaseChunk);
 	AccumulateWAVChunk(pWAVChunk);

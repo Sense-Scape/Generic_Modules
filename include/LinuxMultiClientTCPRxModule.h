@@ -79,7 +79,7 @@ private:
     /*
      * @brief Module process to reveice data from TCP buffer and pass to next module
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void Process(std::shared_ptr<BaseChunk> pBaseChunk);
 };
 
 #endif

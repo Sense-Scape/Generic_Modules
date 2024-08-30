@@ -14,7 +14,7 @@
 /*3rd Party*/
 #include <sndfile.hh> // For WAV Files
 
-class LinuxWAVReaderModule : public BaseModule
+class WAVReaderModule : public BaseModule
 {
 
 private:
@@ -35,7 +35,7 @@ protected:
     /*
      * @brief Module process to write WAV file
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void Process(std::shared_ptr<BaseChunk> pBaseChunk);
 
 public:
     /*
@@ -44,14 +44,14 @@ public:
      * @param[in] u32ChunkSize size of TimeChunk chunks
      * @param[in] uMaxInputBufferSize size of input buffer
      */
-    LinuxWAVReaderModule(std::string sFileReadPath, uint32_t u32ChunkSize, uint32_t uMaxInputBufferSize);
-    ~LinuxWAVReaderModule(){};
+    WAVReaderModule(std::string sFileReadPath, uint32_t u32ChunkSize, uint32_t uMaxInputBufferSize);
+    ~WAVReaderModule(){};
 
     /*
      * @brief Returns module type
      * @param[out] ModuleType of processing module
      */
-    std::string GetModuleType() override { return "LinuxWAVReaderModule"; };
+    std::string GetModuleType() override { return "WAVReaderModule"; };
 
     /**
      * @brief Check input buffer and try process data

@@ -4,6 +4,9 @@
 #include "BaseModule.h"
 #include "WAVChunk.h"
 
+/**
+ * @brief Accumulated WAV chunks until specified period
+ */
 class WAVAccumulator : public BaseModule
 {
 
@@ -66,7 +69,7 @@ protected:
      * @brief Module process to write WAV file
      * @param[in] pBaseChunkpointer to base chunk
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void Process_WAVChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 };
 
 #endif

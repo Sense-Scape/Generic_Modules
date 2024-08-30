@@ -16,11 +16,11 @@ public:
      */
     ToJSONModule(unsigned uBufferSize);
     //~ToJSONModule(){};
-
+    
     /**
-     * @brief Generate and fill complex time data chunk and pass on to next module
+     * @brief Check input buffer and try process data
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void ContinuouslyTryProcess() override;
 
     /**
      * @brief Returns module type
@@ -29,6 +29,12 @@ public:
     std::string GetModuleType() override { return "ToJSONModule"; };
 
 private:
+
+    /**
+     * @brief Generate and fill complex time data chunk and pass on to next module
+     */
+    void Process(std::shared_ptr<BaseChunk> pBaseChunk);
+
 };
 
 #endif

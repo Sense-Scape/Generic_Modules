@@ -1,6 +1,6 @@
-#include "LinuxTCPTxModule.h"
+#include "TCPTxModule.h"
 
-LinuxTCPTxModule::LinuxTCPTxModule(std::string sIPAddress, std::string sTCPPort, unsigned uMaxInputBufferSize, int iDatagramSize = 512) : BaseModule(uMaxInputBufferSize),
+TCPTxModule::TCPTxModule(std::string sIPAddress, std::string sTCPPort, unsigned uMaxInputBufferSize, int iDatagramSize = 512) : BaseModule(uMaxInputBufferSize),
                                                                                                                                           m_sDestinationIPAddress(sIPAddress),
                                                                                                                                           m_sTCPPort(sTCPPort),
                                                                                                                                           m_WinSocket(),
@@ -9,12 +9,12 @@ LinuxTCPTxModule::LinuxTCPTxModule(std::string sIPAddress, std::string sTCPPort,
 {
 }
 
-LinuxTCPTxModule::~LinuxTCPTxModule()
+TCPTxModule::~TCPTxModule()
 {
     CloseTCPSocket(m_WinSocket);
 }
 
-void LinuxTCPTxModule::ConnectTCPSocket()
+void TCPTxModule::ConnectTCPSocket()
 {
     // Configuring protocol to TCP
     if ((m_WinSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
@@ -42,7 +42,7 @@ void LinuxTCPTxModule::ConnectTCPSocket()
     signal(SIGPIPE, SIG_IGN);
 }
 
-void LinuxTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
+void TCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     // Constantly looking for new connections and stating client threads
     // One thread should be created at a time, corresponding to one simulated device
@@ -106,16 +106,18 @@ void LinuxTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     }
 }
 
-void LinuxTCPTxModule::RunClientThread(int &clientSocket)
+void TCPTxModule::RunClientThread(int &clientSocket)
 {
     while (!m_bShutDown)
     {
+       
         try
         {
             // During processing we see if there is data (UDP Chunk) in the input buffer
             std::shared_ptr<BaseChunk> pBaseChunk;
             if (TakeFromBuffer(pBaseChunk))
             {
+                
                 // Cast it back to a UDP chunk
                 auto udpChunk = std::static_pointer_cast<ByteChunk>(pBaseChunk);
                 const auto pvcData = udpChunk->m_vcDataChunk;
@@ -153,19 +155,12 @@ void LinuxTCPTxModule::RunClientThread(int &clientSocket)
     m_bTCPConnected = false;
 }
 
-void LinuxTCPTxModule::CloseTCPSocket(int &clientSocket)
+void TCPTxModule::CloseTCPSocket(int &clientSocket)
 {
     close(clientSocket);
 }
 
-void LinuxTCPTxModule::StartProcessing()
-{
-    // Passing in empty chunk that is not used
-    m_thread = std::thread([this]
-                           { Process(std::shared_ptr<BaseChunk>()); });
-}
-
-void LinuxTCPTxModule::ContinuouslyTryProcess()
+void TCPTxModule::StartProcessing()
 {
     // Passing in empty chunk that is not used
     m_thread = std::thread([this]

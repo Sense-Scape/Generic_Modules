@@ -1,6 +1,6 @@
-#include "LinuxWAVReaderModule.h"
+#include "WAVReaderModule.h"
 
-LinuxWAVReaderModule::LinuxWAVReaderModule(std::string sFileReadPath, uint32_t u32ChunkSize, unsigned uMaxInputBufferSize) : BaseModule(uMaxInputBufferSize),
+WAVReaderModule::WAVReaderModule(std::string sFileReadPath, uint32_t u32ChunkSize, unsigned uMaxInputBufferSize) : BaseModule(uMaxInputBufferSize),
                                                                                                                              m_sFileReadPath(sFileReadPath),
                                                                                                                              m_u16FilePlaybackIndex(0),
                                                                                                                              m_u32ChunkSize(u32ChunkSize),
@@ -9,7 +9,7 @@ LinuxWAVReaderModule::LinuxWAVReaderModule(std::string sFileReadPath, uint32_t u
     SetInputWAVFileList();
 }
 
-void LinuxWAVReaderModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
+void WAVReaderModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
 
     // Check if currently reading and if not open a file
@@ -64,7 +64,7 @@ void LinuxWAVReaderModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     std::this_thread::sleep_for(std::chrono::milliseconds((uint32_t)(1000 * fChunkDuration_seconds)));
 }
 
-void LinuxWAVReaderModule::SetInputWAVFileList()
+void WAVReaderModule::SetInputWAVFileList()
 {
     // Find all files using dorectory iterator
     for (const auto &entry : std::filesystem::directory_iterator(m_sFileReadPath))
@@ -84,10 +84,10 @@ void LinuxWAVReaderModule::SetInputWAVFileList()
 
     // Using a range-based for loop
     for (const std::string &sFilePath : m_vsFileList)
-        PLOG_INFO << "LinuxWAVReaderModule found: " + sFilePath;
+        PLOG_INFO << "WAVReaderModule found: " + sFilePath;
 }
 
-void LinuxWAVReaderModule::ContinuouslyTryProcess()
+void WAVReaderModule::ContinuouslyTryProcess()
 {
     while (!m_bShutDown)
     {

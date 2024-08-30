@@ -18,9 +18,9 @@ public:
     //~TracerModule(){};
 
     /**
-     * @brief Generate and fill complex time data chunk and pass on to next module
+     * @brief Check input buffer and try process data
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void ContinuouslyTryProcess() override;
 
     /**
      * @brief Returns module type
@@ -37,6 +37,11 @@ public:
 private:
     std::string m_strPipelinePosition;  ///< Name printed with tracer
     bool m_bPrintJSONIfPossible;        ///< If json availablle, will be printed
+
+        /**
+     * @brief Generate and fill complex time data chunk and pass on to next module
+     */
+    void Process(std::shared_ptr<BaseChunk> pBaseChunk);
 };
 
 #endif

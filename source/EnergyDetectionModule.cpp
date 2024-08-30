@@ -3,17 +3,11 @@
 EnergyDetectionModule::EnergyDetectionModule(unsigned uBufferSize, float fThresholdAboveNoiseFoor) :m_fThresholdAboveNoiseFoor_db(fThresholdAboveNoiseFoor),
                                                                                                     BaseModule(uBufferSize)
 {
-
+    RegisterChunkCallbackFunction(ChunkType::FFTMagnitudeChunk, &EnergyDetectionModule::Process_FFTMagnitudeChunk, (BaseModule*)this);
 }
 
-void EnergyDetectionModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
+void EnergyDetectionModule::Process_FFTMagnitudeChunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-    // Check if it a chunk we are interested in otherwise try pass
-    if(pBaseChunk->GetChunkType() != ChunkType::FFTMagnitudeChunk) {
-        TryPassChunk(pBaseChunk);
-        return;
-    }
-
     // Now we prepare the chunk for processing
     auto pFFTMagnitudeChunk = std::static_pointer_cast<FFTMagnitudeChunk>(pBaseChunk);
 

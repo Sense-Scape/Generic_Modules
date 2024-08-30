@@ -11,6 +11,9 @@
 #include "BaseModule.h"
 #include "WAVChunk.h"
 
+/**
+ * @brief Checks for space and writes WAV data to file system
+ */
 class WAVWriterModule : public BaseModule
 {
 
@@ -37,7 +40,7 @@ protected:
     /*
      * @brief Module process to write WAV file
      */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+    void Process_WAVChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 
 public:
     /*

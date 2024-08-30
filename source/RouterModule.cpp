@@ -26,6 +26,7 @@ void RouterModule::RegisterOutputModule(std::shared_ptr<BaseModule> pNextModule,
 
     // If not, register the chunktype module pair
     m_ChunkTypeModuleMap[eChunkType].push_back(pNextModule);
+    RegisterChunkCallbackFunction(eChunkType, &RouterModule::RouteChunk,(BaseModule*)this);
 }
 
 void RouterModule::RouteChunk(std::shared_ptr<BaseChunk> pBaseChunk)
@@ -54,9 +55,4 @@ void RouterModule::RouteChunk(std::shared_ptr<BaseChunk> pBaseChunk)
         std::string strWarning = std::string(__FUNCTION__) + ": " + ChunkTypesNamingUtility::toString(pBaseChunk->GetChunkType()) + " not registered chunk type, dropping";
         PLOG_WARNING << strWarning;
     }
-}
-
-void RouterModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
-{
-    RouteChunk(pBaseChunk);
 }
