@@ -78,15 +78,17 @@ bool SoundCardInterfaceModule::UpdatePCMSamples()
             fprintf(stderr, "Error getting available frames: %s\n", snd_strerror(frames_available));
             exit(1);
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         frames_available = snd_pcm_avail_update(m_capture_handle);
     } 
 
     if ((err = snd_pcm_readi(m_capture_handle, m_pvcAudioData->data(), iBufferFrames)) != iBufferFrames)
     {
-        fprintf(stderr, "Read from audio interface failed (%d): %s\n",
+        fprintf(stderr, "Read from audio interface failed (%d) (possible overrun): %s\n",
         err, snd_strerror(err));
-        exit(1);
+        snd_pcm_prepare(m_capture_handle);
+        snd_pcm_start(m_capture_handle);
+        return false;
     }
 
     // Iterate through each sample capture
