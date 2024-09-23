@@ -1,7 +1,6 @@
 #include "WAVWriterModule.h"
 
-WAVWriterModule::WAVWriterModule(std::string sFileWritePath, unsigned uMaxInputBufferSize) : BaseModule(uMaxInputBufferSize),
-                                                                                                       m_sFileWritePath(sFileWritePath)
+WAVWriterModule::WAVWriterModule(std::string sFileWritePath, unsigned uMaxInputBufferSize) : BaseModule(uMaxInputBufferSize), m_sFileWritePath(sFileWritePath)
 {
     // Creating file path for audio files if it does not exist
     CreateFilePath();
@@ -30,27 +29,22 @@ void WAVWriterModule::WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk)
         return; // or handle error appropriately
     }
 
-    // Modify WAV header for 32-bit float
-    pWAVChunk->m_sWAVHeader.AudioFormat = 3; // 3 for IEEE float
-    pWAVChunk->m_sWAVHeader.bitsPerSample = 32;
-    pWAVChunk->m_sWAVHeader.bytesPerSec = pWAVChunk->m_sWAVHeader.SamplesPerSec * pWAVChunk->m_sWAVHeader.NumOfChan * 4; // 4 bytes per sample
-    pWAVChunk->m_sWAVHeader.blockAlign = pWAVChunk->m_sWAVHeader.NumOfChan * 4;
+    // Modify WAV header for 16-bit PCM integer (can change to 32-bit if needed)
+    pWAVChunk->m_sWAVHeader.AudioFormat = 1; // 1 for PCM (integer)
+    pWAVChunk->m_sWAVHeader.bitsPerSample = 16; // 16 bits per sample
+    pWAVChunk->m_sWAVHeader.bytesPerSec = pWAVChunk->m_sWAVHeader.SamplesPerSec * pWAVChunk->m_sWAVHeader.NumOfChan * 2; // 2 bytes per sample for 16-bit
+    pWAVChunk->m_sWAVHeader.blockAlign = pWAVChunk->m_sWAVHeader.NumOfChan * 2;
 
     // Recalculate data size
-    uint32_t dataSize = pWAVChunk->m_vi16Data.size() * sizeof(float);
+    uint32_t dataSize = pWAVChunk->m_vi16Data.size() * sizeof(int16_t); // Size for 16-bit integers
     pWAVChunk->m_sWAVHeader.Subchunk2Size = dataSize;
 
     // Write modified WAV header
     auto pvcWAVHeaderBytes = pWAVChunk->WAVHeaderToBytes();
     outFile.write(reinterpret_cast<const char*>(pvcWAVHeaderBytes->data()), 44);
 
-    // Convert 16-bit int to 32-bit float and write
-    std::vector<float> floatData(pWAVChunk->m_vi16Data.size());
-    for (size_t i = 0; i < pWAVChunk->m_vi16Data.size(); ++i) {
-        floatData[i] = static_cast<float>(pWAVChunk->m_vi16Data[i]) / 32768.0f;   
-    }
-
-    outFile.write(reinterpret_cast<const char*>(floatData.data()), dataSize);
+    // Write 16-bit int data directly
+    outFile.write(reinterpret_cast<const char*>(pWAVChunk->m_vi16Data.data()), dataSize);
     
     // Update file size in header
     uint32_t fileSize = static_cast<uint32_t>(outFile.tellp()) - 8;
