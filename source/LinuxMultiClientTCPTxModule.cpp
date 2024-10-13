@@ -1,8 +1,8 @@
 #include "LinuxMultiClientTCPTxModule.h"
 
-LinuxMultiClientTCPTxModule::LinuxMultiClientTCPTxModule(std::string sIPAddress, std::string sTCPPort, unsigned uMaxInputBufferSize, int iDatagramSize = 512) : BaseModule(uMaxInputBufferSize),
+LinuxMultiClientTCPTxModule::LinuxMultiClientTCPTxModule(std::string sIPAddress, uint16_t u16TCPPort, unsigned uMaxInputBufferSize, int iDatagramSize = 512) : BaseModule(uMaxInputBufferSize),
 																																								m_sDestinationIPAddress(sIPAddress),
-																																								m_sTCPAllocatorPortNumber(sTCPPort),
+																																								m_u16TCPPort(u16TCPPort),
 																																								m_bTCPConnected()
 {
 }
@@ -107,7 +107,7 @@ uint16_t LinuxMultiClientTCPTxModule::WaitForReturnedPortAllocation(int &WinSock
 			// And then try store data
 			if (i16ReceivedDataLength > vcByteData.size())
 			{
-				std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + m_sTCPAllocatorPortNumber + ": received data length shorter than actual received data ";
+				std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + std::to_string(m_u16TCPPort) + ": received data length shorter than actual received data ";
 				PLOG_WARNING << strWarning;
 				bReadError = true;
 				break;
@@ -138,11 +138,9 @@ void LinuxMultiClientTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		if (!m_bTCPConnected)
 		{
 			int AllocatingServerSocket;
-			uint16_t u16TCPPort = std::stoi(m_sTCPAllocatorPortNumber);
 
 			// Lets request a port number on which to communicate with the server
-
-			ConnectTCPSocket(AllocatingServerSocket, u16TCPPort);
+			ConnectTCPSocket(AllocatingServerSocket, m_u16TCPPort);
 
 			if (!m_bTCPConnected)
 			{
