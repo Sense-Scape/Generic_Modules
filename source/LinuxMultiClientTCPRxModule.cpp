@@ -1,8 +1,8 @@
 #include "LinuxMultiClientTCPRxModule.h"
 
-LinuxMultiClientTCPRxModule::LinuxMultiClientTCPRxModule(std::string sIPAddress, std::string sTCPPort, unsigned uMaxInputBufferSize, int iDatagramSize = 512) : BaseModule(uMaxInputBufferSize),
+LinuxMultiClientTCPRxModule::LinuxMultiClientTCPRxModule(std::string sIPAddress, uint16_t u16TCPPort, unsigned uMaxInputBufferSize, int iDatagramSize = 512) : BaseModule(uMaxInputBufferSize),
                                                                                                                                                                 m_sIPAddress(sIPAddress),
-                                                                                                                                                                m_sTCPPort(sTCPPort),
+                                                                                                                                                                m_u16TCPPort(u16TCPPort),
                                                                                                                                                                 m_iDatagramSize(iDatagramSize),
                                                                                                                                                                 m_u16LifeTimeConnectionCount(0)
 {
@@ -16,12 +16,10 @@ void LinuxMultiClientTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     while (!m_bShutDown)
     {
-
         // Connect to the allocation port and start listening for client to connections
         int AllocatingServerSocket;
-        uint16_t u16TCPPort = std::stoi(m_sTCPPort);
 
-        ConnectTCPSocket(AllocatingServerSocket, u16TCPPort);
+        ConnectTCPSocket(AllocatingServerSocket, m_u16TCPPort);
         AllocateAndStartClientProcess(AllocatingServerSocket);
         CloseTCPSocket(AllocatingServerSocket);
     }
@@ -104,8 +102,7 @@ void LinuxMultiClientTCPRxModule::AllocateAndStartClientProcess(int &AllocatingS
 
     // Increment and define port we can allocate to new client to not have port clash
     m_u16LifeTimeConnectionCount += 1;
-    uint16_t u16BasePortNumber = std::stoi(m_sTCPPort);
-    uint16_t u16AllocatedPortNumber = u16BasePortNumber + m_u16LifeTimeConnectionCount;
+    uint16_t u16AllocatedPortNumber = m_u16TCPPort + m_u16LifeTimeConnectionCount;
 
     {
         std::string strInfo = std::string(__FUNCTION__) + ": Begining client port allocation to port " + std::to_string(u16AllocatedPortNumber);
@@ -199,7 +196,7 @@ void LinuxMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNum
                 // And then try store data
                 if (uReceivedDataLength > vcByteData.size())
                 {
-                    std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + m_sTCPPort + ": received data length shorter than actual received data ";
+                    std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + std::to_string(m_u16TCPPort) + ": received data length shorter than actual received data ";
                     PLOG_WARNING << strWarning;
                     bReadError = true;
                     break;
