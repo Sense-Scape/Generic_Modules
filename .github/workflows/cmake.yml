@@ -26,6 +26,9 @@ jobs:
     - name: Install ALSA
       run: sudo apt-get install libasound2-dev
 
+    - name: Install ALSA
+      run: sudo apt-get install libpng
+
     - name: Install SNDFile
       run: |
         sudo apt-get install libsndfile1
