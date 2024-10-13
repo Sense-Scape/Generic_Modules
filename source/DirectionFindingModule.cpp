@@ -5,8 +5,23 @@ DirectionFindingModule::DirectionFindingModule(unsigned uBufferSize, double dPro
                                 m_dBaselineLength_m(dBaselineLength_m),
                                 BaseModule(uBufferSize)
 {
-    RegisterChunkCallbackFunction(ChunkType::DetectionBinChunk, &DirectionFindingModule::Process_DetectionBinChunk, (BaseModule*)this);
-    RegisterChunkCallbackFunction(ChunkType::FFTChunk, &DirectionFindingModule::Process_FFTChunk,(BaseModule*)this);
+
+}
+
+void DirectionFindingModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
+{
+    switch (pBaseChunk->GetChunkType())
+    {
+    case ChunkType::DetectionBinChunk:
+        ProcessDetectionBinChunk(pBaseChunk);
+        break;
+    
+    case ChunkType::FFTChunk:
+        ProcessFFTChunk(pBaseChunk);
+        break;
+    }
+
+    TryPassChunk(pBaseChunk);
 }
 
 double DirectionFindingModule::CalculateAngleOfArrival(double differentialPhase_rads,double f_hz, double v_mps, double l_m) {
@@ -19,12 +34,11 @@ double DirectionFindingModule::CalculateAngleOfArrival(double differentialPhase_
     return dAOA_rad;
 }
 
-void DirectionFindingModule::Process_DetectionBinChunk(std::shared_ptr<BaseChunk> pBaseChunk)
+void DirectionFindingModule::ProcessDetectionBinChunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     // Store data for a single client
     auto pDetectionBinChunk = std::static_pointer_cast<DetectionBinChunk>(pBaseChunk);
-    auto vu8SourceIdentifier = pDetectionBinChunk->GetSourceIdentifier();
-    m_mSourceIdentierToDetectionBins[vu8SourceIdentifier] = *pDetectionBinChunk->GetDetectionBins();
+    m_vvu16DetectionBins = *pDetectionBinChunk->GetDetectionBins();
 }
 
 float DirectionFindingModule::CalculateDifferentialPhase(const std::complex<float>& z1, const std::complex<float>& z2)
@@ -44,7 +58,7 @@ float DirectionFindingModule::CalculateDifferentialPhase(const std::complex<floa
         return phase_diff;
 }
 
-void DirectionFindingModule::Process_FFTChunk(std::shared_ptr<BaseChunk> pBaseChunk)
+void DirectionFindingModule::ProcessFFTChunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     auto pFFTChunk = std::static_pointer_cast<FFTChunk>(pBaseChunk);
     
@@ -58,22 +72,10 @@ void DirectionFindingModule::Process_FFTChunk(std::shared_ptr<BaseChunk> pBaseCh
         return;
     }
     
-
-    // Try find detection bins otherwise dont process
-    auto vu8SourceIdentifier = pFFTChunk->GetSourceIdentifier();
-    bool bSourceIdentifierNotSeen = (m_mSourceIdentierToDetectionBins.find(vu8SourceIdentifier) == m_mSourceIdentierToDetectionBins.end());
-    if(bSourceIdentifierNotSeen)
-    {
-        std::cout << "aaa" << std::endl;
-        TryPassChunk(pFFTChunk);
-        return;
-    }
-
     // Prep the data to process
-    auto vu16DetectionBins0 = m_mSourceIdentierToDetectionBins[vu8SourceIdentifier][0];
-    auto vu16DetectionBins1 = m_mSourceIdentierToDetectionBins[vu8SourceIdentifier][1];
-
     std::vector<float> vfAngleOfArrivals;
+    auto vu16DetectionBins0 = m_vvu16DetectionBins[0];
+    auto vu16DetectionBins1 = m_vvu16DetectionBins[1];
 
     // Then calculate the AOA
     for (const auto& uDetectionIndex : vu16DetectionBins0)
@@ -94,7 +96,7 @@ void DirectionFindingModule::Process_FFTChunk(std::shared_ptr<BaseChunk> pBaseCh
     // And store said data
     auto pDirectionChunk = std::make_shared<DirectionBinChunk>();
     pDirectionChunk->SetSourceIdentifier(pFFTChunk->GetSourceIdentifier());
-    pDirectionChunk->SetDirectionData(vu16DetectionBins0.size(), vu16DetectionBins0, vfAngleOfArrivals, pFFTChunk->m_dSampleRate);
+    pDirectionChunk->SetDirectionData(m_vvu16DetectionBins[0].size(), m_vvu16DetectionBins[0], vfAngleOfArrivals, pFFTChunk->m_dSampleRate);
 
     // Once complete, pass on the data
     TryPassChunk(pFFTChunk);

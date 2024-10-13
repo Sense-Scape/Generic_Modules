@@ -1,8 +1,8 @@
 #include "TCPTxModule.h"
 
-TCPTxModule::TCPTxModule(std::string sIPAddress, std::string sTCPPort, unsigned uMaxInputBufferSize, int iDatagramSize = 512) : BaseModule(uMaxInputBufferSize),
+TCPTxModule::TCPTxModule(std::string sIPAddress, uint16_t u16TCPPort, unsigned uMaxInputBufferSize, int iDatagramSize = 512) : BaseModule(uMaxInputBufferSize),
                                                                                                                                           m_sDestinationIPAddress(sIPAddress),
-                                                                                                                                          m_sTCPPort(sTCPPort),
+                                                                                                                                          m_u16TCPPort(u16TCPPort),
                                                                                                                                           m_WinSocket(),
                                                                                                                                           m_SocketStruct(),
                                                                                                                                           m_bTCPConnected()
@@ -53,13 +53,13 @@ void TCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         {
             ConnectTCPSocket();
 
-            std::string strInfo = std::string(__FUNCTION__) + ": Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
+            std::string strInfo = std::string(__FUNCTION__) + ": Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + std::to_string(m_u16TCPPort);
             PLOG_INFO << strInfo;
 
             // Lets start by creating the sock addr
             sockaddr_in sockaddr;
             sockaddr.sin_family = AF_INET;
-            sockaddr.sin_port = htons(stoi(m_sTCPPort));
+            sockaddr.sin_port = htons(m_u16TCPPort);
 
             // Lets then convert an IPv4 or IPv6 to its binary representation
             if (inet_pton(AF_INET, m_sDestinationIPAddress.c_str(), &(sockaddr.sin_addr)) <= 0)
@@ -81,7 +81,7 @@ void TCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
             // Then lets do a blocking call to try connect
             if (connect(clientSocket, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) == 0)
             {
-                std::string strInfo = std::string(__FUNCTION__) + ": Connected to server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
+                std::string strInfo = std::string(__FUNCTION__) + ": Connected to server at ip " + m_sDestinationIPAddress + " on port " + std::to_string(m_u16TCPPort);
                 PLOG_INFO << strInfo;
 
                 // And update connection state and spin of the processing thread
@@ -92,7 +92,7 @@ void TCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
             }
             else
             {
-                std::string strWarning = std::string(__FUNCTION__) + ": Failed to connect to the server.Error code :" + std::to_string(errno);
+                std::string strWarning = std::string(__FUNCTION__) + ": Failed to connect to the server. Error code: " + std::to_string(errno);
                 PLOG_WARNING << strWarning;
                 std::this_thread::sleep_for(std::chrono::milliseconds(10000));
                 close(clientSocket);
@@ -148,7 +148,7 @@ void TCPTxModule::RunClientThread(int &clientSocket)
 
     // In the case of stopping processing or an error we
     // formally close the socket and update state variable
-    std::string strInfo = std::string(__FUNCTION__) + ": Closing TCP Socket at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
+    std::string strInfo = std::string(__FUNCTION__) + ": Closing TCP Socket at ip " + m_sDestinationIPAddress + " on port " + std::to_string(m_u16TCPPort);
     PLOG_INFO << strInfo;
 
     CloseTCPSocket(clientSocket);

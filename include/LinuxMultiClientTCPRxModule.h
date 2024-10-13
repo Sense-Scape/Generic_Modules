@@ -22,11 +22,11 @@ public:
     /**
      * @brief WinTCPRxModule constructor
      * @param[in] sIPAddress string format of host IP address
-     * @param[in] sTCPPort string format of port to listen on
-     * @param[in] uMaxInputBufferSize snumber of chunk that may be stores in input buffer (unused)
+     * @param[in] u16TCPPort uint16_t format of port to listen on
+     * @param[in] uMaxInputBufferSize number of chunks that may be stored in input buffer (unused)
      * @param[in] iDatagramSize RX datagram size
      */
-    LinuxMultiClientTCPRxModule(std::string sIPAddress, std::string sTCPPort, unsigned uMaxInputBufferSize, int iDatagramSize);
+    LinuxMultiClientTCPRxModule(std::string sIPAddress, uint16_t u16TCPPort, unsigned uMaxInputBufferSize, int iDatagramSize);
     ~LinuxMultiClientTCPRxModule();
 
     /**
@@ -47,7 +47,7 @@ public:
 
 private:
     std::string m_sIPAddress;              ///< String format of host IP address
-    std::string m_sTCPPort;                ///< String format of port to listen on
+    uint16_t m_u16TCPPort;                 ///< uint16_t format of port to listen on
     int m_iDatagramSize;                   ///< Maxmimum TCP buffer length
     uint16_t m_u16LifeTimeConnectionCount; ///< Number of TCP client connections arcoss time
 

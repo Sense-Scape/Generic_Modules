@@ -24,11 +24,11 @@ public:
     /**
      * @brief TCPTxModule constructor
      * @param[in] sIPAddress string format of host IP address
-     * @param[in] sTCPPort string format of port to listen on
-     * @param[in] uMaxInputBufferSize snumber of chunk that may be stores in input buffer (unused)
+     * @param[in] u16TCPPort uint16_t format of port to listen on
+     * @param[in] uMaxInputBufferSize number of chunks that may be stored in input buffer (unused)
      * @param[in] iDatagramSize RX datagram size
      */
-    TCPTxModule(std::string sIPAddress, std::string sTCPPort, unsigned uMaxInputBufferSize, int iDatagramSize);
+    TCPTxModule(std::string sIPAddress, uint16_t u16TCPPort, unsigned uMaxInputBufferSize, int iDatagramSize);
     ~TCPTxModule();
 
     /**
@@ -50,7 +50,7 @@ public:
 
 private:
     std::string m_sDestinationIPAddress; ///< string format of host IP address
-    std::string m_sTCPPort;              ///< string format of port to listen on
+    uint16_t m_u16TCPPort;               ///< uint16_t format of port to listen on
     int m_WinSocket;                     ///< Linux socket
     struct sockaddr_in m_SocketStruct;   ///< IPv4 Socket
     std::atomic<bool> m_bTCPConnected;   ///< State variable as to whether the TCP socket is connected

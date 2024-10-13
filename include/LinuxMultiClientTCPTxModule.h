@@ -23,11 +23,11 @@ public:
     /**
      * @brief WinTCPTxModule constructor
      * @param[in] sIPAddress string format of host IP address
-     * @param[in] sTCPPort string format of port to listen on
+     * @param[in] u16TCPPort u16 format of port to listen on
      * @param[in] uMaxInputBufferSize snumber of chunk that may be stores in input buffer (unused)
      * @param[in] iDatagramSize RX datagram size
      */
-    LinuxMultiClientTCPTxModule(std::string sIPAddress, std::string sTCPPort, unsigned uMaxInputBufferSize, int iDatagramSize);
+    LinuxMultiClientTCPTxModule(std::string sIPAddress, uint16_t u16TCPPort, unsigned uMaxInputBufferSize, int iDatagramSize);
     ~LinuxMultiClientTCPTxModule();
 
     /**
@@ -48,7 +48,7 @@ public:
 
 private:
     std::string m_sDestinationIPAddress;   ///< string format of host IP address
-    std::string m_sTCPAllocatorPortNumber; ///< string format of port to listen on
+    uint16_t m_u16TCPPort;                 ///< uint16_t format of port to listen on
     std::atomic<bool> m_bTCPConnected;     ///< State variable as to whether the TCP socket is connected
 
     /**
