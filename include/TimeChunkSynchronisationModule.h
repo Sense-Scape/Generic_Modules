@@ -19,12 +19,12 @@ public:
 
 private:
     void Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk);
-    void SynchronizeAndProcessChunks();
 
     /**
      * @brief Check if we need to perform synchronization and perform it if necessary
+     * @return True if we should perform synchronization, false otherwise
      */
-    void CheckAndPerformSynchronization();
+    bool ShouldWeTrySynchronise();
 
     /**
      * @brief Check if all queues have data
@@ -32,13 +32,19 @@ private:
      */
     bool CheckAllQueuesHaveData();
 
+    /**
+     * @brief Synchronize the channels of the time data
+     */
+    void SynchronizeChannels();
+
     std::map<std::vector<uint8_t>, std::vector<int16_t>> m_TimeDataSourceMap;
-    std::map<std::vector<uint8_t>, uint64_t> m_MostRecentSourceTimestamp;
+
     uint64_t m_u64SampleRate_hz;
     uint64_t m_u64ThresholdNs;
     uint64_t m_u64SyncIntervalNs;
     std::chrono::steady_clock::time_point m_tpLastSyncAttempt;
-    std::unordered_map<std::string, uint64_t> m_LastProcessedTimestampMap;
+    std::map<std::vector<uint8_t>, uint64_t> m_OldestSourceTimestampMap;  ///< Time stamps from the oldest chunk received from each source   
+    std::map<std::vector<uint8_t>, uint64_t> m_MostRecentSourceTimestamp; ///< Time stamps from the most recent chunk received from each source
 };
 
 #endif

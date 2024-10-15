@@ -14,6 +14,11 @@ void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk
 {
     auto pTimeChunk = std::static_pointer_cast<TimeChunk>(pBaseChunk);
 
+    // Check if this is the first piece of data for this source
+    // So we can make sure the channels are time aligned
+    if (m_TimeDataSourceMap[pTimeChunk->GetSourceIdentifier()].empty())
+        m_OldestSourceTimestampMap[pTimeChunk->GetSourceIdentifier()] = pTimeChunk->m_i64TimeStamp;
+
     // Store time data instead of only the first channel of data
     auto& vi16TimeData = m_TimeDataSourceMap[pTimeChunk->GetSourceIdentifier()];
     vi16TimeData.insert(vi16TimeData.end(), pTimeChunk->m_vvi16TimeChunks[0].begin(), pTimeChunk->m_vvi16TimeChunks[0].end());
@@ -22,19 +27,32 @@ void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk
     m_MostRecentSourceTimestamp[pTimeChunk->GetSourceIdentifier()] = pTimeChunk->m_i64TimeStamp;
     m_u64SampleRate_hz = pTimeChunk->m_i64TimeStamp;
 
-    CheckAndPerformSynchronization();
+    if(!ShouldWeTrySynchronise());
+        return;
+    
+    SynchronizeChannels();
+
 }
 
-void TimeChunkSynchronisationModule::CheckAndPerformSynchronization()
-{
+bool TimeChunkSynchronisationModule::ShouldWeTrySynchronise()
+{   
+    // Check if we have enough data to perform synchronization
+    if (!CheckAllQueuesHaveData())
+        return false;
+
+    // Check if we have enough sources to do multilateration
+    bool bEnoughSourcesToDoMultilateration = m_TimeDataSourceMap.size() >= 3;
+    if (!bEnoughSourcesToDoMultilateration) 
+        return false;
+
+    // Check if we have waited long enough to perform synchronization
     auto tpNow = std::chrono::steady_clock::now();
     auto u64ElapsedNs = std::chrono::duration_cast<std::chrono::nanoseconds>(tpNow - m_tpLastSyncAttempt).count();
+    if (u64ElapsedNs <= m_u64SyncIntervalNs)
+        return false;
+    m_tpLastSyncAttempt = tpNow;
 
-    if (u64ElapsedNs >= m_u64SyncIntervalNs)
-    {
-        SynchronizeAndProcessChunks();
-        m_tpLastSyncAttempt = tpNow;
-    }
+    return true;
 }
 
 bool TimeChunkSynchronisationModule::CheckAllQueuesHaveData()
@@ -49,107 +67,26 @@ bool TimeChunkSynchronisationModule::CheckAllQueuesHaveData()
     return true;
 }
 
-void TimeChunkSynchronisationModule::SynchronizeAndProcessChunks()
+void TimeChunkSynchronisationModule::SynchronizeChannels()
 {
-    // Check if we have enough sources to do multilateration
-    bool bEnoughSourcesToDoMultilateration = m_TimeDataSourceMap.size() >= 3;
-    if (!bEnoughSourcesToDoMultilateration) 
-        return;
-        
-    if (!CheckAllQueuesHaveData())
-        return;
-    
+    // Find the most recent 'oldest' timestamp
+    uint64_t i64MostRecentOldestTimestamp = std::numeric_limits<int64_t>::min();
+    for (const auto& pair : m_OldestSourceTimestampMap)
+        i64MostRecentOldestTimestamp = std::max(i64MostRecentOldestTimestamp, pair.second);
 
-    // Now that we know we have sources, check if all queues have data and find the earliest timestamp
-    bool bDiscontinuityDetected = false;
-    uint64_t u64EarliestTimestamp = std::numeric_limits<uint64_t>::max();
-
-
-    for (const auto& queuePair : m_TimeDataSourceMap)
+    // Calculate and remove excess samples from each channel
+    for (auto& pair : m_TimeDataSourceMap)
     {
-        
-        
-        uint64_t u64CurrentTimestamp = m_MostRecentSourceTimestamp[queuePair.first];
-        u64EarliestTimestamp = std::min(u64EarliestTimestamp, u64CurrentTimestamp);
+        const auto& sourceId = pair.first;
+        auto& timeData = pair.second;
 
-        // Check for discontinuity
-        if (m_LastProcessedTimestampMap.find(queuePair.first) != m_LastProcessedTimestampMap.end())
+        int64_t i64TimeDifference = i64MostRecentOldestTimestamp - m_OldestSourceTimestampMap[sourceId];
+        size_t uSamplesToRemove = static_cast<size_t>(i64TimeDifference * m_u64SampleRate_hz / 1e9);
+
+        if (uSamplesToRemove > 0 && uSamplesToRemove < timeData.size())
         {
-            uint64_t u64LastTimestamp = m_LastProcessedTimestampMap[queuePair.first];
-            uint64_t u64TimeDifference = u64CurrentTimestamp - u64LastTimestamp;
-            
-            if (u64TimeDifference > m_u64ThresholdNs)
-            {
-                PLOG_WARNING << "Discontinuity detected for source: " << queuePair.first.data() 
-                             << ". Time difference: " << u64TimeDifference << " ns";
-                bDiscontinuityDetected = true;
-                break;
-            }
-        }
-        
-        // Update the last processed timestamp
-        m_LastProcessedTimestampMap[queuePair.first] = u64CurrentTimestamp;
-    }
-
-    if (!bAllQueuesHaveData || bDiscontinuityDetected) 
-    {
-        // If a discontinuity is detected, we might want to clear the buffers and start over
-        if (bDiscontinuityDetected)
-        {
-            for (auto& queuePair : m_TimeDataSourceMap)
-            {
-                queuePair.second.clear();
-            }
-            m_LastProcessedTimestampMap.clear();
-        }
-        return;
-    }
-
-    // Synchronize data by removing samples until timestamps match
-    for (auto& queuePair : m_TimeDataSourceMap)
-    {
-        auto i64CurrentSourceTimeStamp = m_MostRecentSourceTimestamp[queuePair.first];
-        auto& vfDataVector = queuePair.second;
-
-        if (!vfDataVector.empty() && i64CurrentSourceTimeStamp < u64EarliestTimestamp)
-        {
-            uint64_t timeDifference = u64EarliestTimestamp - i64CurrentSourceTimeStamp;
-            size_t elementsToRemove = timeDifference / (1e9 / m_u64SampleRate_hz); // Assuming m_dSampleRate is in Hz
-
-            if (elementsToRemove > 0)
-            {
-                if (elementsToRemove >= vfDataVector.size())
-                {
-                    PLOG_WARNING << "Dropping all samples from source: " << queuePair.first.data();
-                    vfDataVector.clear();
-                }
-                else
-                {
-                    vfDataVector.erase(vfDataVector.begin(), vfDataVector.begin() + elementsToRemove);
-                    PLOG_WARNING << "Dropping " << elementsToRemove << " samples from source: " << queuePair.first.data();
-                }
-            }
+            timeData.erase(timeData.begin(), timeData.begin() + uSamplesToRemove);
+            m_OldestSourceTimestampMap[sourceId] = i64MostRecentOldestTimestamp;
         }
     }
-
-    // Check if all queues still have data after synchronization
-    for (const auto& queuePair : m_TimeDataSourceMap)
-    {
-        if (queuePair.second.empty())
-        {
-            return; // Not enough synchronized data, wait for next cycle
-        }
-    }
-
-    // Process synchronized data
-    std::vector<std::pair<uint64_t, std::vector<float>>> vSynchronizedData;
-    for (auto& queuePair : m_TimeDataSourceMap)
-    {
-        vSynchronizedData.push_back(queuePair.second.front());
-        queuePair.second.pop();
-    }
-
-    // TODO: Process the synchronized data as needed
-    // For example, you could create a new chunk type that contains all synchronized data
-    // and pass it to the next module using TryPassChunk()
 }
