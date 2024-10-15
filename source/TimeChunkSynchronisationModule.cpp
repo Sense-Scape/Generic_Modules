@@ -15,7 +15,10 @@ void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk
     auto pTimeChunk = std::static_pointer_cast<TimeChunk>(pBaseChunk);
 
     // Store actual time data instead of TimeChunk
-    m_TimeDataSourceMap[pTimeChunk->GetSourceIdentifier()].emplace_back(pTimeChunk->m_vvi16TimeChunks[0]);
+    auto& targetVector = m_TimeDataSourceMap[pTimeChunk->GetSourceIdentifier()];
+    targetVector.insert(targetVector.end(), pTimeChunk->m_vvi16TimeChunks[0].begin(), pTimeChunk->m_vvi16TimeChunks[0].end());
+
+    // Then we can store the timestamp and sample rate
     m_NewestSourceTimestampMap[pTimeChunk->GetSourceIdentifier()] = pTimeChunk->m_i64TimeStamp;
     m_u64SampleRate_hz = pTimeChunk->m_i64TimeStamp;
 

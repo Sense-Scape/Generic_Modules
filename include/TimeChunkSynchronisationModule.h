@@ -21,7 +21,7 @@ private:
     void Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk);
     void SynchronizeAndProcessChunks();
 
-    std::map<std::vector<uint8_t>, std::vector<float>> m_TimeDataSourceMap;
+    std::map<std::vector<uint8_t>, std::vector<int16_t>> m_TimeDataSourceMap;
     std::map<std::vector<uint8_t>, uint64_t> m_NewestSourceTimestampMap;
     uint64_t m_u64SampleRate_hz;
     uint64_t m_u64ThresholdNs;
