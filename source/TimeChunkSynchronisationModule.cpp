@@ -20,13 +20,14 @@ bool TimeChunkSynchronisationModule::IsTimestampContinuous(const std::vector<uin
     int64_t i64ExpectedTimestamp = i64LastReceivedDataTimestamp + static_cast<int64_t>((uNumSamples) / dSampleRate_hz);
     
     // Allow for a small error bound (e.g., 1% of the expected time difference)
-    int64_t i64ErrorBound_ns = 1e6; 
+    int64_t i64ErrorBound_ns = 1e9; 
     return std::abs(i64MostRecentTimeStamp - i64ExpectedTimestamp) <= i64ErrorBound_ns;
 }
 
 void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk)
 {
     auto pTimeChunk = std::static_pointer_cast<TimeChunk>(pBaseChunk);
+
     const auto& vu8SourceId = pTimeChunk->GetSourceIdentifier();
     int64_t i64MostRecentTimeStamp = pTimeChunk->m_i64TimeStamp;
     double dSampleRate = pTimeChunk->m_dSampleRate;
@@ -104,10 +105,9 @@ bool TimeChunkSynchronisationModule::CheckQueuesHaveDataForMultilateration()
     for (const auto& queuePair : m_TimeDataSourceMap)
     {
         if (queuePair.second.empty())
-        {
             return false;
-        }
     }
+
     return true;
 }
 
@@ -117,7 +117,6 @@ bool TimeChunkSynchronisationModule::CheckQueuesHaveEnoughData(double dSecondsRe
         return false;
 
     size_t uSamplesRequired = static_cast<size_t>(dSecondsRequired * m_dSampleRate_hz);
-    PLOG_INFO << "uSamplesRequired: " << uSamplesRequired;
 
     for (const auto& queuePair : m_TimeDataSourceMap)
     {
@@ -132,11 +131,11 @@ bool TimeChunkSynchronisationModule::CheckQueuesHaveEnoughData(double dSecondsRe
 }
 
 void TimeChunkSynchronisationModule::SynchronizeChannels()
-{
+{   
     // Find the most recent 'oldest' timestamp
-    uint64_t i64MostRecentOldestTimestamp = std::numeric_limits<int64_t>::min();
+    uint64_t u64MostRecentStaterTimestamp = 0;
     for (const auto& pair : m_OldestSourceTimestampMap)
-        i64MostRecentOldestTimestamp = std::max(i64MostRecentOldestTimestamp, pair.second);
+        u64MostRecentStaterTimestamp = std::max(u64MostRecentStaterTimestamp, pair.second);
 
     // Calculate and remove excess samples from each channel
     for (auto& pair : m_TimeDataSourceMap)
@@ -144,26 +143,15 @@ void TimeChunkSynchronisationModule::SynchronizeChannels()
         const auto& sourceId = pair.first;
         auto& timeData = pair.second;
 
-        int64_t i64TimeDifference = i64MostRecentOldestTimestamp - m_OldestSourceTimestampMap[sourceId];
+        int64_t i64TimeDifference = u64MostRecentStaterTimestamp - m_OldestSourceTimestampMap[sourceId];
         size_t uSamplesToRemove = static_cast<size_t>(i64TimeDifference * m_dSampleRate_hz / 1e9);
 
         if (uSamplesToRemove > 0 && uSamplesToRemove < timeData.size())
         {
+            m_OldestSourceTimestampMap[sourceId] = u64MostRecentStaterTimestamp;
             timeData.erase(timeData.begin(), timeData.begin() + uSamplesToRemove);
-            m_OldestSourceTimestampMap[sourceId] = i64MostRecentOldestTimestamp;
         }
-    }
 
-    // After synchronization, create the synchronized TimeChunk
-    auto pSyncedTimeChunk = CreateSynchronizedTimeChunk();
-
-    if (pSyncedTimeChunk)
-    {
-        // Pass the synchronized chunk to the next module
-        TryPassChunk(pSyncedTimeChunk);
-
-        // Clear the state after processing
-        ClearState();
     }
 }
 
