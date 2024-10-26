@@ -10,7 +10,7 @@ TimeChunkSynchronisationModule::TimeChunkSynchronisationModule(unsigned uBufferS
     RegisterChunkCallbackFunction(ChunkType::TimeChunk, &TimeChunkSynchronisationModule::Process_TimeChunk, (BaseModule*)this);
 }
 
-bool TimeChunkSynchronisationModule::IsTimestampContinuous(const std::vector<uint8_t>& sourceId, int64_t i64MostRecentTimeStamp, size_t uNumSamples, double dSampleRate_hz)
+bool TimeChunkSynchronisationModule::IsDataContinuous(const std::vector<uint8_t>& sourceId, int64_t i64MostRecentTimeStamp, size_t uNumSamples, double dSampleRate_hz)
 {
     auto it = m_MostRecentSourceTimestamp.find(sourceId);
     if (it == m_MostRecentSourceTimestamp.end())
@@ -18,10 +18,14 @@ bool TimeChunkSynchronisationModule::IsTimestampContinuous(const std::vector<uin
 
     int64_t i64LastReceivedDataTimestamp = it->second;
     int64_t i64ExpectedTimestamp = i64LastReceivedDataTimestamp + static_cast<int64_t>((uNumSamples) / dSampleRate_hz);
-    
-    // Allow for a small error bound (e.g., 1% of the expected time difference)
-    int64_t i64ErrorBound_ns = 1e9; 
-    return std::abs(i64MostRecentTimeStamp - i64ExpectedTimestamp) <= i64ErrorBound_ns;
+    int64_t i64ErrorBound_ns = 1e6; 
+
+    bool bIsDataContinuous = std::abs(i64MostRecentTimeStamp - i64ExpectedTimestamp) <= i64ErrorBound_ns;
+
+    if (!bIsDataContinuous)
+        PLOG_WARNING << "Data is not continuous for source " << sourceId << ". Expected timestamp: " << i64ExpectedTimestamp << " ns, but received: " << i64MostRecentTimeStamp << " ns.";
+
+    return bIsDataContinuous;
 }
 
 void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk)
@@ -29,45 +33,43 @@ void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk
     auto pTimeChunk = std::static_pointer_cast<TimeChunk>(pBaseChunk);
 
     const auto& vu8SourceId = pTimeChunk->GetSourceIdentifier();
-    int64_t i64MostRecentTimeStamp = pTimeChunk->m_i64TimeStamp;
     double dSampleRate = pTimeChunk->m_dSampleRate;
     const auto& vi16FirstChannelData = pTimeChunk->m_vvi16TimeChunks[0];
 
     // Check if this is the first piece of data for this source
     // So we can make sure the channels are time aligned
+    int64_t i64MostRecentTimeStamp = pTimeChunk->m_i64TimeStamp;
     if (m_TimeDataSourceMap[vu8SourceId].empty())
         m_OldestSourceTimestampMap[vu8SourceId] = i64MostRecentTimeStamp;
 
     // Check if the new timestamp is continuous
-    bool bIsTimestampContinuous = IsTimestampContinuous(vu8SourceId, i64MostRecentTimeStamp, vi16FirstChannelData.size(), dSampleRate);
-    if (!bIsTimestampContinuous)
+    if (!IsDataContinuous(vu8SourceId, i64MostRecentTimeStamp, vi16FirstChannelData.size(), dSampleRate))
     {
-        // Handle discontinuity by clearing the state and logging a warning
         ClearState();
-        PLOG_WARNING << "Timestamp discontinuity detected for source " << vu8SourceId << ". State cleared.";
         return;
     }
 
-    // Store time data instead of only the first channel of data
-    auto& vi16TimeData = m_TimeDataSourceMap[vu8SourceId];
-    vi16TimeData.insert(vi16TimeData.end(), vi16FirstChannelData.begin(), vi16FirstChannelData.end());
+    StoreData(pTimeChunk);
 
-    // Then store the timestamp and sample rate of data (assuming sample rate is constant for all data)
-    m_MostRecentSourceTimestamp[vu8SourceId] = i64MostRecentTimeStamp;
-    m_dSampleRate_hz = dSampleRate;
+    // Check if we have not received from other channels
+    if (HasChannelTimeoutOccured())
+    {
+        ClearState();
+        return;
+    }
 
      // Check if we have enough data to perform synchronization
     if (!CheckQueuesHaveDataForMultilateration())
         return;
 
-    // Then check if we should try to synchronize the channels
+    // // Then check if we should try to synchronize the channels
     if (!ShouldWeTrySynchronise())
         return;
 
     SynchronizeChannels();
 
-        // Check if we have enough data in all queues (e.g., 1 second worth of data)
-    if (!CheckQueuesHaveEnoughData(5.0))
+    // Check if we have enough data in all queues (e.g., 1 second worth of data)
+    if (!CheckQueuesHaveEnoughData(30.0))
         return;
 
     // Package send and clear state
@@ -76,7 +78,24 @@ void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk
 
     TryPassChunk(pTDOATimeChunk);
     ClearState();   
+}
 
+bool TimeChunkSynchronisationModule::HasChannelTimeoutOccured()
+{
+    auto now = std::chrono::system_clock::now();
+    auto i64TimeSinceEpoch_us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+   
+    for (const auto& SourceTimeStampPair : m_MostRecentSourceTimestamp)
+    {
+        uint64_t i64TimeSinceLastData_ns = (i64TimeSinceEpoch_us - SourceTimeStampPair.second)*1e3;
+        if (i64TimeSinceLastData_ns > m_u64Threshold_ns)
+        {
+            PLOG_WARNING << "No data on channel " << SourceTimeStampPair.first << " for " << i64TimeSinceLastData_ns << " ns. Clearing state.";
+            return true;
+        }       
+    }
+
+    return false;
 }
 
 bool TimeChunkSynchronisationModule::ShouldWeTrySynchronise()
@@ -121,10 +140,7 @@ bool TimeChunkSynchronisationModule::CheckQueuesHaveEnoughData(double dSecondsRe
     for (const auto& queuePair : m_TimeDataSourceMap)
     {
         if (queuePair.second.size() < uSamplesRequired)
-        {
-            PLOG_INFO << "Not enough data in queue for source " << queuePair.first << ". Size: " << queuePair.second.size();
             return false;
-        }
     }
 
     return true;
@@ -135,7 +151,9 @@ void TimeChunkSynchronisationModule::SynchronizeChannels()
     // Find the most recent 'oldest' timestamp
     uint64_t u64MostRecentStaterTimestamp = 0;
     for (const auto& pair : m_OldestSourceTimestampMap)
+    {
         u64MostRecentStaterTimestamp = std::max(u64MostRecentStaterTimestamp, pair.second);
+    }
 
     // Calculate and remove excess samples from each channel
     for (auto& pair : m_TimeDataSourceMap)
@@ -144,12 +162,12 @@ void TimeChunkSynchronisationModule::SynchronizeChannels()
         auto& timeData = pair.second;
 
         int64_t i64TimeDifference = u64MostRecentStaterTimestamp - m_OldestSourceTimestampMap[sourceId];
-        size_t uSamplesToRemove = static_cast<size_t>(i64TimeDifference * m_dSampleRate_hz / 1e9);
+        auto u32SamplesToRemove = (uint32_t)(i64TimeDifference/ 1e6) * m_dSampleRate_hz;
 
-        if (uSamplesToRemove > 0 && uSamplesToRemove < timeData.size())
+        if (u32SamplesToRemove > 0 && u32SamplesToRemove < timeData.size())
         {
             m_OldestSourceTimestampMap[sourceId] = u64MostRecentStaterTimestamp;
-            timeData.erase(timeData.begin(), timeData.begin() + uSamplesToRemove);
+            timeData.erase(timeData.begin(), timeData.begin() + u32SamplesToRemove);
         }
 
     }
@@ -205,4 +223,14 @@ std::shared_ptr<TimeChunk> TimeChunkSynchronisationModule::CreateSynchronizedTim
     }
 
     return pSyncedTimeChunk;
+}
+
+void TimeChunkSynchronisationModule::StoreData(std::shared_ptr<TimeChunk> pTimeChunk)
+{
+    auto vu8SourceIdentifier = pTimeChunk->GetSourceIdentifier();
+
+    m_TimeDataSourceMap[vu8SourceIdentifier] = pTimeChunk->m_vvi16TimeChunks[0];
+    m_MostRecentSourceTimestamp[vu8SourceIdentifier] = pTimeChunk->m_i64TimeStamp;
+    m_OldestSourceTimestampMap[vu8SourceIdentifier] = pTimeChunk->m_i64TimeStamp;
+    m_dSampleRate_hz = pTimeChunk->m_dSampleRate;
 }

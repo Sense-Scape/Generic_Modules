@@ -51,7 +51,7 @@ private:
      * @param dSampleRate_hz The sample rate of the data source
      * @return True if the timestamp is continuous, false otherwise
      */
-    bool IsTimestampContinuous(const std::vector<uint8_t>& sourceId, int64_t i64NewTimestamp, size_t uNumSamples, double dSampleRate_hz);
+    bool IsDataContinuous(const std::vector<uint8_t>& sourceId, int64_t i64NewTimestamp, size_t uNumSamples, double dSampleRate_hz);
 
         /**
      * @brief Clears all internal state of the module
@@ -79,6 +79,10 @@ private:
      * @return A shared pointer to the new synchronized TimeChunk, or nullptr if no data is available
      */
     std::shared_ptr<TimeChunk> CreateSynchronizedTimeChunk();
+
+    bool HasChannelTimeoutOccured();
+
+    void StoreData(std::shared_ptr<TimeChunk> pTimeChunk);
 };
 
 #endif
