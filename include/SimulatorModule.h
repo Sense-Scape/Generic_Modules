@@ -25,8 +25,9 @@ public:
      * @param[in] uNumChannels Number of data channels to simulate
      * @param[in] uSimulatedFrequency Frequency of sinusoid to simulate
      * @param[in] uBufferSize Size of input buffer
+     * @param[in] i64StartUpDelay_us start up delay in us of this simulator
      */
-    SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, std::vector<uint8_t> &vu8SourceIdentifier, unsigned uBufferSize);
+    SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, std::vector<uint8_t> &vu8SourceIdentifier, unsigned uBufferSize, int64_t i64StartUpDelay_us);
     //~SimulatorModule(){};
 
     /**
@@ -62,6 +63,7 @@ private:
     std::shared_ptr<TimeChunk> m_pTimeChunk;    ///< Pointer to member time data chunk
     std::vector<float> m_vfChannelPhases_rad;   ///< Vector od channel phases
     std::vector<uint8_t> m_vu8SourceIdentifier; ///< Source identifier of generated chunks
+    uint32_t m_i64StartUpDelay_us;    ///< Delay in microseconds
 
     /**
      * @brief Initializes Time Chunk vectors default values. Initializes according to number of ADCs and their channels
