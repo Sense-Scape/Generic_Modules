@@ -1,13 +1,14 @@
 #include "SimulatorModule.h"
 
-SimulatorModule::SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, std::vector<uint8_t> &vu8SourceIdentifier, unsigned uBufferSize) : 
+SimulatorModule::SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, std::vector<uint8_t> &vu8SourceIdentifier, unsigned uBufferSize,  int64_t i64StartUpDelay_us) : 
 BaseModule(uBufferSize),                                                                                                                                                                                                                                            
 m_uNumChannels(uNumChannels),
 m_u64SampleCount(0),
 m_uSimulatedFrequency(uSimulatedFrequency),
 m_dSampleRate(dSampleRate),
 m_dChunkSize(dChunkSize),
-m_vu8SourceIdentifier(vu8SourceIdentifier)
+m_vu8SourceIdentifier(vu8SourceIdentifier),
+m_i64StartUpDelay_us(i64StartUpDelay_us)
 {
     // Set all channel phases to zero with angle of arrival = 0 
     m_vfChannelPhases_rad.resize(m_uNumChannels);
@@ -19,6 +20,8 @@ m_vu8SourceIdentifier(vu8SourceIdentifier)
         + "SourceIdentifier [ " + strSourceIdentifier + "] \n" 
         + "SampleRate [ " + std::to_string(m_dSampleRate) + " ] Hz \n"
         + "ChunkSize [ " + std::to_string(m_dChunkSize) + " ]\n" 
+        + "Start Up Delay (us) [ " + std::to_string(m_i64StartUpDelay_us) + " ]\n" 
+        + "Number of Channels [ " + std::to_string(m_uNumChannels) + " ]\n" 
         + "=========";
     PLOG_INFO << strInfo;
 
@@ -51,7 +54,7 @@ void SimulatorModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     }
 
     // Sleeping for time equivalent to chunk period
-    std::this_thread::sleep_for(std::chrono::milliseconds((unsigned)((1000*m_dChunkSize)/m_dSampleRate)));
+    std::this_thread::sleep_for(std::chrono::nanoseconds((unsigned)((1e9*m_dChunkSize)/m_dSampleRate)));
 }
 
 void SimulatorModule::ReinitializeTimeChunk()
@@ -90,15 +93,25 @@ void SimulatorModule::SimulateADCSample()
 
 void SimulatorModule::SetChannelPhases(std::vector<float> &vfChannelPhases, std::string strPhaseType)
 {
+   
+
     if (strPhaseType == "Degrees")
-        std::transform(vfChannelPhases.begin(), vfChannelPhases.end(), vfChannelPhases.begin(), [](auto& val) {return val * M_PI/180; });
+    {
+        for (size_t i = 0; i < vfChannelPhases.size(); i++)
+            vfChannelPhases[i] = vfChannelPhases[i] * M_PI/180.0;  
+    }
 
     m_vfChannelPhases_rad = vfChannelPhases;
+
+    PLOG_INFO << "Channel Phases: " << m_vfChannelPhases_rad[0];
+
 }
 
 void SimulatorModule::SimulateUpdatedTimeStamp()
-{
-    m_u64CurrentTimeStamp += (uint64_t)(m_dChunkSize * ((1/ (double)m_dSampleRate) * 1e6));
+{   
+    auto now = std::chrono::system_clock::now();
+    auto i64CurrentTime_us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+    m_u64CurrentTimeStamp = i64CurrentTime_us + m_i64StartUpDelay_us; 
 }
 
 void SimulatorModule::SimulateTimeStampMetaData()
