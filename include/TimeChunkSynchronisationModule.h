@@ -18,7 +18,7 @@ public:
      * @param u64Threshold_ns The threshold in nanoseconds for time synchronization
      * @param u64SyncInterval_ns The interval in nanoseconds between synchronization attempts
      */
-    TimeChunkSynchronisationModule(unsigned uBufferSize, uint64_t u64Threshold_ns, uint64_t u64SyncInterval_ns);
+    TimeChunkSynchronisationModule(unsigned uBufferSize, uint64_t u64Threshold_us, uint64_t u64SyncInterval_ns);
     ~TimeChunkSynchronisationModule() = default;
 
     std::string GetModuleType() override { return "TimeChunkSynchronisationModule"; }
@@ -61,7 +61,7 @@ private:
     std::map<std::vector<uint8_t>, std::vector<int16_t>> m_TimeDataSourceMap;
 
     double m_dSampleRate_hz;
-    uint64_t m_u64Threshold_ns;
+    uint64_t m_u64Threshold_us;
     uint64_t m_u64SyncInterval_ns;
     std::chrono::steady_clock::time_point m_tpLastSyncAttempt;
     std::map<std::vector<uint8_t>, uint64_t> m_OldestSourceTimestampMap;  ///< Time stamps from the oldest chunk received from each source   
