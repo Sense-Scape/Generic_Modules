@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cmath>
 #include <thread>
+#include <random>
 
 #define _USE_MATH_DEFINES // Allows the use of math constants
 #include <math.h>
@@ -26,8 +27,9 @@ public:
      * @param[in] uSimulatedFrequency Frequency of sinusoid to simulate
      * @param[in] uBufferSize Size of input buffer
      * @param[in] i64StartUpDelay_us start up delay in us of this simulator
+     * @param[in] fSNR_db snr of generated signal
      */
-    SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, std::vector<uint8_t> &vu8SourceIdentifier, unsigned uBufferSize, int64_t i64StartUpDelay_us);
+    SimulatorModule(double dSampleRate, double dChunkSize, unsigned uNumChannels, unsigned uSimulatedFrequency, std::vector<uint8_t> &vu8SourceIdentifier, unsigned uBufferSize, int64_t i64StartUpDelay_us, float fSNR_db);
     //~SimulatorModule(){};
 
     /**
@@ -54,6 +56,7 @@ public:
     void SetChannelPhases(std::vector<float> &vfChannelPhases, std::string strPhaseType);
 
 private:
+    /// Data Generation
     unsigned m_uNumChannels;                    ///< Number of ADC channels to simulate
     unsigned m_uSimulatedFrequency;             ///< Sinusoid frequency to simulate
     uint64_t m_u64SampleCount;                  ///< Count to track index of simulated sinusoid
@@ -63,7 +66,11 @@ private:
     std::shared_ptr<TimeChunk> m_pTimeChunk;    ///< Pointer to member time data chunk
     std::vector<float> m_vfChannelPhases_rad;   ///< Vector od channel phases
     std::vector<uint8_t> m_vu8SourceIdentifier; ///< Source identifier of generated chunks
-    uint32_t m_i64StartUpDelay_us;    ///< Delay in microseconds
+
+    // Signal Generation
+    uint32_t m_i64StartUpDelay_us;              ///< Delay in microseconds
+    float m_fSNR_db;                            ///< SNR of signal
+    float m_fSignalAmplitude;                   ///< As a percentage of full scale
 
     /**
      * @brief Initializes Time Chunk vectors default values. Initializes according to number of ADCs and their channels
@@ -84,6 +91,11 @@ private:
      * @brief Updates timechuink meta data including timestamp and source identifier
      */
     void SimulateTimeStampMetaData();
+
+    /**
+     * @brief Adds no gaussian white noise to generated signal using member noise levels
+     */
+    void AddNoiseToSamples();
 };
 
 #endif
