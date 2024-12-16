@@ -25,7 +25,7 @@ void SimulatorModule::PrintConfiguration()
         + "ADC Mode [ " + m_strADCMode + " ]\n"
         + "Clock Mode [ " + m_strClockMode + " ]\n"
         + "Sinusoid Config: \n"
-        + "SigAmpOfFullScale [ " + std::to_string(m_fSignalAmplitude) + " ]\n"
+        + "SignalPower_dBm [ " + std::to_string(m_fSignalPower_dBm) + " ]\n"
         + "=========";
 
     PLOG_INFO << strInfo;
@@ -60,8 +60,8 @@ void SimulatorModule::ConfigureModuleJSON(nlohmann::json_abi_v3_11_2::json jsonC
     CheckAndThrowJSON(jsonConfig,"ClockMode");
     m_strClockMode = jsonConfig["ClockMode"];
 
-    CheckAndThrowJSON(jsonConfig,"SigAmpOfFullScale");
-    m_fSignalAmplitude = jsonConfig["SigAmpOfFullScale"];
+    CheckAndThrowJSON(jsonConfig,"SignalPower_dBm");
+    m_fSignalPower_dBm = jsonConfig["SignalPower_dBm"];
 
     CheckAndThrowJSON(jsonConfig,"ChannelPhases_deg");
     m_vfChannelPhases_rad = jsonConfig["ChannelPhases_deg"].get<std::vector<float>>();
@@ -73,13 +73,15 @@ void SimulatorModule::ConfigureModuleJSON(nlohmann::json_abi_v3_11_2::json jsonC
         std::string strFatal = std::string(__FUNCTION__) + "Channel phase count does not equal channel count";
         PLOG_FATAL << strFatal;
         throw std::runtime_error(strFatal);
-    
+    }
+
     m_vfChannelPhases_rad.resize(m_uNumChannels);
 
-    std::normal_distribution<double> dist(0,1);
+    // Used only in gaussian mode
+    auto stdDev = ConvertPowerToStdDev(m_fSignalPower_dBm);
+    std::normal_distribution<double> dist(0,stdDev);
     m_dist = dist;
-    
-    }
+
 }
 
 void SimulatorModule::CheckAndThrowJSON(const nlohmann::json_abi_v3_11_2::json& j, const std::string& key) {
@@ -142,7 +144,8 @@ void SimulatorModule::ReinitializeTimeChunk()
 
 void SimulatorModule::GenerateSinsoid()
 {
-    float fAmplitudeScalingFactor = m_fSignalAmplitude*(std::pow(2, 15) - 1);
+    auto m_fSignalPower_lin = std::pow(10, m_fSignalPower_dBm/10);
+    float fAmplitudeScalingFactor = std::pow(m_fSignalPower_lin*2, 0.5);
 
     // Iterate through each channel vector and sample index
     for (unsigned uCurrentSampleIndex = 0; uCurrentSampleIndex < m_dChunkSize; uCurrentSampleIndex++)
@@ -209,12 +212,16 @@ void SimulatorModule::SimulateTimeStampMetaData()
         throw std::runtime_error("Clock Mode incorrectly specified as: " + m_strClockMode);
 }
 
+float SimulatorModule::ConvertPowerToStdDev(float fSignalPower_dBm)
+{
+    return std::pow(m_fSignalPower_dBm*std::pow(10, -1/10),0.5);
+}
+
 void SimulatorModule::SimulateNoise()
 {
     // Noise signal is norm dist with power = stddev as defined above where we back 
     // calcualte using snr and signal level
-    float fPowerInSinuosid_lin = calculatePower(m_pTimeChunk->m_vvi16TimeChunks[0]);
-    auto stdDevNoise = std::pow(fPowerInSinuosid_lin*std::pow(10, -m_fSNR_db/10),0.5);
+    auto stdDevNoise = std::pow(m_fSignalPower_dBm*std::pow(10, -m_fSNR_db/10),0.5);
 
     // Now generate normal distribution wiht power to create noise
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();

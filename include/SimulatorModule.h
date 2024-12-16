@@ -57,12 +57,12 @@ private:
     // Signal Generation
     uint32_t m_i64StartUpDelay_us;              ///< Delay in microseconds
     float m_fSNR_db;                            ///< SNR of signal
-    float m_fSignalAmplitude;                   ///< As a percentage of full scale
+    float m_fSignalPower_dBm;                   ///< As a percentage of full scale
 
     std::string m_strADCMode;
     std::string m_strClockMode;
 
-    std::mt19937 m_generator(0);
+    std::mt19937 m_generator = std::mt19937(0);
     std::normal_distribution<double> m_dist;
     uint64_t m_count = 0;
 
@@ -116,6 +116,11 @@ private:
      */
     void WaitForStartUpDelay();
     
+    /**
+     * @brief
+     */
+    float ConvertPowerToStdDev(float fSignalPower_dBm);
+
     /**
      * @brief Proint current configuration of this module
      */
