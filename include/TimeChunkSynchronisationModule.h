@@ -24,6 +24,17 @@ public:
     std::string GetModuleType() override { return "TimeChunkSynchronisationModule"; }
 
 private:
+
+    double m_dSampleRate_hz;                     ///< last recorded sample rate
+    uint64_t m_u64ChannelTimoutThreshold_us;     ///< how long a channel cannot send data before a state clearance occurs
+    uint64_t m_u64SyncInterval_ns;               ///< How long to wait before trying to synchronise channels
+    float m_TDOALength_s = 10;
+    std::chrono::steady_clock::time_point m_tpLastSyncAttempt;                  ///< Time stamp of last synchronisation
+    std::map<std::vector<uint8_t>, uint64_t> m_OldestSourceTimestampMap;        ///< Time stamps from the oldest chunk received from each source   
+    std::map<std::vector<uint8_t>, uint64_t> m_MostRecentSourceTimestamp;       ///< Time stamps from the most recent chunk received from each source
+    std::map<std::vector<uint8_t>, std::vector<int16_t>> m_TimeDataSourceMap;   ///< Map whioch stores each sources current time data
+
+
     void Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 
     /**
@@ -58,15 +69,6 @@ private:
      */
     void ClearState();
 
-    std::map<std::vector<uint8_t>, std::vector<int16_t>> m_TimeDataSourceMap;
-
-    double m_dSampleRate_hz;
-    uint64_t m_u64Threshold_us;
-    uint64_t m_u64SyncInterval_ns;
-    std::chrono::steady_clock::time_point m_tpLastSyncAttempt;
-    std::map<std::vector<uint8_t>, uint64_t> m_OldestSourceTimestampMap;  ///< Time stamps from the oldest chunk received from each source   
-    std::map<std::vector<uint8_t>, uint64_t> m_MostRecentSourceTimestamp; ///< Time stamps from the most recent chunk received from each source
-
     /**
      * @brief Check if all queues have at least n seconds worth of data
      * @param dSecondsRequired The number of seconds worth of data required in each queue
@@ -79,9 +81,16 @@ private:
      * @return A shared pointer to the new synchronized TimeChunk, or nullptr if no data is available
      */
     std::shared_ptr<TimeChunk> CreateSynchronizedTimeChunk();
-
+    
+    /**
+     * @brief Checks if any of the channels has not received data for a specified amount of time
+     */
     bool HasChannelTimeoutOccured();
 
+    /**
+     * @brief Stores time data in an internal map\
+     * @param[in] pTimeChunk pointer to time chunk of data
+     */
     void StoreData(std::shared_ptr<TimeChunk> pTimeChunk);
 };
 

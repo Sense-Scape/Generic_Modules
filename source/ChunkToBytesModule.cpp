@@ -17,9 +17,8 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     bool bSourceIdentifierNotSeen = (m_MapOfIndentifiersToChunkTypeSessions.find(vu8SourceIdentifier) == m_MapOfIndentifiersToChunkTypeSessions.end());
     bool bChunkTypeNotSeen = true;
 
-    if (bSourceIdentifierNotSeen)
-        bChunkTypeNotSeen = (m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier].find(eChunkType) ==
-                             m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier].end());
+    if (!bSourceIdentifierNotSeen)
+        bChunkTypeNotSeen = m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier].count(eChunkType) == 0;
 
     // By first checking if the source identider has been seen
     if (bSourceIdentifierNotSeen || bChunkTypeNotSeen)
@@ -37,18 +36,21 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     // PLOG_FATAL << std::to_string(pSessionModeHeader->m_u32uChunkType);
     //  Bytes to transmit is equal to number of bytes in derived object (e.g TimeChunk)
     auto pvcByteData = pBaseChunk->Serialise();
-    uint32_t u32TransmittableDataBytes = pvcByteData->size();
+    u_int64_t u32TransmittableDataBytes = pvcByteData->size();
 
     uint16_t uSessionDataHeaderSize = 2; // size of the footer in bytes. '\0' denotes finish if this structure
     uint16_t uSessionTransmissionSize = m_uTransmissionSize;
     bool bTransmit = true;
-    unsigned uDataBytesTransmitted = 0; // Current count of how many bytes have been transmitted
-    unsigned uDataBytesToTransmit = m_uTransmissionSize - uSessionDataHeaderSize - pSessionModeHeader->GetSize();
-    unsigned uMaxTransmissionSize = m_uTransmissionSize; // Largest buffer size that can be request for transmission
+    u_int64_t uDataBytesTransmitted = 0; // Current count of how many bytes have been transmitted
+    uint16_t uDataBytesToTransmit = m_uTransmissionSize - uSessionDataHeaderSize - pSessionModeHeader->GetSize();
+    uint16_t uMaxTransmissionSize = m_uTransmissionSize; // Largest buffer size that can be request for transmission
+
+    // std::cout << std::to_string(u32TransmittableDataBytes) << std::endl;
 
     // Now that we have configured meta data, lets start transmitting
     while (bTransmit)
     {
+        //std::cout << std::to_string(pSessionModeHeader->m_uSequenceNumber) + "--" + std::to_string(u32TransmittableDataBytes) << std::endl;
         // If our next transmission exceeds the number of data bytes available to be transmitted
         if (uDataBytesTransmitted + uDataBytesToTransmit >= u32TransmittableDataBytes)
         {
@@ -70,6 +72,7 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 
         // We then add the session state info
         auto pHeaderBytes = pSessionModeHeader->Serialise();
+        
         memcpy(&vuByteData[uSessionDataHeaderSize], &((*pHeaderBytes)[0]), pSessionModeHeader->GetSize());
 
         // Then lets insert the actual data byte data to transmit after the header
@@ -86,7 +89,9 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         uDataBytesTransmitted += uDataBytesToTransmit;
         pSessionModeHeader->IncrementSequence();
     }
-    pSessionModeHeader->IncrementSession();
+    std::cout << std::to_string(pSessionModeHeader->m_uSessionNumber) << std::endl;
+    m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType]->IncrementSession();
+    
 }
 
 void ChunkToBytesModule::ContinuouslyTryProcess()
