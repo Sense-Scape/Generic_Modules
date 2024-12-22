@@ -28,6 +28,7 @@ private:
     double m_dSampleRate_hz;                     ///< last recorded sample rate
     uint64_t m_u64ChannelTimoutThreshold_us;     ///< how long a channel cannot send data before a state clearance occurs
     uint64_t m_u64SyncInterval_ns;               ///< How long to wait before trying to synchronise channels
+    uint64_t m_u64ChannelDiscontinuityThreshold_us;
     float m_TDOALength_s = 10;
     std::chrono::steady_clock::time_point m_tpLastSyncAttempt;                  ///< Time stamp of last synchronisation
     std::map<std::vector<uint8_t>, uint64_t> m_OldestSourceTimestampMap;        ///< Time stamps from the oldest chunk received from each source   

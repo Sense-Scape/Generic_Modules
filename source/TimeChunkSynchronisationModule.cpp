@@ -4,7 +4,7 @@
 #include <chrono>
 
 TimeChunkSynchronisationModule::TimeChunkSynchronisationModule(unsigned uBufferSize, uint64_t u64Threshold_us, uint64_t u64SyncInterval_ns)
-    : BaseModule(uBufferSize), m_u64Threshold_us(u64Threshold_us), m_u64SyncInterval_ns(u64SyncInterval_ns),
+    : BaseModule(uBufferSize), m_u64ChannelDiscontinuityThreshold_us(u64Threshold_us), m_u64SyncInterval_ns(u64SyncInterval_ns),
       m_tpLastSyncAttempt(std::chrono::steady_clock::now())
 {
     RegisterChunkCallbackFunction(ChunkType::TimeChunk, &TimeChunkSynchronisationModule::Process_TimeChunk, (BaseModule*)this);
@@ -106,7 +106,7 @@ bool TimeChunkSynchronisationModule::HasChannelTimeoutOccured()
 
         int64_t i64TimeSinceLastData_us = std::fabs(i64TimeSinceEpoch_us - SourceTimeStampPair.second);
 
-        if (i64TimeSinceLastData_us > m_u64Threshold_us)
+        if (i64TimeSinceLastData_us > m_u64ChannelDiscontinuityThreshold_us)
         {
             PLOG_WARNING << "No data on channel " << SourceTimeStampPair.first << " for " << i64TimeSinceLastData_us/1e6 << " seconds. Clearing state.";
             return true;
