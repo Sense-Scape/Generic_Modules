@@ -39,10 +39,9 @@ void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk
 
     // Check if this is the first piece of data for this source
     // So we can make sure the channels are time aligned
-    int64_t i64MostRecentTimeStamp = pTimeChunk->m_i64TimeStamp;
-    if (m_TimeDataSourceMap[vu8SourceId].empty())
-        m_MostRecentSourceTimestamp[vu8SourceId] = i64MostRecentTimeStamp;
+    TryInitialiseDataSource(pTimeChunk);
 
+    int64_t i64MostRecentTimeStamp = pTimeChunk->m_i64TimeStamp;
     auto it = m_OldestSourceTimestampMap.find(vu8SourceId);
     if (it == m_OldestSourceTimestampMap.end())
     {
@@ -51,10 +50,12 @@ void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk
     }
         
 
-    //Check if the new timestamp is continuous
-    if (!IsDataContinuous(vu8SourceId, i64MostRecentTimeStamp, vi16FirstChannelData.size(), dSampleRate))
+    bool bDataContinuous = IsDataContinuous(vu8SourceId, i64MostRecentTimeStamp, vi16FirstChannelData.size(), dSampleRate);
+    bool bChannelCountConsistent = IsChannelCountTheSame(pTimeChunk);
+    bool dataValid = bDataContinuous && bChannelCountConsistent;
+    
+    if (!dataValid)
     {
-        PLOG_WARNING << "Time sync data not continuous, clearing";
         ClearState();
         return;
     }
@@ -78,7 +79,7 @@ void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk
     SynchronizeChannels();
     
     // Check if we have enough data in all queues (e.g., 1 second worth of data)
-    if (!CheckQueuesHaveEnoughData(m_TDOALength_s))
+    if (!CheckQueuesHaveEnoughData())
     {
         return;
     }
@@ -146,13 +147,13 @@ bool TimeChunkSynchronisationModule::CheckQueuesHaveDataForMultilateration()
     return true;
 }
 
-bool TimeChunkSynchronisationModule::CheckQueuesHaveEnoughData(double dSecondsRequired)
+bool TimeChunkSynchronisationModule::CheckQueuesHaveEnoughData()
 {
     // Dont sync if we dont have data
     if (m_TimeDataSourceMap.empty())
         return false;
     
-    size_t uSamplesRequired = static_cast<size_t>(dSecondsRequired * m_dSampleRate_hz);
+    size_t uSamplesRequired = static_cast<size_t>(m_TDOALength_s * m_dSampleRate_hz);
    
     for (const auto& queuePair : m_TimeDataSourceMap)
     {
@@ -206,7 +207,6 @@ void TimeChunkSynchronisationModule::SynchronizeChannels()
 
 void TimeChunkSynchronisationModule::ClearState()
 {
-    PLOG_DEBUG << m_TimeDataSourceMap.size();
     m_TimeDataSourceMap.clear();
     m_OldestSourceTimestampMap.clear();
     m_MostRecentSourceTimestamp.clear();
@@ -214,41 +214,29 @@ void TimeChunkSynchronisationModule::ClearState()
     m_tpLastSyncAttempt = std::chrono::steady_clock::now();
 }
 
-std::shared_ptr<TimeChunk> TimeChunkSynchronisationModule::CreateSynchronizedTimeChunk()
+std::shared_ptr<TDOAChunk> TimeChunkSynchronisationModule::CreateSynchronizedTimeChunk()
 {
     if (m_TimeDataSourceMap.empty())
         return nullptr;
 
     // Determine the number of samples and channels
-    size_t numSamples = static_cast<size_t>(m_TDOALength_s * m_dSampleRate_hz); //m_TimeDataSourceMap.begin()->second.size();
+    size_t numSamples = static_cast<size_t>(m_TDOALength_s * m_dSampleRate_hz);
     size_t numChannels = m_TimeDataSourceMap.size();
 
     if (numSamples == 0)
         return nullptr;
 
-    auto pNewSyncedTimeChunk = std::make_shared<TimeChunk>(
-        static_cast<double>(numSamples),
+    auto pTDOAChunk = std::make_shared<TDOAChunk>(
         m_dSampleRate_hz,
-        m_OldestSourceTimestampMap.begin()->second, // Use the oldest timestamp as the chunk timestamp
-        16, // Assuming 16-bit samples, adjust if necessary
-        2,  // Assuming 2 bytes per sample, adjust if necessary
-        static_cast<unsigned>(numChannels)
+        m_OldestSourceTimestampMap.begin()->second
     );
 
     // Fill the TimeChunk with synchronized data
     auto channelIndex = 0;
-    pNewSyncedTimeChunk->m_vvi16TimeChunks.resize(numChannels);
 
     for (const auto& [vu8SourceId, sourceData] : m_TimeDataSourceMap)
     {
-        pNewSyncedTimeChunk->m_vvi16TimeChunks[channelIndex].resize(numSamples);
-        std::copy(sourceData.begin(),sourceData.begin() + numSamples, pNewSyncedTimeChunk->m_vvi16TimeChunks[channelIndex].begin());
-
-        // Now remove those samples from vector and update timestamps
-        m_TimeDataSourceMap[vu8SourceId].erase(m_TimeDataSourceMap[vu8SourceId].begin(), m_TimeDataSourceMap[vu8SourceId].begin() + numSamples);
-
-        m_OldestSourceTimestampMap[vu8SourceId] += 1e6*((double)numSamples/m_dSampleRate_hz);
-        channelIndex++;
+       //pTDOAChunk->AddData(0,0,);
     }
     
 
@@ -256,12 +244,41 @@ std::shared_ptr<TimeChunk> TimeChunkSynchronisationModule::CreateSynchronizedTim
     if (!m_TimeDataSourceMap.empty())
     {
         auto vu8firstSource = m_TimeDataSourceMap.begin()->first;
-        pNewSyncedTimeChunk->SetSourceIdentifier(vu8firstSource);
+        pTDOAChunk->SetSourceIdentifier(vu8firstSource);
     }
     else
         PLOG_ERROR << "source not applied";
 
-    return pNewSyncedTimeChunk;
+    return pTDOAChunk;
+}
+
+bool TimeChunkSynchronisationModule::IsChannelCountTheSame(std::shared_ptr<TimeChunk> pTimeChunk)
+{
+    auto vu8SourceIdentifier = pTimeChunk->GetSourceIdentifier();
+    auto &vvi16StoredTimeData = m_TimeDataSourceMap[vu8SourceIdentifier];
+
+    bool bChannelCountTheSame = true;
+    if (vvi16StoredTimeData.size() != pTimeChunk->m_vvi16TimeChunks.size())
+        bChannelCountTheSame = false;
+
+    return bChannelCountTheSame;
+}
+
+void TimeChunkSynchronisationModule::TryInitialiseDataSource(std::shared_ptr<TimeChunk> pTimeChunk)
+{
+    const auto& vu8SourceId = pTimeChunk->GetSourceIdentifier();
+    int64_t i64MostRecentTimeStamp = pTimeChunk->m_i64TimeStamp;
+
+    if (!m_TimeDataSourceMap[vu8SourceId].empty())
+        return;
+    
+    m_MostRecentSourceTimestamp[vu8SourceId] = i64MostRecentTimeStamp;
+
+    auto stChannelCount = pTimeChunk->m_vvi16TimeChunks.size();
+    m_TimeDataSourceMap[vu8SourceId].resize(stChannelCount);
+
+    
+
 }
 
 void TimeChunkSynchronisationModule::StoreData(std::shared_ptr<TimeChunk> pTimeChunk)
@@ -269,11 +286,18 @@ void TimeChunkSynchronisationModule::StoreData(std::shared_ptr<TimeChunk> pTimeC
     auto vu8SourceIdentifier = pTimeChunk->GetSourceIdentifier();
     auto &vi16NewTimeData = pTimeChunk->m_vvi16TimeChunks[0];
 
-    auto &vi16StoredTimeData = m_TimeDataSourceMap[vu8SourceIdentifier];
-    auto a = vi16StoredTimeData.size();
-    vi16StoredTimeData.insert(vi16StoredTimeData.end(), vi16NewTimeData.begin(), vi16NewTimeData.end());
     m_MostRecentSourceTimestamp[vu8SourceIdentifier] = pTimeChunk->m_i64TimeStamp;
-    // PLOG_DEBUG << std::to_string(vi16StoredTimeData.size() - a ) << std::endl;
-    
     m_dSampleRate_hz = pTimeChunk->m_dSampleRate;
+
+
+    auto &vvi16StoredTimeData = m_TimeDataSourceMap[vu8SourceIdentifier];
+    auto count = 0;
+    for (auto& vi16Data :  pTimeChunk->m_vvi16TimeChunks) 
+    {
+        // TODO: check the if sub vec has been defined
+        auto &vi16StoredData = vvi16StoredTimeData[count];
+        vi16StoredData.insert(vi16StoredData.end(), vi16Data.begin(), vi16Data.end());
+        count++;
+    }
+    
 }
