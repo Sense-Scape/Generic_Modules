@@ -7,3 +7,6 @@
 [submodule "components/Base_Module"]
 	path = components/Base_Module
 	url = https://github.com/Sense-Scape/Base_Module.git
+[submodule "components/googletest"]
+	path = components/googletest
+	url = git@github.com:Sense-Scape/googletest.git
