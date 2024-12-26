@@ -24,12 +24,18 @@ protected:
 
         pTimeChunkTwoChannel = std::make_shared<TimeChunk>(dChunkSize,dSampleRate,i64TimeStamp,uBits,uNumBytes,uNumChannels);
         pTimeChunkTwoChannel->SetSourceIdentifier({1});
-        
+        pGPSChunkTwoChannel = std::make_shared<GPSChunk>(i64TimeStamp, true, 0, true, 0);
+        pGPSChunkTwoChannel->SetSourceIdentifier({1});
+
         pTimeChunkThreeChannel = std::make_shared<TimeChunk>(dChunkSize,dSampleRate,i64TimeStamp,uBits,uNumBytes,uNumChannels+1);
         pTimeChunkThreeChannel->SetSourceIdentifier({2});
+        pGPSChunkThreeChannel = std::make_shared<GPSChunk>(i64TimeStamp, true, 0, true, 0);
+        pGPSChunkThreeChannel->SetSourceIdentifier({2});
 
         pTimeChunkFourChannel = std::make_shared<TimeChunk>(dChunkSize,dSampleRate,i64TimeStamp,uBits,uNumBytes,uNumChannels+2);
         pTimeChunkFourChannel->SetSourceIdentifier({3});
+        pGPSChunkFourChannel = std::make_shared<GPSChunk>(i64TimeStamp, true, 0, true, 0);
+        pGPSChunkFourChannel->SetSourceIdentifier({3});
     }
 
     void TearDown() override {
@@ -38,8 +44,11 @@ protected:
 
     std::shared_ptr<TimeChunkSynchronisationModule> pTimeChunkSynchronisationModule;
     std::shared_ptr<TimeChunk> pTimeChunkTwoChannel;
+    std::shared_ptr<GPSChunk> pGPSChunkTwoChannel;
     std::shared_ptr<TimeChunk> pTimeChunkThreeChannel;
+    std::shared_ptr<GPSChunk> pGPSChunkThreeChannel;
     std::shared_ptr<TimeChunk> pTimeChunkFourChannel;
+    std::shared_ptr<GPSChunk> pGPSChunkFourChannel;
 };
 
 TEST_F(TestTimeSyncClass, TestTrackingChannelCounts) {
@@ -58,13 +67,48 @@ TEST_F(TestTimeSyncClass, TestTrackingChannelCounts) {
 
 TEST_F(TestTimeSyncClass, TestMultiLaterationSourceCount) {
 
-    pTimeChunkSynchronisationModule->Process_TimeChunk(pTimeChunkTwoChannel);
-    pTimeChunkSynchronisationModule->Process_TimeChunk(pTimeChunkThreeChannel);
+    pTimeChunkSynchronisationModule->CallChunkCallbackFunction(pTimeChunkTwoChannel);
+    pTimeChunkSynchronisationModule->CallChunkCallbackFunction(pTimeChunkThreeChannel);
     bool bResult = pTimeChunkSynchronisationModule->CheckQueuesHaveDataForMultilateration();
-    EXPECT_EQ(bResult, false) << " Testing we fail multilateration check with 2 channels";
+    EXPECT_EQ(bResult, false) << " Testing we fail multilateration check with 2 sources";
 
-    pTimeChunkSynchronisationModule->Process_TimeChunk(pTimeChunkFourChannel);
+    pTimeChunkSynchronisationModule->CallChunkCallbackFunction(pTimeChunkFourChannel);
     bResult = pTimeChunkSynchronisationModule->CheckQueuesHaveDataForMultilateration();
-    EXPECT_EQ(bResult, true) << " Testing we pass multilateration check with 3 channels";
+    EXPECT_EQ(bResult, true) << " Testing we pass multilateration check with 3 sources";
+
+}
+
+TEST_F(TestTimeSyncClass, TestGPSWithTimeData) {
+
+    bool bResult = pTimeChunkSynchronisationModule->CheckWeHaveEnoughGPSData();
+    EXPECT_EQ(bResult, false) << " Testing we fail GPS check with no time no GPS sources";
+
+    pTimeChunkSynchronisationModule->CallChunkCallbackFunction(pTimeChunkTwoChannel);
+    bResult = pTimeChunkSynchronisationModule->CheckWeHaveEnoughGPSData();
+    EXPECT_EQ(bResult, false) << " Testing we fail GPS check with 1 time no GPS sources";
+
+    pTimeChunkSynchronisationModule->CallChunkCallbackFunction(pGPSChunkTwoChannel);
+    bResult = pTimeChunkSynchronisationModule->CheckWeHaveEnoughGPSData();
+    EXPECT_EQ(bResult, true) << " Testing we fail GPS check with 1 time and GPS sources";
+
+    pTimeChunkSynchronisationModule->CallChunkCallbackFunction(pTimeChunkThreeChannel);
+    bResult = pTimeChunkSynchronisationModule->CheckWeHaveEnoughGPSData();
+    EXPECT_EQ(bResult, false) << " Testing we fail GPS check with 2 time no GPS sources";
+
+    pTimeChunkSynchronisationModule->CallChunkCallbackFunction(pGPSChunkThreeChannel);
+    bResult = pTimeChunkSynchronisationModule->CheckWeHaveEnoughGPSData();
+    EXPECT_EQ(bResult, true) << " Testing we fail GPS check with 2 time and GPS sources";
+
+    pTimeChunkSynchronisationModule->ClearState();
+    bResult = pTimeChunkSynchronisationModule->CheckWeHaveEnoughGPSData();
+    EXPECT_EQ(bResult, false) << " Testing we fail GPS check with 2 time and GPS sources";
+
+    pTimeChunkSynchronisationModule->CallChunkCallbackFunction(pTimeChunkFourChannel);
+    bResult = pTimeChunkSynchronisationModule->CheckWeHaveEnoughGPSData();
+    EXPECT_EQ(bResult, false) << " Testing we fail GPS check with 2 time and GPS sources";
+
+    pTimeChunkSynchronisationModule->CallChunkCallbackFunction(pGPSChunkFourChannel);
+    bResult = pTimeChunkSynchronisationModule->CheckWeHaveEnoughGPSData();
+    EXPECT_EQ(bResult, true) << " Testing we fail GPS check with 2 time and GPS sources";
 
 }
