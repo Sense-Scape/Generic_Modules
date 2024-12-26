@@ -8,6 +8,7 @@
 #include <chrono>
 #include "BaseModule.h"
 #include "TimeChunk.h"
+#include "GPSChunk.h"
 #include "TDOAChunk.h"
 
 class TimeChunkSynchronisationModule : public BaseModule
@@ -29,6 +30,12 @@ public:
      * @param[in] pTimeChunk time chunk which to process
      */
     void Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk);
+
+    /**
+     * @brief Process store and transmit TDOA data
+     * @param[in] pTimeChunk time chunk which to process
+     */
+    void Process_GPSChunk(std::shared_ptr<BaseChunk> pBaseChunk);
 
     /**
      * @brief Checking if data from a source has the same number of channels
@@ -54,6 +61,17 @@ public:
      */
     bool CheckQueuesHaveEnoughData();
 
+     /**
+     * @brief Check if we have as many gps positions as we have sources of data
+     * @return true if gps position count is equal to number sources of data 
+     */
+    bool CheckWeHaveEnoughGPSData();
+
+    /**
+     * @brief Clears all internal state of the module
+     */
+    void ClearState();
+
 
 private:
 
@@ -63,9 +81,15 @@ private:
     uint64_t m_u64ChannelDiscontinuityThreshold_us;
     float m_TDOALength_s = 10;
     std::chrono::steady_clock::time_point m_tpLastSyncAttempt;                  ///< Time stamp of last synchronisation
+
+    // TimeChunks
     std::map<std::vector<uint8_t>, uint64_t> m_OldestSourceTimestampMap;        ///< Time stamps from the oldest chunk received from each source   
-    std::map<std::vector<uint8_t>, uint64_t> m_MostRecentSourceTimestamp;       ///< Time stamps from the most recent chunk received from each source
+    std::map<std::vector<uint8_t>, uint64_t> m_MostRecentSourceTimestamp;       ///< Time stamps from the most recent chunk received from each source 
     std::map<std::vector<uint8_t>, std::vector<std::vector<int16_t>>> m_TimeDataSourceMap;   ///< Map whioch stores each sources current time data
+
+    // GPSChunk
+    std::map<std::vector<uint8_t>, double> m_dSourceLongitudesMap;               ///< 
+    std::map<std::vector<uint8_t>, double> m_dSourceLatitudesMap;                ///<
 
     /**
      * @brief Check if we need to perform synchronization and perform it if necessary
@@ -88,11 +112,6 @@ private:
      */
     bool IsDataContinuous(const std::vector<uint8_t>& sourceId, int64_t i64NewTimestamp, size_t uNumSamples, double dSampleRate_hz);
 
-    
-    /**
-     * @brief Clears all internal state of the module
-     */
-    void ClearState();
 
     /**
      * @brief Creates a new TimeChunk with synchronized data from all sources

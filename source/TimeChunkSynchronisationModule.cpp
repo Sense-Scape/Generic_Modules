@@ -8,6 +8,7 @@ TimeChunkSynchronisationModule::TimeChunkSynchronisationModule(unsigned uBufferS
       m_tpLastSyncAttempt(std::chrono::steady_clock::now())
 {
     RegisterChunkCallbackFunction(ChunkType::TimeChunk, &TimeChunkSynchronisationModule::Process_TimeChunk, (BaseModule*)this);
+    RegisterChunkCallbackFunction(ChunkType::GPSChunk, &TimeChunkSynchronisationModule::Process_GPSChunk, (BaseModule*)this);
 }
 
 bool TimeChunkSynchronisationModule::IsDataContinuous(const std::vector<uint8_t>& sourceId, int64_t i64MostRecentTimeStamp, size_t uNumSamples, double dSampleRate_hz)
@@ -27,6 +28,22 @@ bool TimeChunkSynchronisationModule::IsDataContinuous(const std::vector<uint8_t>
         PLOG_WARNING << "Data is not continuous for source " << sourceId << ". Expected timestamp: " << i64ExpectedTimestamp_us << " ns, but received: " << i64MostRecentTimeStamp << " ns.";
 
     return bIsDataContinuous;
+}
+
+void TimeChunkSynchronisationModule::Process_GPSChunk(std::shared_ptr<BaseChunk> pBaseChunk)
+{
+    auto pGPSChunk  = std::static_pointer_cast<GPSChunk>(pBaseChunk);
+    auto vu8SourceIdentifier = pGPSChunk->GetSourceIdentifier();
+
+    auto dLongScaling = pGPSChunk->m_bIsWest ? -1 : 1;
+    auto dLatScaling = pGPSChunk->m_bIsNorth ? 1 : -1;
+
+    auto dLong = pGPSChunk->m_dLongitude;
+    auto dLat = pGPSChunk->m_dLatitude;
+
+    m_dSourceLongitudesMap[vu8SourceIdentifier] = dLong;
+    m_dSourceLatitudesMap[vu8SourceIdentifier] = dLat;
+
 }
 
 void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk> pBaseChunk)
@@ -70,6 +87,9 @@ void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk
     // }
 
     if (!CheckQueuesHaveDataForMultilateration())
+        return;
+
+    if (!CheckWeHaveEnoughGPSData())
         return;
 
     // // Then check if we should try to synchronize the channels
@@ -164,6 +184,19 @@ bool TimeChunkSynchronisationModule::CheckQueuesHaveEnoughData()
     return true;
 }
 
+bool TimeChunkSynchronisationModule::CheckWeHaveEnoughGPSData()
+{
+    if (m_dSourceLongitudesMap.empty() || m_dSourceLatitudesMap.empty())
+        return false;
+        
+    // Just a rudimentary check to start
+    bool bChannelCountSameAsLong = m_OldestSourceTimestampMap.size() == m_dSourceLongitudesMap.size();
+    bool bChannelCountSameAsLat = m_OldestSourceTimestampMap.size() == m_dSourceLatitudesMap.size();
+
+    bool bEnoughGPSData = bChannelCountSameAsLong && bChannelCountSameAsLat;
+    return bEnoughGPSData;
+}
+
 void TimeChunkSynchronisationModule::SynchronizeChannels()
 {   
     // Find the most recent timestamp from all the channels
@@ -212,6 +245,9 @@ void TimeChunkSynchronisationModule::ClearState()
     m_MostRecentSourceTimestamp.clear();
     m_dSampleRate_hz = 0;
     m_tpLastSyncAttempt = std::chrono::steady_clock::now();
+
+    m_dSourceLatitudesMap.clear();
+    m_dSourceLongitudesMap.clear();
 }
 
 std::shared_ptr<TDOAChunk> TimeChunkSynchronisationModule::CreateSynchronizedTimeChunk()
@@ -228,16 +264,17 @@ std::shared_ptr<TDOAChunk> TimeChunkSynchronisationModule::CreateSynchronizedTim
 
     auto pTDOAChunk = std::make_shared<TDOAChunk>(
         m_dSampleRate_hz,
-        m_OldestSourceTimestampMap.begin()->second
+        m_OldestSourceTimestampMap.begin()->second,
+        512
     );
 
     // Fill the TimeChunk with synchronized data
-    auto channelIndex = 0;
-
-    for (const auto& [vu8SourceId, sourceData] : m_TimeDataSourceMap)
-    {
-       //pTDOAChunk->AddData(0,0,);
-    }
+    for (auto& [vu8SourceId, vvi16SourceData] : m_TimeDataSourceMap)
+       pTDOAChunk->AddData(
+                        m_dSourceLongitudesMap[vu8SourceId],
+                        m_dSourceLatitudesMap[vu8SourceId],
+                        vu8SourceId, 
+                        vvi16SourceData);
     
 
     // Set the source identifier (assuming we want to use the first source's identifier)
@@ -277,8 +314,6 @@ void TimeChunkSynchronisationModule::TryInitialiseDataSource(std::shared_ptr<Tim
     auto stChannelCount = pTimeChunk->m_vvi16TimeChunks.size();
     m_TimeDataSourceMap[vu8SourceId].resize(stChannelCount);
 
-    
-
 }
 
 void TimeChunkSynchronisationModule::StoreData(std::shared_ptr<TimeChunk> pTimeChunk)
@@ -294,7 +329,6 @@ void TimeChunkSynchronisationModule::StoreData(std::shared_ptr<TimeChunk> pTimeC
     auto count = 0;
     for (auto& vi16Data :  pTimeChunk->m_vvi16TimeChunks) 
     {
-        // TODO: check the if sub vec has been defined
         auto &vi16StoredData = vvi16StoredTimeData[count];
         vi16StoredData.insert(vi16StoredData.end(), vi16Data.begin(), vi16Data.end());
         count++;
