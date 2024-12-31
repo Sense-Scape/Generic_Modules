@@ -50,6 +50,7 @@ void SimulatorModule::ConfigureModuleJSON(nlohmann::json_abi_v3_11_2::json jsonC
 
     CheckAndThrowJSON(jsonConfig,"StartupDelay_us");
     m_i64StartUpDelay_us = jsonConfig["StartupDelay_us"];
+    m_u64CurrentTimeStamp_us = m_i64StartUpDelay_us;
 
     CheckAndThrowJSON(jsonConfig,"SNR_db");
     m_fSNR_db = jsonConfig["SNR_db"];
@@ -195,6 +196,8 @@ void SimulatorModule::GenerateCountTimestamp()
 {
     uint64_t u64ChunkPeriod_us = uint64_t(m_dChunkSize*(1/m_dSampleRate)*1e6);
     m_u64CurrentTimeStamp_us = m_u64CurrentTimeStamp_us + u64ChunkPeriod_us;
+
+    //std::cout << std::this_thread::get_id() << "  " << m_u64CurrentTimeStamp_us << std::endl;
 }
 
 
