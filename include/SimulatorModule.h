@@ -42,7 +42,6 @@ public:
      */
     void ContinuouslyTryProcess() override;
 
-private:
     /// Data Generation
     unsigned m_uNumChannels;                    ///< Number of ADC channels to simulate
     unsigned m_uSimulatedFrequency;             ///< Sinusoid frequency to simulate
