@@ -89,7 +89,7 @@ void ChunkToBytesModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
         uDataBytesTransmitted += uDataBytesToTransmit;
         pSessionModeHeader->IncrementSequence();
     }
-    std::cout << std::to_string(pSessionModeHeader->m_uSessionNumber) << std::endl;
+    
     m_MapOfIndentifiersToChunkTypeSessions[vu8SourceIdentifier][eChunkType]->IncrementSession();
     
 }
