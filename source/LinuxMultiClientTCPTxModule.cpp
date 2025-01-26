@@ -41,8 +41,14 @@ void LinuxMultiClientTCPTxModule::ConnectTCPSocket(int &sock, uint16_t u16TCPPor
 	std::string strInfo = std::string(__FUNCTION__) + ": Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + std::to_string(u16TCPPort) + "";
 	PLOG_INFO << strInfo;
 
-	auto a = connect(sock, (struct sockaddr *)&sockaddr, sizeof(sockaddr));
-	if (a == 0)
+	// Set socket timeout for connect
+	struct timeval timeout;
+	timeout.tv_sec = 5;  // Set timeout to 5 seconds
+	timeout.tv_usec = 0;
+	setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(timeout));
+
+	auto iConnectResult = connect(sock, (struct sockaddr *)&sockaddr, sizeof(sockaddr));
+	if (iConnectResult == 0)
 	{
 		std::string strInfo = std::string(__FUNCTION__) + ": Connected to server at ip " + m_sDestinationIPAddress + " on port " + std::to_string(u16TCPPort) + "";
 		PLOG_INFO << strInfo;
