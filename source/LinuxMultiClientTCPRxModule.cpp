@@ -141,6 +141,18 @@ void LinuxMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNum
     ConnectTCPSocket(InitialClientConnectionSocket, u16AllocatedPortNumber);
     int clientSocket = accept(InitialClientConnectionSocket, NULL, NULL);
 
+    // New code to get the client IP address
+    sockaddr_in clientAddr;
+    socklen_t clientAddrLen = sizeof(clientAddr);
+    std::string clientIP = "NO IP determined";
+    if (getpeername(clientSocket, (sockaddr*)&clientAddr, &clientAddrLen) == 0) {
+        clientIP = inet_ntoa(clientAddr.sin_addr);
+        std::string strInfo = std::string(__FUNCTION__) + ": Client connected from IP: " + clientIP;
+        PLOG_INFO << strInfo;
+    } else {
+        PLOG_WARNING << "Failed to get client IP address.";
+    }
+
     {
         std::string strInfo = std::string(__FUNCTION__) + ": Starting client thread ";
         PLOG_INFO << strInfo;
@@ -166,19 +178,23 @@ void LinuxMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNum
 
         // Set a timeout of 5 seconds
         struct timeval timeout;
-        timeout.tv_sec = 5; // seconds
+        timeout.tv_sec = 10; // seconds
         timeout.tv_usec = 0; // microseconds
 
         int num_ready = select(clientSocket + 1, &readfds, NULL, NULL, &timeout);
 
         if (num_ready < 0)
         {
-            std::string strWarning = std::string(__FUNCTION__) + ": Failed to wait for data on socket: " + std::to_string(errno);
+            std::string strWarning = std::string(__FUNCTION__) + ": Failed to wait for data on socket for client " + clientIP +" with error: " + std::to_string(errno);
             PLOG_WARNING << strWarning;
             break; // Exit the loop on error
         }
         else if (num_ready == 0)
-            continue; // Timeout occurred, continue the loop
+        {
+            std::string strWarning = std::string(__FUNCTION__) + ": Timeout occured after 10s for client " + clientIP;
+            PLOG_WARNING << strWarning;
+            break; // Exit the loop on error
+        }
 
         // Read the data from the socket
         if (FD_ISSET(clientSocket, &readfds))
