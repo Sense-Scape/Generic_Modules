@@ -97,39 +97,15 @@ uint16_t LinuxMultiClientTCPTxModule::WaitForReturnedPortAllocation(int &WinSock
 			vcByteData.resize(sizeof(uint16_t));
 			int16_t i16ReceivedDataLength = recv(WinSocket, &vcByteData[0], sizeof(uint16_t), 0);
 
-			// Lets pseudo error check
-			if (i16ReceivedDataLength == -1)
-			{
-				// std::string strWarning = std::string(__FUNCTION__) + ": recv() failed with error code : " + std::to_string(WSAGetLastError()) + " ";
-				// PLOG_WARNING << strWarning;
-			}
-			else if (i16ReceivedDataLength == 0)
-			{
-				// connection closed, too handle
-				std::string strWarning = std::string(__FUNCTION__) + ": connection closed, too handle ";
-				PLOG_WARNING << strWarning;
-			}
-
-			// And then try store data
-			if (i16ReceivedDataLength > vcByteData.size())
-			{
-				std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + std::to_string(m_u16TCPPort) + ": received data length shorter than actual received data ";
-				PLOG_WARNING << strWarning;
-				bReadError = true;
+			bReadError = CheckForSocketReadErrors(i16ReceivedDataLength,vcByteData.size());
+			if(bReadError)
 				break;
-			}
 
 			for (int i = 0; i < i16ReceivedDataLength; i++)
 				vcAccumulatedBytes.emplace_back(vcByteData[i]);
 		}
 	}
-	else
-	{
-		std::string strWarning = std::string(__FUNCTION__) + ": To add logic here";
-		PLOG_WARNING << strWarning;
-		throw;
-	}
-
+	
 	uint16_t u16AllocatedPortNumber;
 	memcpy(&u16AllocatedPortNumber, &vcAccumulatedBytes[0], sizeof(uint16_t));
 	LOG_WARNING << "Client allocated port " + std::to_string(u16AllocatedPortNumber);
@@ -240,4 +216,34 @@ void LinuxMultiClientTCPTxModule::ContinuouslyTryProcess()
 	// Passing in empty chunk that is not used
 	m_thread = std::thread([this]
 						   { Process(std::shared_ptr<BaseChunk>()); });
+}
+
+
+bool LinuxMultiClientTCPTxModule::CheckForSocketReadErrors(ssize_t stReportedSocketDataLength, size_t stActualDataLength)
+{
+     // Check for timeout
+    if (stReportedSocketDataLength == -1 && errno == EAGAIN)
+    {
+        std::string strWarning = std::string(__FUNCTION__) + ": recv() timed out  or errored for client (error: " + std::to_string(errno) + ") " + m_sDestinationIPAddress;
+        PLOG_WARNING << strWarning;
+        return true;
+    }
+
+    else if (stReportedSocketDataLength == 0)
+    {
+        // connection closed, too handle
+        std::string strInfo = std::string(__FUNCTION__) + ": client " + m_sDestinationIPAddress + " closed connection closed, shutting down thread";
+        PLOG_INFO << strInfo;
+        return true;
+    }
+
+    // And then try store data
+    if (stReportedSocketDataLength > stActualDataLength)
+    {
+        std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + std::to_string(m_u16TCPPort) + ": received data length shorter than actual received data ";
+        PLOG_WARNING << strWarning;
+        return true;
+    }
+
+    return false;
 }
