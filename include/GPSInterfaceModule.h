@@ -4,6 +4,7 @@
 /*Linux Includes*/
 #include <iostream>
 #include <fstream>
+#include <gps.h> 
 
 /*Custom Includes*/
 #include "BaseModule.h"
@@ -47,19 +48,9 @@ public:
     bool m_bSimulatedIsWest;          ///< Whether the simualted position is West
     double m_dSimulatedLatitude = 0;  ///< The simulated latitide
     double m_dSimulatedLongitude = 0; ///< The simulated longitude
+    gps_data_t gpsData;
 
 private:
-    /**
-     * @brief Attempt to open a serial interace from the /dev directory
-     * @return True or False as to whether the interface was opened
-     */
-    bool TryOpenSerialInterface();
-
-    /**
-     * @brief Checks if the module interface is open
-     * @return True or False as to whether the interface is currently opened
-     */
-    bool IsSerialInterfaceOpen();
 
     /**
      * @brief Check serial interface of NMEA 0813 string fror posisiton data
@@ -78,29 +69,9 @@ private:
     void CheckIfSimulationPositionSet();
 
     /**
-     * @brief Calaculates check sum of NMEA 0183 string
-     * @return Check sum of the NMEA 0183 GPS string
+     * @brief Checks and logs if the GPS position has been set
      */
-    unsigned char CalculateChecksum(const std::string &sentence);
-
-    /**
-     * @brief Extracts gps position from NMEA0813 from string
-     * @param sentence string of GPS data
-     * @return returns GPS chunk
-     */
-    std::shared_ptr<GPSChunk> ExtractGSPData(const std::string sentence);
-
-    /**
-     * @brief Verify the GPS string has valid data
-     * @param sentence string of GPS data
-     * @return returns GPS chunk
-     */
-    bool VerifyGPSData(const std::string strReceivedData);
-
-    /**
-     * @brief Print current configuration of this module
-     */
-    void PrintConfiguration();
+    void TryOpenGPSInterface();
 
     /**
      * @brief use a json object to configure this module
