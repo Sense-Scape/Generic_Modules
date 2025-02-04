@@ -23,6 +23,13 @@ if (NOT TARGET BaseModuleLib)
     add_subdirectory(components/Base_Module)
 endif()
 
+find_library(GPS_LIBRARY gps REQUIRED)
+if(GPS_LIBRARY)
+  message(STATUS "Found GPS library: ${GPS_LIBRARY}")
+else()
+  message(FATAL_ERROR "GPS library not found!")
+endif()
+
 add_subdirectory(components/kissfft)
 
 # Include directories for main code and tests
@@ -58,4 +65,4 @@ target_include_directories(GenericTests
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/components/kissfft	
 )
 
-target_link_libraries(GenericTests PRIVATE GenericModuleLib BaseModuleLib ChunkTypesLib GTest::GTest GTest::Main)
+target_link_libraries(GenericTests PRIVATE GenericModuleLib BaseModuleLib ChunkTypesLib GTest::GTest GTest::Main gps)
