@@ -1,16 +1,59 @@
 #include "GPSInterfaceModule.h"
 
-GPSInterfaceModule::GPSInterfaceModule(std::string strInterfaceName, std::vector<uint8_t> &vu8SourceIdentifier, unsigned uBufferSize, bool bSimulateData) : BaseModule(uBufferSize),
-                                                                                                                                                            m_vu8SourceIdentifier(vu8SourceIdentifier),
-                                                                                                                                                            m_strInterfaceName(strInterfaceName),
-                                                                                                                                                            m_bSimulateData(bSimulateData)
 
+GPSInterfaceModule::GPSInterfaceModule(unsigned uBufferSize, nlohmann::json_abi_v3_11_2::json jsonConfig) : 
+    BaseModule(uBufferSize)
 {
-    // If we dont simulate then try open an interface
-    if (!bSimulateData)
-        TryOpenSerialInterface();
-    else 
-        PLOG_INFO << "Simulating position";
+    ConfigureModuleJSON(jsonConfig);
+    
+    if(!m_bSimulateData)
+        TryOpenGPSInterface();
+}
+
+void GPSInterfaceModule::ConfigureModuleJSON(nlohmann::json_abi_v3_11_2::json jsonConfig)
+{
+
+    PLOG_INFO << jsonConfig.dump();
+    
+    CheckAndThrowJSON(jsonConfig, "SourceIdentifier");
+    m_vu8SourceIdentifier = jsonConfig["SourceIdentifier"].get<std::vector<uint8_t>>();
+
+    CheckAndThrowJSON(jsonConfig, "SerialPort");
+    m_strInterfaceName = jsonConfig["SerialPort"];
+
+    CheckAndThrowJSON(jsonConfig, "SimulatePosition");
+    std::string strSimulatePosition = jsonConfig["SimulatePosition"];
+    std::transform(strSimulatePosition.begin(), strSimulatePosition.end(), strSimulatePosition.begin(), 
+                  [](unsigned char c) { return std::toupper(c); });
+    m_bSimulateData = (strSimulatePosition == "TRUE");
+
+    if (m_bSimulateData) {
+        CheckAndThrowJSON(jsonConfig, "SimulatedLongitude");
+        CheckAndThrowJSON(jsonConfig, "SimulatedLatitude");
+        double dSimulatedLongitude = jsonConfig["SimulatedLongitude"];
+        double dSimulatedLatitude = jsonConfig["SimulatedLatitude"];
+
+        if (dSimulatedLongitude > 0)
+            m_bSimulatedIsWest = false;
+        else
+            m_bSimulatedIsWest = true;
+        m_dSimulatedLongitude = std::abs(dSimulatedLongitude);
+
+        if (dSimulatedLatitude > 0)
+            m_bSimulatedIsNorth = true;
+        else
+            m_bSimulatedIsNorth = false;
+        m_dSimulatedLatitude = std::abs(dSimulatedLatitude);
+    }
+}
+
+void GPSInterfaceModule::CheckAndThrowJSON(const nlohmann::json_abi_v3_11_2::json& j, const std::string& key) {
+    auto it = j.find(key);
+    if (it == j.end()) {
+        std::string strFatal = std::string(__FUNCTION__) + "Key '" + key + "' not found in JSON.";
+        PLOG_FATAL << strFatal;
+        throw std::runtime_error(strFatal);
+    }
 }
 
 void GPSInterfaceModule::ContinuouslyTryProcess()
@@ -36,143 +79,64 @@ void GPSInterfaceModule::DefaultProcess(std::shared_ptr<BaseChunk> pBaseChunk)
             TrySimulatedPositionData();
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
-        else if (IsSerialInterfaceOpen())
+        else
         {
             TryTransmitPositionData();
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
-        else
-        {
-            // If not then sleeop and try connect
-            std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-            TryOpenSerialInterface();
-        }
     }
 }
 
-bool GPSInterfaceModule::TryOpenSerialInterface()
+void GPSInterfaceModule::TryOpenGPSInterface()
 {
-
+    while (!m_bShutDown)
     {
-        std::string strInfo = "Opening interface to gps opened on: " + m_strInterfaceName;
-        PLOG_INFO << strInfo;
+        if (gps_open("localhost", "2947", &gpsData) == -1) {
+                PLOG_WARNING << "Failed to connect to gpsd";
+                std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+            }
+            else
+            {
+                PLOG_WARNING << "Connected to gpsd";
+                gps_stream(&gpsData, WATCH_ENABLE, NULL);
+                break;
+            }
     }
-
-    m_fsSerialInterface = std::fstream(m_strInterfaceName.c_str());
-
-    if (IsSerialInterfaceOpen())
-    {
-        std::string strInfo = "Serial interface to gps opened on: " + m_strInterfaceName;
-        PLOG_INFO << strInfo;
-        return true;
-    }
-
-    std::string strWarning = "Failed to open the serial port to GPS Module";
-    PLOG_WARNING << strWarning;
-    return false;
-}
-
-bool GPSInterfaceModule::IsSerialInterfaceOpen()
-{
-    return m_fsSerialInterface.is_open();
 }
 
 void GPSInterfaceModule::TryTransmitPositionData()
 {
-    if (m_fsSerialInterface.peek() != EOF)
-    {
 
-        // Read data from the serial port
-        std::string strReceivedData;
-        std::getline(m_fsSerialInterface, strReceivedData);
+    // Wait for a response
+    char message[4096]; // Buffer for raw GPSD messages (optional)
+    int message_len = sizeof(message); // Length of the buffer
 
-        bool bGPSStringValid = VerifyGPSData(strReceivedData);
-        if(!bGPSStringValid)
-            return;
+    if (gps_waiting(&gpsData, 5000000)) { // Wait for up to 5 seconds
 
-        // Read latitude, latitude direction, longitude, and longitude direction
-        auto pGPSChunk = ExtractGSPData(strReceivedData);
-        TryPassChunk(pGPSChunk);
-    }
-}
-
-// Function to calculate the checksum for an NMEA sentence
-unsigned char GPSInterfaceModule::CalculateChecksum(const std::string &sentence)
-{
-    unsigned char checksum = 0;
-
-    // XOR all characters between '$' and '*' (excluding '$' and '*')
-    for (size_t i = 1; i < sentence.length(); i++)
-    {
-        if (sentence[i] == '*')
-            break;
-
-        checksum ^= sentence[i];
-    }
-
-    return checksum;
-}
-
-std::shared_ptr<GPSChunk> GPSInterfaceModule::ExtractGSPData(const std::string sentence)
-{
-    std::vector<std::string> result;
-    size_t start = 0, end = 0;
-    std::cout << sentence << std::endl;
-
-    // split on commas to get all items in the string
-    while (end != std::string::npos)
-    {
-        start = sentence.find_first_not_of(',', end);
-        if (start == std::string::npos)
-            break;
-
-        end = sentence.find(',', start);
-        if (end == std::string::npos)
-        {
-            result.push_back(sentence.substr(start));
-            break;
+        if (gps_read(&gpsData, message, message_len) == -1) {
+            PLOG_WARNING << "Failed to read from gpsd";
+            gps_close(&gpsData);
+            TryOpenGPSInterface();
         }
 
-        result.push_back(sentence.substr(start, end - start));
-    }
+        auto pGPSChunk = std::make_shared<GPSChunk>();
+        pGPSChunk->SetSourceIdentifier(m_vu8SourceIdentifier);
 
-    auto pGPSChunk = std::make_shared<GPSChunk>();
-    pGPSChunk->SetSourceIdentifier(m_vu8SourceIdentifier);
+        // Get the current time point using system clock
+        std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+        std::time_t epochTime = std::chrono::system_clock::to_time_t(now);
+        pGPSChunk->m_i64TimeStamp = static_cast<uint64_t>(epochTime);
 
-    // Get the current time point using system clock
-    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-    std::time_t epochTime = std::chrono::system_clock::to_time_t(now);
-    pGPSChunk->m_i64TimeStamp = static_cast<uint64_t>(epochTime);
+        pGPSChunk->m_bIsNorth = gpsData.fix.latitude >= 0;
+        pGPSChunk->m_bIsWest = gpsData.fix.longitude < 0;
+        pGPSChunk->m_dLatitude = std::abs(gpsData.fix.latitude);
+        pGPSChunk->m_dLongitude = std::abs(gpsData.fix.longitude);
 
-    pGPSChunk->m_bIsNorth = result[2] == "N";
-    pGPSChunk->m_bIsWest = result[4] == "W";
-    pGPSChunk->m_dLatitude = std::stod(result[1])/100.f;
-    pGPSChunk->m_dLongitude = std::stod(result[3])/100.f;
-
-    return pGPSChunk;
-}
-
-void GPSInterfaceModule::SetSimulationPosition(double dLong, double dLat)
-{
-    if (!m_bSimulateData)
-    {
-        PLOG_INFO << "GPS is in live mode";
-        return;
-    }
-
-    if (dLong > 0)
-        m_bSimulatedIsWest = true;
+        TryPassChunk(pGPSChunk);
+    
+    } 
     else
-        m_bSimulatedIsWest = false;
-    m_dSimulatedLongitude = std::abs(dLong);
-
-    if (dLat > 0)
-        m_bSimulatedIsNorth = true;
-    else
-        m_bSimulatedIsNorth = false;
-    m_dSimulatedLatitude = std::abs(dLat);
-
-    PLOG_INFO << "GPS in simulated mode: long = " + std::to_string(dLong) + " lat = " + std::to_string(dLat);
+        PLOG_WARNING << "Timeout waiting for GPS data";
 }
 
 void GPSInterfaceModule::TrySimulatedPositionData()
@@ -201,42 +165,4 @@ void GPSInterfaceModule::CheckIfSimulationPositionSet()
 
     if (m_dSimulatedLatitude == 0 && m_dSimulatedLongitude == 0)
         PLOG_WARNING << "GPS in simulation mode but no position has beens set";
-}
-
-bool GPSInterfaceModule::VerifyGPSData(const std::string strReceivedData)
-{
-        // Print the received data
-        if (strReceivedData.empty())
-        {
-            std::string strDebug = "GPS string is empty";
-            PLOG_DEBUG << strDebug;
-            return false;
-        }
-
-        // Extract and check the checksum provided in the sentence
-        unsigned char ucExpectedChecksum = CalculateChecksum(strReceivedData);
-        std::string strProvidedChecksumStr = strReceivedData.substr(strReceivedData.find('*') + 1, 2);
-        unsigned char ucProvidedChecksum = std::stoul(strProvidedChecksumStr, nullptr, 16); // Convert hex string to unsigned char
-
-        // Compare the calculated checksum with the provided checksum
-        if (ucExpectedChecksum != ucProvidedChecksum)
-        {
-            std::string strDebug = "GPS Checksum is invalid: " + strReceivedData;
-            PLOG_DEBUG << strDebug;
-            return false;
-        }
-
-        // Now check it is position string   
-        std::string strGPSMessageType = strReceivedData.substr(strReceivedData.find('$') + 1, 5);
-        if (strGPSMessageType != "GPGLL" )
-            return false;
-
-        if (strGPSMessageType.size() <= 18)
-        {
-            std::string strDebug = "Position received with no position information - cant see satellite = " + strReceivedData;
-            PLOG_DEBUG << strDebug;
-            return false;
-        }
-
-        return true;
 }

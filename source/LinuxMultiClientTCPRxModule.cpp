@@ -149,7 +149,13 @@ void LinuxMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNum
     std::vector<char> vcAccumulatedBytes;
     vcAccumulatedBytes.reserve(2048);
 
-    bool bReadError = false;
+    // Set a timeout for the recv function
+    struct timeval recvTimeout;
+    recvTimeout.tv_sec = 5; // seconds
+    recvTimeout.tv_usec = 0; // microseconds
+    setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&recvTimeout, sizeof(recvTimeout));
+
+    bool bSocketErrorOccured = false;
 
     while (!m_bShutDown)
     {
@@ -157,20 +163,26 @@ void LinuxMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNum
         fd_set readfds;
         FD_ZERO(&readfds);
         FD_SET(clientSocket, &readfds);
-        int num_ready = select(clientSocket + 1, &readfds, NULL, NULL, NULL);
+
+        // Set a timeout of 5 seconds
+        struct timeval timeout;
+        timeout.tv_sec = 5; // seconds
+        timeout.tv_usec = 0; // microseconds
+
+        int num_ready = select(clientSocket + 1, &readfds, NULL, NULL, &timeout);
+
         if (num_ready < 0)
         {
-
-            std::string strInfo = std::string(__FUNCTION__) + ": Failed to wait for data on socket: " + std::to_string(errno);
-            PLOG_WARNING << strInfo;
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-            continue;
+            std::string strWarning = std::string(__FUNCTION__) + ": Failed to wait for data on socket: " + std::to_string(errno);
+            PLOG_WARNING << strWarning;
+            break; // Exit the loop on error
         }
+        else if (num_ready == 0)
+            continue; // Timeout occurred, continue the loop
 
         // Read the data from the socket
         if (FD_ISSET(clientSocket, &readfds))
-        {
+        {   
             // Arbitrarily using 2048 and 512
             while (vcAccumulatedBytes.size() < 512)
             {
@@ -178,29 +190,10 @@ void LinuxMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNum
                 vcByteData.resize(512);
                 int uReceivedDataLength = recv(clientSocket, &vcByteData[0], 512, 0);
 
-                // Lets pseudo error check
-                if (uReceivedDataLength == -1)
-                {
-                    std::string strWarning = std::string(__FUNCTION__) + ": recv() failed with error code : " + std::to_string(errno) + " ";
-                    PLOG_WARNING << strWarning;
-                }
-                else if (uReceivedDataLength == 0)
-                {
-                    // connection closed, too handle
-                    std::string strInfo = std::string(__FUNCTION__) + ": client closed connection closed, shutting down thread";
-                    PLOG_INFO << strInfo;
-                    bReadError = true;
+                bool bSocketErrorOccured = CheckForSocketReadErrors(uReceivedDataLength, vcByteData.size());
+                if(bSocketErrorOccured)
                     break;
-                }
 
-                // And then try store data
-                if (uReceivedDataLength > vcByteData.size())
-                {
-                    std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + std::to_string(m_u16TCPPort) + ": received data length shorter than actual received data ";
-                    PLOG_WARNING << strWarning;
-                    bReadError = true;
-                    break;
-                }
                 for (int i = 0; i < uReceivedDataLength; i++)
                     vcAccumulatedBytes.emplace_back(vcByteData[i]);
             }
@@ -222,9 +215,9 @@ void LinuxMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNum
             pUDPDataChunk->m_vcDataChunk = vcCompleteClassByteVector;
 
             TryPassChunk(std::dynamic_pointer_cast<BaseChunk>(pUDPDataChunk));
+
         }
-        if (bReadError)
-            break;
+   
     }
 
     CloseTCPSocket(clientSocket);
@@ -247,4 +240,34 @@ void LinuxMultiClientTCPRxModule::ContinuouslyTryProcess()
     // passing in empty chunk that is not used
     m_thread = std::thread([this]
                            { Process(std::shared_ptr<BaseChunk>()); });
+}
+
+
+bool LinuxMultiClientTCPRxModule::CheckForSocketReadErrors(ssize_t stReportedSocketDataLength, size_t stActualDataLength)
+{
+     // Check for timeout
+    if (stReportedSocketDataLength == -1 && errno == EAGAIN)
+    {
+        std::string strWarning = std::string(__FUNCTION__) + ": recv() timed out  or errored for client (error: " + std::to_string(errno) + ") " + m_sIPAddress;
+        PLOG_WARNING << strWarning;
+        return true;
+    }
+
+    else if (stReportedSocketDataLength == 0)
+    {
+        // connection closed, too handle
+        std::string strInfo = std::string(__FUNCTION__) + ": client " + m_sIPAddress + " closed connection closed, shutting down thread";
+        PLOG_INFO << strInfo;
+        return true;
+    }
+
+    // And then try store data
+    if (stReportedSocketDataLength > stActualDataLength)
+    {
+        std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + std::to_string(m_u16TCPPort) + ": received data length shorter than actual received data ";
+        PLOG_WARNING << strWarning;
+        return true;
+    }
+
+    return false;
 }

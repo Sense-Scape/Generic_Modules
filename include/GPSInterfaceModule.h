@@ -4,6 +4,7 @@
 /*Linux Includes*/
 #include <iostream>
 #include <fstream>
+#include <gps.h> 
 
 /*Custom Includes*/
 #include "BaseModule.h"
@@ -12,17 +13,15 @@
 /**
  * @brief Class that reads the GPS data from the serial interface
  */
-class GPSInterfaceModule : public BaseModule
+class   GPSInterfaceModule : public BaseModule
 {
 public:
     /**
      * @brief Constructor to communicate with serial GPS module
-     * @param strInterfaceName The interface with which communicate with GPS module
-     * @param vu8SourceIdentifier Source identifier of chunks produced by this module
      * @param uBufferSize Size of module buffer
-     * @param bSimulateData whether to simulate GPS data or not
+     * @param jsonConfig JSON configuration for the module
      */
-    GPSInterfaceModule(std::string strInterfaceName, std::vector<uint8_t> &vu8SourceIdentifier, unsigned uBufferSize, bool bSimulateData);
+    GPSInterfaceModule(unsigned uBufferSize, nlohmann::json_abi_v3_11_2::json jsonConfig);
 
     /**
      * @brief Generate and fill complex time data chunk and pass on to next module
@@ -40,14 +39,6 @@ public:
      */
     void ContinuouslyTryProcess() override;
 
-    /**
-     * @brief Set position when in simulation mode
-     * @param dLong Simulated longitude position
-     * @param dLat Simulated latitude position
-     */
-    void SetSimulationPosition(double dLong, double dLat);
-
-private:
     std::fstream m_fsSerialInterface;           ///< Stream to serial interface
     std::string m_strInterfaceName;             ///< The string in the /dev directory
     std::vector<uint8_t> m_vu8SourceIdentifier; ///< Source identifier of generated chunks
@@ -57,17 +48,9 @@ private:
     bool m_bSimulatedIsWest;          ///< Whether the simualted position is West
     double m_dSimulatedLatitude = 0;  ///< The simulated latitide
     double m_dSimulatedLongitude = 0; ///< The simulated longitude
-    /**
-     * @brief Attempt to open a serial interace from the /dev directory
-     * @return True or False as to whether the interface was opened
-     */
-    bool TryOpenSerialInterface();
+    gps_data_t gpsData;
 
-    /**
-     * @brief Checks if the module interface is open
-     * @return True or False as to whether the interface is currently opened
-     */
-    bool IsSerialInterfaceOpen();
+private:
 
     /**
      * @brief Check serial interface of NMEA 0813 string fror posisiton data
@@ -86,24 +69,22 @@ private:
     void CheckIfSimulationPositionSet();
 
     /**
-     * @brief Calaculates check sum of NMEA 0183 string
-     * @return Check sum of the NMEA 0183 GPS string
+     * @brief Checks and logs if the GPS position has been set
      */
-    unsigned char CalculateChecksum(const std::string &sentence);
+    void TryOpenGPSInterface();
 
     /**
-     * @brief Extracts gps position from NMEA0813 from string
-     * @param sentence string of GPS data
-     * @return returns GPS chunk
+     * @brief use a json object to configure this module
+     * @param[in] jsonConfig JSON configuration of this module
      */
-    std::shared_ptr<GPSChunk> ExtractGSPData(const std::string sentence);
+    void ConfigureModuleJSON(nlohmann::json_abi_v3_11_2::json jsonConfig);
 
     /**
-     * @brief Verify the GPS string has valid data
-     * @param sentence string of GPS data
-     * @return returns GPS chunk
+     * @brief look for specified key and throw if not found
+     * @param[in] jsonConfig JSON configuration of this module
+     * @param[in] key Key for which one is looking
      */
-    bool VerifyGPSData(const std::string strReceivedData);
+    void CheckAndThrowJSON(const nlohmann::json_abi_v3_11_2::json& j, const std::string& key);
 };
 
 #endif

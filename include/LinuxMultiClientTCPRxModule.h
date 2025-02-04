@@ -76,6 +76,14 @@ private:
      */
     void CloseTCPSocket(int socket);
 
+    /**
+     * @brief Checks for errors during socket read operations
+     * @param[in] stReceivedDataLength Length of data received from the socket
+     * @param[in] stActualDataLength Expected length of data
+     * @return true if an error occurred, false otherwise
+     */
+    bool CheckForSocketReadErrors(ssize_t stReceivedDataLength, size_t stActualDataLength);
+
     /*
      * @brief Module process to reveice data from TCP buffer and pass to next module
      */
