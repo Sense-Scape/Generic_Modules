@@ -15,6 +15,10 @@ void ToJSONModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		TryPassChunk(pJSONChunk);
 		//std::cout << pJSONChunk->m_JSONDocument.dump() << std::endl;
 	}
+	else if(pBaseChunk->GetChunkType() == ChunkType::JSONChunk)
+	{
+		TryPassChunk(pBaseChunk);
+	}
 	else
 	{
 		auto strChunkType = ChunkTypesNamingUtility::toString(pBaseChunk->GetChunkType());
