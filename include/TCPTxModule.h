@@ -54,18 +54,7 @@ private:
     int m_WinSocket;                     ///< Linux socket
     struct sockaddr_in m_SocketStruct;   ///< IPv4 Socket
     std::atomic<bool> m_bTCPConnected;   ///< State variable as to whether the TCP socket is connected
-
-    /**
-     * @brief Creates the windows socket using member variables
-     */
-    void ConnectTCPSocket();
-
-    /*
-     * @brief Closes Windows socket
-     * @param[in] TCP Socket
-     */
-    void CloseTCPSocket(int &clientSocket);
-
+    
     /*
      * @brief Module process to reveice data from TCP buffer and pass to next module
      * @param[in] Pointer to base chunk

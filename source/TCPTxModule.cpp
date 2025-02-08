@@ -11,35 +11,7 @@ TCPTxModule::TCPTxModule(std::string sIPAddress, uint16_t u16TCPPort, unsigned u
 
 TCPTxModule::~TCPTxModule()
 {
-    CloseTCPSocket(m_WinSocket);
-}
-
-void TCPTxModule::ConnectTCPSocket()
-{
-    // Configuring protocol to TCP
-    if ((m_WinSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-    {
-        std::string strError = std::string(__FUNCTION__) + ":Windows TCP socket WSA Error. INVALID_int ";
-        PLOG_ERROR << strError;
-        throw;
-    }
-
-    // Allow address reuse
-    int optval = 1;
-    if (setsockopt(m_WinSocket, SOL_SOCKET, SO_REUSEADDR, (char *)&optval, sizeof(optval)) < 0)
-    {
-        // Handle error
-    }
-
-    // Keep the connection open
-    int optlen = sizeof(optval);
-    if (setsockopt(m_WinSocket, SOL_SOCKET, SO_KEEPALIVE, (char *)&optval, optlen) < 0)
-    {
-        return;
-    }
-
-    // Prevents crashes when server closes ubruptly and casues sends to fail
-    signal(SIGPIPE, SIG_IGN);
+    close(m_WinSocket);
 }
 
 void TCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
@@ -47,19 +19,26 @@ void TCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
     // Constantly looking for new connections and stating client threads
     // One thread should be created at a time, corresponding to one simulated device
     // In the case of an error, the thread will close and this will recreate the socket
+
+    // Lets start by creating the sock addr
+    sockaddr_in sockaddr;
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = htons(m_u16TCPPort);
+    // and prevent crashes when server closes ubruptly and casues sends to fail
+    signal(SIGPIPE, SIG_IGN);
+
+    bool bPrintedOnThisReconnect = false;
+
     while (!m_bShutDown)
     {
         if (!m_bTCPConnected)
         {
-            ConnectTCPSocket();
-
-            std::string strInfo = std::string(__FUNCTION__) + ": Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + std::to_string(m_u16TCPPort);
-            PLOG_INFO << strInfo;
-
-            // Lets start by creating the sock addr
-            sockaddr_in sockaddr;
-            sockaddr.sin_family = AF_INET;
-            sockaddr.sin_port = htons(m_u16TCPPort);
+            if(!bPrintedOnThisReconnect)
+            {
+                std::string strInfo = std::string(__FUNCTION__) + ": Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + std::to_string(m_u16TCPPort);
+                PLOG_INFO << strInfo;
+                bPrintedOnThisReconnect = true;
+            }
 
             // Lets then convert an IPv4 or IPv6 to its binary representation
             if (inet_pton(AF_INET, m_sDestinationIPAddress.c_str(), &(sockaddr.sin_addr)) <= 0)
@@ -74,34 +53,34 @@ void TCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
             {
                 std::string strFatal = std::string(__FUNCTION__) + ":INVALID_SOCKET ";
                 PLOG_FATAL << strFatal;
-                // Handle the error here
-                // throw or return an error code
             }
+            
+            bool bConnectionSuccessful = (connect(clientSocket, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) == 0);
 
             // Then lets do a blocking call to try connect
-            if (connect(clientSocket, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) == 0)
+            if (bConnectionSuccessful)
             {
                 std::string strInfo = std::string(__FUNCTION__) + ": Connected to server at ip " + m_sDestinationIPAddress + " on port " + std::to_string(m_u16TCPPort);
                 PLOG_INFO << strInfo;
 
                 // And update connection state and spin of the processing thread
                 m_bTCPConnected = true;
+                bPrintedOnThisReconnect = false;
                 std::thread clientThread([this, &clientSocket]
                                          { RunClientThread(clientSocket); });
                 clientThread.detach();
             }
             else
-            {
-                std::string strWarning = std::string(__FUNCTION__) + ": Failed to connect to the server. Error code: " + std::to_string(errno);
-                PLOG_WARNING << strWarning;
-                std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-                close(clientSocket);
+            {   
+                close(clientSocket);        
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         }
         else
         {
             // While we are already connected lets just put the thread to sleep
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            bPrintedOnThisReconnect = false;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 }
@@ -110,14 +89,12 @@ void TCPTxModule::RunClientThread(int &clientSocket)
 {
     while (!m_bShutDown)
     {
-       
         try
         {
             // During processing we see if there is data (UDP Chunk) in the input buffer
             std::shared_ptr<BaseChunk> pBaseChunk;
             if (TakeFromBuffer(pBaseChunk))
             {
-                
                 // Cast it back to a UDP chunk
                 auto udpChunk = std::static_pointer_cast<ByteChunk>(pBaseChunk);
                 const auto pvcData = udpChunk->m_vcDataChunk;
@@ -127,7 +104,7 @@ void TCPTxModule::RunClientThread(int &clientSocket)
                 int bytes_sent = send(clientSocket, &pvcData[0], length, 0);
                 if (bytes_sent < 0)
                 {
-                    // An error occurred.
+                    PLOG_WARNING  << "Server closed connection abruptly";
                     break;
                 }
             }
@@ -151,13 +128,8 @@ void TCPTxModule::RunClientThread(int &clientSocket)
     std::string strInfo = std::string(__FUNCTION__) + ": Closing TCP Socket at ip " + m_sDestinationIPAddress + " on port " + std::to_string(m_u16TCPPort);
     PLOG_INFO << strInfo;
 
-    CloseTCPSocket(clientSocket);
-    m_bTCPConnected = false;
-}
-
-void TCPTxModule::CloseTCPSocket(int &clientSocket)
-{
     close(clientSocket);
+    m_bTCPConnected = false;
 }
 
 void TCPTxModule::StartProcessing()
