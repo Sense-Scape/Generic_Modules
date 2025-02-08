@@ -27,6 +27,8 @@ public:
      */
     std::string GetModuleType() override { return "SessionProcModule"; };
 
+    void StartReportingLoop() override;
+
 private:
     std::map<uint32_t, std::function<void(std::shared_ptr<ByteChunk>)>> m_mFunctionCallbacksMap;             ///< Map of function callbacks called according to session type
     std::map<std::vector<uint8_t>, std::map<ChunkType, std::shared_ptr<std::vector<char>>>> m_mSessionBytes; ///< Map of session mode intermediate bytes prior ro session completion
@@ -35,7 +37,7 @@ private:
      * @brief Module process to collect and format UDP data
      */
     void Process_ByteChunk(std::shared_ptr<BaseChunk> pBaseChunk);
-
+    void Process_JSONChunk(std::shared_ptr<BaseChunk> pBaseChunk);
     /*
      * @brief Registers all used session types for use
      */

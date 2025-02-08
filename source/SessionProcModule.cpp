@@ -5,6 +5,12 @@ SessionProcModule::SessionProcModule(unsigned uBufferSize) : BaseModule(uBufferS
                                                              m_mSessionBytes()
 {
     RegisterChunkCallbackFunction(ChunkType::ByteChunk, &SessionProcModule::Process_ByteChunk,(BaseModule*)this);
+    RegisterChunkCallbackFunction(ChunkType::JSONChunk, &SessionProcModule::Process_JSONChunk,(BaseModule*)this);
+}
+
+void SessionProcModule::Process_JSONChunk(std::shared_ptr<BaseChunk> pBaseChunk)
+{
+    TryPassChunk(pBaseChunk);
 }
 
 void SessionProcModule::Process_ByteChunk(std::shared_ptr<BaseChunk> pBaseChunk)
@@ -129,4 +135,33 @@ std::shared_ptr<SessionController> SessionProcModule::GetPreviousSessionState(st
 void SessionProcModule::UpdatePreviousSessionState(std::vector<uint8_t> &vu8SourceIdentifier, ChunkType chunkType, SessionController reliableSessionMode)
 {
     m_mSessionModesStatesMap[vu8SourceIdentifier][chunkType] = std::make_shared<SessionController>(reliableSessionMode);
+}
+
+void SessionProcModule::StartReportingLoop()
+{
+    while (!m_bShutDown)
+    {
+
+        // Lets start by generating Queue stat
+        std::unique_lock<std::mutex> BufferAccessLock(m_BufferStateMutex);
+        uint16_t u16CurrentBufferSize = m_cbBaseChunkBuffer.size();
+        auto strModuleName = GetModuleType();
+        BufferAccessLock.unlock();
+
+        nlohmann::json j = {
+            {"Server", {
+                { strModuleName, {  // Extra `{}` around key-value pairs
+                    {"QueueLength", std::to_string(u16CurrentBufferSize)}
+                }}
+            }}
+        };
+
+        // Then transmit
+        auto pJSONChunk = std::make_shared<JSONChunk>();
+        pJSONChunk->m_JSONDocument = j;
+        CallChunkCallbackFunction(pJSONChunk);
+
+        // And sleep as not to send too many
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
 }
