@@ -200,13 +200,14 @@ void LinuxMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNum
         if (FD_ISSET(clientSocket, &readfds))
         {   
             // Arbitrarily using 2048 and 512
+            bool bSocketErrorOccured = false;
             while (vcAccumulatedBytes.size() < 512)
             {
                 std::vector<char> vcByteData;
                 vcByteData.resize(512);
                 int uReceivedDataLength = recv(clientSocket, &vcByteData[0], 512, 0);
 
-                bool bSocketErrorOccured = CheckForSocketReadErrors(uReceivedDataLength, vcByteData.size());
+                bSocketErrorOccured = CheckForSocketReadErrors(uReceivedDataLength, vcByteData.size());
                 if(bSocketErrorOccured)
                     break;
 
@@ -214,6 +215,9 @@ void LinuxMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNum
                     vcAccumulatedBytes.emplace_back(vcByteData[i]);
             }
 
+            if(bSocketErrorOccured)
+                    break;
+                    
             // Now see if a complete object has been passed on socket
             // Search for null character
             uint16_t u16SessionTransmissionSize;
