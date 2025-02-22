@@ -51,7 +51,8 @@ protected:
     std::shared_ptr<GPSChunk> pGPSChunkFourChannel;
 };
 
-TEST_F(TestTimeSyncClass, TestTrackingChannelCounts) {
+// On reboot of a sensor we may change channel count, cmake sure this does not cause issues
+TEST_F(TestTimeSyncClass, TestChannelCountsFromASourceRemainConstant) {
 
     auto bResult = pTimeChunkSynchronisationModule->IsChannelCountTheSame(pTimeChunkTwoChannel);
     EXPECT_EQ(bResult, false) << " Testing initialisation channel count";
@@ -65,7 +66,8 @@ TEST_F(TestTimeSyncClass, TestTrackingChannelCounts) {
 
 }
 
-TEST_F(TestTimeSyncClass, TestMultiLaterationSourceCount) {
+// Ensure we have stored at least 3 souces of data  for multlateration
+TEST_F(TestTimeSyncClass, TestWeHaveEnoughSourcesForMultlateration) {
 
     pTimeChunkSynchronisationModule->CallChunkCallbackFunction(pTimeChunkTwoChannel);
     pTimeChunkSynchronisationModule->CallChunkCallbackFunction(pTimeChunkThreeChannel);
@@ -78,6 +80,8 @@ TEST_F(TestTimeSyncClass, TestMultiLaterationSourceCount) {
 
 }
 
+// There is no gaurentee of getting GPS and time data, if we have anough source data check
+// if we have received GPS data from the corresponding source
 TEST_F(TestTimeSyncClass, TestGPSWithTimeData) {
 
     bool bResult = pTimeChunkSynchronisationModule->CheckWeHaveEnoughGPSData();

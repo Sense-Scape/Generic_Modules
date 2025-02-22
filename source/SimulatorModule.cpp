@@ -12,7 +12,8 @@ void SimulatorModule::PrintConfiguration()
 {
 
     std::string strSourceIdentifier = std::accumulate(m_vu8SourceIdentifier.begin(), m_vu8SourceIdentifier.end(), std::string(""),
-        [](std::string str, int element) { return str + std::to_string(element) + " "; });
+        [](const std::string &str, int element) { return str + std::to_string(element) + " "; });
+
     std::string strInfo = std::string(__FUNCTION__) + " Simulator Module create:\n" 
         + "=========\n" +
         + "General Config: \n"

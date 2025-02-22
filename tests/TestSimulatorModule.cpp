@@ -16,8 +16,9 @@ protected:
 
 };
 
-TEST_F(TestSimulatorModule, testSimTimestampConfig) {
-
+// Test we have the generate timestamp offset as a function of number of samples and sample rate
+TEST_F(TestSimulatorModule, testSimTimestampIncrement) {
+    
     nlohmann::json DefaultJsonConfig = { 
         {"Enabled", "TRUE"},
         {"SampleRate_Hz", 16000},
@@ -37,10 +38,13 @@ TEST_F(TestSimulatorModule, testSimTimestampConfig) {
     auto bResult = pSimulatorModule->m_u64CurrentTimeStamp_us == 0;
     EXPECT_EQ(bResult, true) << " Testing initialisation of timestamp in simulation mode";
 
-    // Test we have the offset
     pSimulatorModule->GenerateCountTimestamp();
     bResult = pSimulatorModule->m_u64CurrentTimeStamp_us == uint64_t(1'000'000*(512.0/16000.0));
     EXPECT_EQ(bResult, true) << " Testing initialisation of timestamp in simulation mode";
+}
+
+// Test we can add an offset tot the start timestamp
+TEST_F(TestSimulatorModule, testSimTimestampStartOffset) {
 
     nlohmann::json TimeOffsetJsonConfig = { 
         {"Enabled", "TRUE"},
@@ -58,7 +62,7 @@ TEST_F(TestSimulatorModule, testSimTimestampConfig) {
 
     pSimulatorModule = std::make_shared<SimulatorModule>(10, TimeOffsetJsonConfig);
 
-    bResult = pSimulatorModule->m_u64CurrentTimeStamp_us == 29155;
+    bool bResult = pSimulatorModule->m_u64CurrentTimeStamp_us == 29155;
     EXPECT_EQ(bResult, true) << " Testing initialisation of timestamp in simulation mode";
 
     // Test we have the offset
