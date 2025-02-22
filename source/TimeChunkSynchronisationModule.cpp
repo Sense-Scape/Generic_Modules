@@ -86,15 +86,12 @@ void TimeChunkSynchronisationModule::Process_TimeChunk(std::shared_ptr<BaseChunk
     //     return;
     // }
 
-    if (!CheckQueuesHaveDataForMultilateration())
-        return;
+    bool bWeHaveEnoughData =  CheckQueuesHaveDataForMultilateration();
+    bool bWeHaveAllGPSPositions = CheckWeHaveEnoughGPSData();
+    bool bWeHaveWaitedLongEnoughToSync = ShouldWeTrySynchronise();
 
-    if (!CheckWeHaveEnoughGPSData())
-        return;
-
-    // // Then check if we should try to synchronize the channels
-    if (!ShouldWeTrySynchronise())
-        return;
+    if (!(bWeHaveEnoughData && bWeHaveAllGPSPositions && bWeHaveWaitedLongEnoughToSync))
+        return
 
     SynchronizeChannels();
     
@@ -142,6 +139,9 @@ bool TimeChunkSynchronisationModule::ShouldWeTrySynchronise()
     // Check if we have waited long enough to perform synchronization
     auto tpNow = std::chrono::steady_clock::now();
     auto u64ElapsedNs = std::chrono::duration_cast<std::chrono::nanoseconds>(tpNow - m_tpLastSyncAttempt).count();
+
+    m_u16SecondsSinceLastSync = u64ElapsedNs/1e9;
+
     if (u64ElapsedNs <= m_u64SyncInterval_ns)
         return false;
         
@@ -172,7 +172,8 @@ bool TimeChunkSynchronisationModule::CheckQueuesHaveEnoughData()
     // Dont sync if we dont have data
     if (m_TimeDataSourceMap.empty())
         return false;
-    
+    m_u16NumTimeSources = m_TimeDataSourceMap.size();
+
     size_t uSamplesRequired = static_cast<size_t>(m_TDOALength_s * m_dSampleRate_hz);
 
     for (const auto& queuePair : m_TimeDataSourceMap)
@@ -180,7 +181,8 @@ bool TimeChunkSynchronisationModule::CheckQueuesHaveEnoughData()
         if (queuePair.second[0].size() <= uSamplesRequired)
             return false;
     }
-    
+
+
     return true;
 }
 
@@ -190,6 +192,7 @@ bool TimeChunkSynchronisationModule::CheckWeHaveEnoughGPSData()
         return false;
         
     // Just a rudimentary check to start
+    m_u16NumGPSSources = m_dSourceLatitudesMap.size();
     bool bChannelCountSameAsLong = m_OldestSourceTimestampMap.size() == m_dSourceLongitudesMap.size();
     bool bChannelCountSameAsLat = m_OldestSourceTimestampMap.size() == m_dSourceLatitudesMap.size();
 
@@ -337,3 +340,35 @@ void TimeChunkSynchronisationModule::StoreData(std::shared_ptr<TimeChunk> pTimeC
     }
     
 }
+
+ void TimeChunkSynchronisationModule::StartReportingLoop()
+ {
+     while (!m_bShutDown)
+        {
+
+            // Lets start by generating Queue stat
+            std::unique_lock<std::mutex> BufferAccessLock(m_BufferStateMutex);
+            uint16_t u16CurrentBufferSize = m_cbBaseChunkBuffer.size();
+            auto strModuleName = GetModuleType();
+            BufferAccessLock.unlock();
+
+            nlohmann::json j = {
+                {m_strReportingJsonRoot, {
+                    { strModuleName  + "_"+ m_strReportingJsonModuleAddition, {  // Extra `{}` around key-value pairs
+                        {"QueueLength", std::to_string(u16CurrentBufferSize)},
+                        {"NumTimeSources", std::to_string(m_u16NumTimeSources)},
+                        {"NumGPSSources", std::to_string(m_u16NumGPSSources)},
+                        {"SecondsSinceLastTimeSync", std::to_string(m_u16NumGPSSources)}
+                    }}
+                }}
+            };
+
+            // Then transmit
+            auto pJSONChunk = std::make_shared<JSONChunk>();
+            pJSONChunk->m_JSONDocument = j;
+            CallChunkCallbackFunction(pJSONChunk);
+
+            // And sleep as not to send too many
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+ }

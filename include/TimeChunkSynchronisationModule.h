@@ -6,6 +6,8 @@
 #include <memory>
 #include <vector>
 #include <chrono>
+#include <atomic>
+
 #include "BaseModule.h"
 #include "TimeChunk.h"
 #include "GPSChunk.h"
@@ -86,10 +88,13 @@ private:
     std::map<std::vector<uint8_t>, uint64_t> m_OldestSourceTimestampMap;        ///< Time stamps from the oldest chunk received from each source   
     std::map<std::vector<uint8_t>, uint64_t> m_MostRecentSourceTimestamp;       ///< Time stamps from the most recent chunk received from each source 
     std::map<std::vector<uint8_t>, std::vector<std::vector<int16_t>>> m_TimeDataSourceMap;   ///< Map whioch stores each sources current time data
+    std::atomic<std::uint16_t> m_u16NumTimeSources;                             ///< 
+    std::atomic<std::uint16_t> m_u16SecondsSinceLastSync;
 
     // GPSChunk
     std::map<std::vector<uint8_t>, double> m_dSourceLongitudesMap;               ///< 
     std::map<std::vector<uint8_t>, double> m_dSourceLatitudesMap;                ///<
+    std::atomic<std::uint16_t> m_u16NumGPSSources;                               ///< 
 
     /**
      * @brief Check if we need to perform synchronization and perform it if necessary
@@ -129,6 +134,11 @@ private:
      * @param[in] pTimeChunk pointer to time chunk of data
      */
     void StoreData(std::shared_ptr<TimeChunk> pTimeChunk);
+
+    /**
+     * @brief send reporting json messaages
+     */
+    void StartReportingLoop() override;
 };
 
 #endif
