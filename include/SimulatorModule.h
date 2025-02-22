@@ -131,13 +131,6 @@ public:
      */
     void ConfigureModuleJSON(nlohmann::json_abi_v3_11_2::json jsonConfig);
 
-    /**
-     * @brief look for specified key and throw if not found
-     * @param[in] jsonConfig JSON configuration of this module
-     * @param[in] key Key for which on is looking
-     */
-    void CheckAndThrowJSON(const nlohmann::json_abi_v3_11_2::json& j, const std::string& key);
-
     template<typename T>
     double calculatePower(const std::vector<T>& signal) {
         double power = std::inner_product(signal.begin(), signal.end(), 

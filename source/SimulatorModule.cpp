@@ -86,15 +86,6 @@ void SimulatorModule::ConfigureModuleJSON(nlohmann::json_abi_v3_11_2::json jsonC
 
 }
 
-void SimulatorModule::CheckAndThrowJSON(const nlohmann::json_abi_v3_11_2::json& j, const std::string& key) {
-    auto it = j.find(key);
-    if (it == j.end()) {
-        std::string strFatal = std::string(__FUNCTION__) + "Key '" + key + "' not found in JSON.";
-        PLOG_FATAL << strFatal;
-        throw std::runtime_error(strFatal);
-    }
-}
-
 
 void SimulatorModule::ContinuouslyTryProcess()
 {   
