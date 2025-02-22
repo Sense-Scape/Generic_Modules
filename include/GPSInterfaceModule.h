@@ -43,11 +43,12 @@ public:
     std::string m_strInterfaceName;             ///< The string in the /dev directory
     std::vector<uint8_t> m_vu8SourceIdentifier; ///< Source identifier of generated chunks
     // Simulation Data
-    bool m_bSimulateData;             ///< Whether GPS should try simulate Data
-    bool m_bSimulatedIsNorth;         ///< Whether the simualted position is north
-    bool m_bSimulatedIsWest;          ///< Whether the simualted position is West
-    double m_dSimulatedLatitude = 0;  ///< The simulated latitide
-    double m_dSimulatedLongitude = 0; ///< The simulated longitude
+    bool m_bSimulateData;                       ///< Whether GPS should try simulate Data
+    bool m_bSimulatedIsNorth;                   ///< Whether the simualted position is north
+    bool m_bSimulatedIsWest;                    ///< Whether the simualted position is West
+    double m_dSimulatedLatitude = 0;            ///< The simulated latitide
+    double m_dSimulatedLongitude = 0;           ///< The simulated longitude
+    std::atomic<bool> m_bGPSCurrentlyLocked;    ///< Is the GPS currently locked
     gps_data_t gpsData;
 
 private:
@@ -85,6 +86,11 @@ private:
      * @param[in] key Key for which one is looking
      */
     void CheckAndThrowJSON(const nlohmann::json_abi_v3_11_2::json& j, const std::string& key);
+
+    /**
+     * @brief send reporting json messaages
+     */
+    void StartReportingLoop() override;
 };
 
 #endif

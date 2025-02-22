@@ -59,6 +59,7 @@ private:
     std::vector<uint8_t> m_vu8SourceIdentifier;         ///< Source identifier of generated chunks
     std::shared_ptr<std::vector<char>> m_pvcAudioData;  ///< Pointer to vector to store audio data
 
+    const char *m_pDevice = "hw:1,0";
     snd_pcm_t *m_capture_handle;
     snd_pcm_hw_params_t *m_hw_params;
     snd_pcm_format_t m_format = SND_PCM_FORMAT_S16_LE;
@@ -97,6 +98,11 @@ private:
      * @brief Clean Up alsa config
      */
     void Cleanup(); 
+
+    /**
+     * @brief send reporting json messaages
+     */
+    void StartReportingLoop() override;
 };
 
 #endif

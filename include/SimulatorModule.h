@@ -131,6 +131,11 @@ public:
      */
     void ConfigureModuleJSON(nlohmann::json_abi_v3_11_2::json jsonConfig);
 
+    /**
+     * @brief send reporting json messaages
+     */
+    void StartReportingLoop() override;
+
     template<typename T>
     double calculatePower(const std::vector<T>& signal) {
         double power = std::inner_product(signal.begin(), signal.end(), 
@@ -144,6 +149,7 @@ public:
         double power = calculatePower(signal);
         return 10.0 * std::log10(power / referenceLevel);
     }
+
 };
 
 #endif

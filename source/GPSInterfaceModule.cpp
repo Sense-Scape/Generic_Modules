@@ -118,6 +118,11 @@ void GPSInterfaceModule::TryTransmitPositionData()
             gps_close(&gpsData);
             TryOpenGPSInterface();
         }
+        
+        if(gpsData.fix.mode >= MODE_2D)
+            m_bGPSCurrentlyLocked = true;
+        else
+            m_bGPSCurrentlyLocked = false;
 
         auto pGPSChunk = std::make_shared<GPSChunk>();
         pGPSChunk->SetSourceIdentifier(m_vu8SourceIdentifier);
@@ -166,3 +171,34 @@ void GPSInterfaceModule::CheckIfSimulationPositionSet()
     if (m_dSimulatedLatitude == 0 && m_dSimulatedLongitude == 0)
         PLOG_WARNING << "GPS in simulation mode but no position has beens set";
 }
+
+ void GPSInterfaceModule::StartReportingLoop()
+ {
+     while (!m_bShutDown)
+        {
+
+            // Lets start by generating Queue stat
+            std::unique_lock<std::mutex> BufferAccessLock(m_BufferStateMutex);
+            uint16_t u16CurrentBufferSize = m_cbBaseChunkBuffer.size();
+            auto strModuleName = GetModuleType();
+            BufferAccessLock.unlock();
+
+            nlohmann::json j = {
+                {m_strReportingJsonRoot, {
+                    { strModuleName  + "_"+ m_strReportingJsonModuleAddition, {  // Extra `{}` around key-value pairs
+                        {"QueueLength", std::to_string(u16CurrentBufferSize)},
+                        {"Simulation Mode", std::to_string(m_bSimulateData)},
+                        {"GPSLock", std::to_string(m_bGPSCurrentlyLocked)}
+                    }}
+                }}
+            };
+
+            // Then transmit
+            auto pJSONChunk = std::make_shared<JSONChunk>();
+            pJSONChunk->m_JSONDocument = j;
+            CallChunkCallbackFunction(pJSONChunk);
+
+            // And sleep as not to send too many
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+ }

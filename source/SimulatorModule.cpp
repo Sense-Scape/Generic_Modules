@@ -244,3 +244,35 @@ void SimulatorModule::WaitForStartUpDelay()
 
     std::this_thread::sleep_for(std::chrono::nanoseconds(m_i64StartUpDelay_us*(uint32_t)1e3));
 }
+
+    void SimulatorModule::StartReportingLoop()
+    {
+        while (!m_bShutDown)
+        {
+
+            // Lets start by generating Queue stat
+            std::unique_lock<std::mutex> BufferAccessLock(m_BufferStateMutex);
+            uint16_t u16CurrentBufferSize = m_cbBaseChunkBuffer.size();
+            auto strModuleName = GetModuleType();
+            BufferAccessLock.unlock();
+
+            nlohmann::json j = {
+                {m_strReportingJsonRoot, {
+                    { strModuleName  + "_"+ m_strReportingJsonModuleAddition, {  // Extra `{}` around key-value pairs
+                        {"QueueLength", std::to_string(u16CurrentBufferSize)},
+                        {"ChannelCount", std::to_string(m_uNumChannels)},
+                        {"SampleRate_Hz", std::to_string(int(m_dSampleRate))},
+                        {"ChunkSize", std::to_string(int(m_dChunkSize))}
+                    }}
+                }}
+            };
+
+            // Then transmit
+            auto pJSONChunk = std::make_shared<JSONChunk>();
+            pJSONChunk->m_JSONDocument = j;
+            CallChunkCallbackFunction(pJSONChunk);
+
+            // And sleep as not to send too many
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+    }

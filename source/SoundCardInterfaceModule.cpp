@@ -128,13 +128,13 @@ void SoundCardInterfaceModule::InitALSA()
         unsigned int uSampleRate = m_dSampleRate;
 
         // Specify the hardware device identifier
-        const char *device = "hw:1,0";
-        if ((err = snd_pcm_open(&m_capture_handle, device, SND_PCM_STREAM_CAPTURE, 0)) < 0) {
-            PLOG_ERROR << "cannot open audio " + std::string(device) + " default (" << snd_strerror(err) << ")";
+        
+        if ((err = snd_pcm_open(&m_capture_handle, m_pDevice, SND_PCM_STREAM_CAPTURE, 0)) < 0) {
+            PLOG_ERROR << "cannot open audio " + std::string(m_pDevice) + " default (" << snd_strerror(err) << ")";
             Cleanup();
             exit(1);
         }
-        PLOG_INFO << "audio " + std::string(device) + " interface opened";
+        PLOG_INFO << "audio " + std::string(m_pDevice) + " interface opened";
 
         if ((err = snd_pcm_hw_params_malloc(&m_hw_params)) < 0) {
             PLOG_ERROR << "cannot allocate hardware parameter structure (" << snd_strerror(err) << ")";
@@ -236,5 +236,38 @@ void SoundCardInterfaceModule::InitALSA()
         }
         if (m_capture_handle) {
             snd_pcm_close(m_capture_handle);
+        }
+    }
+
+    void SoundCardInterfaceModule::StartReportingLoop()
+    {
+        while (!m_bShutDown)
+        {
+
+            // Lets start by generating Queue stat
+            std::unique_lock<std::mutex> BufferAccessLock(m_BufferStateMutex);
+            uint16_t u16CurrentBufferSize = m_cbBaseChunkBuffer.size();
+            auto strModuleName = GetModuleType();
+            BufferAccessLock.unlock();
+
+            nlohmann::json j = {
+                {m_strReportingJsonRoot, {
+                    { strModuleName  + "_"+ m_strReportingJsonModuleAddition, {  // Extra `{}` around key-value pairs
+                        {"QueueLength", std::to_string(u16CurrentBufferSize)},
+                        {"ChannelCount", std::to_string(m_uNumChannels)},
+                        {"SampleRate_Hz", std::to_string(int(m_dSampleRate))},
+                        {"AudioDevice", std::string(m_pDevice)},
+                        {"ChunkSize", std::to_string(int(m_dChunkSize))}
+                    }}
+                }}
+            };
+
+            // Then transmit
+            auto pJSONChunk = std::make_shared<JSONChunk>();
+            pJSONChunk->m_JSONDocument = j;
+            CallChunkCallbackFunction(pJSONChunk);
+
+            // And sleep as not to send too many
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
     }
