@@ -196,7 +196,7 @@ void GPSInterfaceModule::CheckIfSimulationPositionSet()
             // Then transmit
             auto pJSONChunk = std::make_shared<JSONChunk>();
             pJSONChunk->m_JSONDocument = j;
-            CallChunkCallbackFunction(pJSONChunk);
+            TryPassReportingChunk(pJSONChunk);
 
             // And sleep as not to send too many
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));

@@ -1,11 +1,12 @@
 #include "TCPTxModule.h"
 
-TCPTxModule::TCPTxModule(std::string sIPAddress, uint16_t u16TCPPort, unsigned uMaxInputBufferSize, int iDatagramSize = 512) : BaseModule(uMaxInputBufferSize),
+TCPTxModule::TCPTxModule(std::string sIPAddress, uint16_t u16TCPPort, unsigned uMaxInputBufferSize, int iDatagramSize, std::string strMode) : BaseModule(uMaxInputBufferSize),
                                                                                                                                           m_sDestinationIPAddress(sIPAddress),
                                                                                                                                           m_u16TCPPort(u16TCPPort),
                                                                                                                                           m_WinSocket(),
                                                                                                                                           m_SocketStruct(),
-                                                                                                                                          m_bTCPConnected()
+                                                                                                                                          m_bTCPConnected(),
+                                                                                                                                          m_strMode(strMode)
 {
 }
 
@@ -15,6 +16,21 @@ TCPTxModule::~TCPTxModule()
 }
 
 void TCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
+{
+    // Call the appropriate connection method based on the mode
+    if (m_strMode == std::string("Connect")) {
+        ConnectToClient();
+    } else if (m_strMode == std::string("Listen")) {
+        ListenForClients();
+    }
+    else
+    {
+        PLOG_ERROR  << std::string(__FUNCTION__) + ": Invalid Connection Mode";
+        throw;
+    }  
+}
+
+void TCPTxModule::ConnectToClient()
 {
     // Constantly looking for new connections and stating client threads
     // One thread should be created at a time, corresponding to one simulated device
@@ -83,6 +99,51 @@ void TCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
+}
+
+void TCPTxModule::ListenForClients()
+{
+    int serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (serverSocket == -1) {
+        // Handle socket creation error
+        return;
+    }
+
+    sockaddr_in listenAddr;
+    listenAddr.sin_family = AF_INET;
+    listenAddr.sin_port = htons(m_u16TCPPort);
+
+    // and prevent crashes when server closes ubruptly and casues sends to fail
+    signal(SIGPIPE, SIG_IGN);
+
+    if (inet_pton(AF_INET, m_sDestinationIPAddress.c_str(), &(listenAddr.sin_addr)) <= 0)
+    {
+        std::string strError = std::string(__FUNCTION__) + ": Invalid IP address ";
+        PLOG_ERROR << strError;
+        throw;
+    }
+
+    PLOG_INFO << std::string(__FUNCTION__) + ": Listening for connections on " + m_sDestinationIPAddress;
+
+    if (bind(serverSocket, (struct sockaddr *)&listenAddr, sizeof(listenAddr)) < 0) {
+        // Handle bind error
+        close(serverSocket);
+        return;
+    }
+
+    listen(serverSocket, 1); // Listen for incoming connections
+
+    while (!m_bShutDown) {
+        int clientSocket = accept(serverSocket, nullptr, nullptr);
+        if (clientSocket >= 0) {
+            // Handle new client connection
+            std::thread clientThread([this, &clientSocket]
+                                     { RunClientThread(clientSocket); });
+            clientThread.detach();
+        }
+    }
+
+    close(serverSocket); // Close the listening socket when done
 }
 
 void TCPTxModule::RunClientThread(int &clientSocket)

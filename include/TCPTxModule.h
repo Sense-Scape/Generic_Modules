@@ -27,8 +27,9 @@ public:
      * @param[in] u16TCPPort uint16_t format of port to listen on
      * @param[in] uMaxInputBufferSize number of chunks that may be stored in input buffer (unused)
      * @param[in] iDatagramSize RX datagram size
+     * @param[in] strMode "Connect" to specified IP or "Listen" to specified IP
      */
-    TCPTxModule(std::string sIPAddress, uint16_t u16TCPPort, unsigned uMaxInputBufferSize, int iDatagramSize);
+    TCPTxModule(std::string sIPAddress, uint16_t u16TCPPort, unsigned uMaxInputBufferSize, int iDatagramSize, std::string strMode = "Connect");
     ~TCPTxModule();
 
     /**
@@ -54,12 +55,17 @@ private:
     int m_WinSocket;                     ///< Linux socket
     struct sockaddr_in m_SocketStruct;   ///< IPv4 Socket
     std::atomic<bool> m_bTCPConnected;   ///< State variable as to whether the TCP socket is connected
+    std::string m_strMode;               ///< Store the connection mode
     
     /*
      * @brief Module process to reveice data from TCP buffer and pass to next module
      * @param[in] Pointer to base chunk
      */
     void Process(std::shared_ptr<BaseChunk> pBaseChunk);
+
+    // New methods for connection modes
+    void ConnectToClient();
+    void ListenForClients();
 };
 
 #endif
