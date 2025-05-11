@@ -123,9 +123,9 @@ void TCPRxModule::RunServerThread(int &clientSocket)
         vcByteData.resize(512);
         int uReceivedDataLength = recv(clientSocket, &vcByteData[0], 512, 0);
 
-        // bSocketErrorOccured = CheckForSocketReadErrors(uReceivedDataLength, vcByteData.size());
-        // if (bSocketErrorOccured)
-        //     break;
+        bSocketErrorOccured = CheckForSocketReadErrors(uReceivedDataLength, vcByteData.size());
+        if (bSocketErrorOccured)
+            break;
 
         for (int i = 0; i < uReceivedDataLength; i++)
             vcAccumulatedBytes.emplace_back(vcByteData[i]);
@@ -160,6 +160,34 @@ void TCPRxModule::RunServerThread(int &clientSocket)
 
     close(clientSocket);
     m_bTCPConnected = false;
+}
+
+bool TCPRxModule::CheckForSocketReadErrors(ssize_t stReportedSocketDataLength, size_t stActualDataLength)
+{
+    // Check for timeout
+    if (stReportedSocketDataLength == -1 && errno == EAGAIN)
+    {
+        std::string strWarning = std::string(__FUNCTION__) + ": recv() timed out or errored (error: " + std::to_string(errno) + ") " + m_sBindIPAddress;
+        PLOG_WARNING << strWarning;
+        return true;
+    }
+    else if (stReportedSocketDataLength == 0)
+    {
+        // connection closed
+        std::string strInfo = std::string(__FUNCTION__) + ": client " + m_sBindIPAddress + " closed connection, shutting down thread";
+        PLOG_INFO << strInfo;
+        return true;
+    }
+
+    // Check if received data length is valid
+    if (stReportedSocketDataLength > stActualDataLength)
+    {
+        std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + std::to_string(m_u16TCPPort) + ": received data length shorter than actual received data ";
+        PLOG_WARNING << strWarning;
+        return true;
+    }
+
+    return false;
 }
 
 void TCPRxModule::StartProcessing()

@@ -72,6 +72,14 @@ private:
      * @param[in] clientSocket Reference to the client socket file descriptor
      */
     void RunServerThread(int &clientSocket);
+
+    /**
+     * @brief Checks for errors during socket read operations
+     * @param[in] stReceivedDataLength Length of data received from the socket
+     * @param[in] stActualDataLength Expected length of data
+     * @return true if an error occurred, false otherwise
+     */
+    bool CheckForSocketReadErrors(ssize_t stReportedSocketDataLength, size_t stActualDataLength);
 };
 
 #endif 
