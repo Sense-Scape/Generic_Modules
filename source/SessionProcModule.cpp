@@ -48,6 +48,7 @@ void SessionProcModule::Process_ByteChunk(std::shared_ptr<BaseChunk> pBaseChunk)
     // We have just started or are continuing a sequence so store intermediate bytes
     if (bStartSequence && bLastInSequence)
     {
+
         // If this is the start create a vector to store data
         if (bStartSequence)
             m_mSessionBytes[vu8SourceIdentifier][SessionChunkType] = std::make_shared<std::vector<char>>();
@@ -98,12 +99,13 @@ void SessionProcModule::Process_ByteChunk(std::shared_ptr<BaseChunk> pBaseChunk)
             // Pass pointer to data on and clear stored data and state information for current session
             TryPassChunk(pBaseChunk);
             m_mSessionModesStatesMap[vu8SourceIdentifier][SessionChunkType] = std::make_shared<SessionController>();
+
             m_mSessionBytes[vu8SourceIdentifier][SessionChunkType] = std::make_shared<std::vector<char>>(); 
         } 
     }
     else
     {
-        std::string strWarning = std::string(__FUNCTION__) + " - WAV session chunk missed, resetting [" + std::to_string(pChunkHeaderState->m_uSessionNumber) + ":" + std::to_string(pChunkHeaderState->m_uSequenceNumber) + "->" + std::to_string(pPreviousChunkHeaderState->m_uSequenceNumber) + "] \n";
+        std::string strWarning = std::string(__FUNCTION__) + " - Session chunk missed, resetting [" + std::to_string(pChunkHeaderState->m_uSessionNumber) + ":" + std::to_string(pChunkHeaderState->m_uSequenceNumber) + "->" + std::to_string(pPreviousChunkHeaderState->m_uSequenceNumber) + "] \n";
         PLOG_WARNING << strWarning;
 
         pChunkHeaderState = std::make_shared<SessionController>();
