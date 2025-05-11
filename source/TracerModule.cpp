@@ -16,6 +16,12 @@ void TracerModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
             auto pJSONChunk = std::make_shared<JSONChunk>();
             PLOG_DEBUG << pChunkToJSONConverter->ToJSON()->dump();
         }
+        else if (pBaseChunk->GetChunkType() == ChunkType::JSONChunk)
+        {
+            auto a = std::static_pointer_cast<JSONChunk>(pBaseChunk);
+            PLOG_DEBUG << a->m_JSONDocument.dump();
+        }
+        
     }
 
     TryPassChunk(pBaseChunk);
