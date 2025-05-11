@@ -7,10 +7,11 @@ set(SOURCE_DIR "source")
 set(INCLUDE_DIR "include")
 set(TEST_DIR "tests")
 
-message(STATUS "Building for Unix")
+message(STATUS "Generating files to build Generic Modules for UNIX")
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
+message(STATUS "Generic Modules Setting C++ standard to ${CMAKE_CXX_STANDARD}")
 
 # Main executable
 file(GLOB SOURCES "${SOURCE_DIR}/*.cpp")
@@ -23,6 +24,7 @@ if (NOT TARGET BaseModuleLib)
     add_subdirectory(components/Base_Module)
 endif()
 
+message(STATUS "Looking for GPS Library")
 find_library(GPS_LIBRARY gps REQUIRED)
 if(GPS_LIBRARY)
   message(STATUS "Found GPS library: ${GPS_LIBRARY}")
@@ -49,8 +51,8 @@ target_include_directories(GenericModuleLib
 find_package(GTest REQUIRED)
 # Main executable
 
+message(STATUS "Adding test files")
 file(GLOB TESTS "${TEST_DIR}/*.cpp")
-message(STATUS ${TESTS})
 add_executable(GenericTests ${TESTS})
 
 target_include_directories(GenericTests
