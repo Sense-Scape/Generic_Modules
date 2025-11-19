@@ -33,6 +33,7 @@ else()
 endif()
 
 add_subdirectory(components/kissfft)
+add_subdirectory(components/cpp-httplib)
 
 # Include directories for main code and tests
 target_include_directories(GenericModuleLib
@@ -44,8 +45,11 @@ target_include_directories(GenericModuleLib
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/components/Base_Module/components/Chunk_Types/components/Nlohmann_JSON/include
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/components/Base_Module/components/Chunk_Types/components/Nlohmann_JSON/include/nlohmann
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/components/Base_Module/components/plog/include
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/components/kissfft	
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/components/kissfft
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/components/cpp-httplib
 )
+
+target_link_libraries(GenericModuleLib PRIVATE httplib::httplib)
 
 # Find Google Test package
 find_package(GTest REQUIRED)
@@ -67,4 +71,4 @@ target_include_directories(GenericTests
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/components/kissfft	
 )
 
-target_link_libraries(GenericTests PRIVATE GenericModuleLib BaseModuleLib ChunkTypesLib GTest::GTest GTest::Main gps)
+target_link_libraries(GenericTests PRIVATE GenericModuleLib BaseModuleLib ChunkTypesLib GTest::GTest GTest::Main gps httplib::httplib)
