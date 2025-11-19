@@ -10,3 +10,6 @@
 [submodule "components/googletest"]
 	path = components/googletest
 	url = git@github.com:Sense-Scape/googletest.git
+[submodule "components/cpp-httplib"]
+	path = components/cpp-httplib
+	url = git@github.com:Sense-Scape/cpp-httplib.git
