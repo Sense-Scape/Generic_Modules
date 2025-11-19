@@ -35,9 +35,6 @@ void TimeChunkSynchronisationModule::Process_GPSChunk(std::shared_ptr<BaseChunk>
     auto pGPSChunk  = std::static_pointer_cast<GPSChunk>(pBaseChunk);
     auto vu8SourceIdentifier = pGPSChunk->GetSourceIdentifier();
 
-    auto dLongScaling = pGPSChunk->m_bIsWest ? -1 : 1;
-    auto dLatScaling = pGPSChunk->m_bIsNorth ? 1 : -1;
-
     auto dLong = pGPSChunk->m_dLongitude;
     auto dLat = pGPSChunk->m_dLatitude;
 

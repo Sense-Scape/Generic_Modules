@@ -24,17 +24,17 @@ protected:
 
         pTimeChunkTwoChannel = std::make_shared<TimeChunk>(dChunkSize,dSampleRate,i64TimeStamp,uBits,uNumBytes,uNumChannels);
         pTimeChunkTwoChannel->SetSourceIdentifier({1});
-        pGPSChunkTwoChannel = std::make_shared<GPSChunk>(i64TimeStamp, true, 0, true, 0);
+        pGPSChunkTwoChannel = std::make_shared<GPSChunk>(i64TimeStamp, 0, 0, true);
         pGPSChunkTwoChannel->SetSourceIdentifier({1});
 
         pTimeChunkThreeChannel = std::make_shared<TimeChunk>(dChunkSize,dSampleRate,i64TimeStamp,uBits,uNumBytes,uNumChannels+1);
         pTimeChunkThreeChannel->SetSourceIdentifier({2});
-        pGPSChunkThreeChannel = std::make_shared<GPSChunk>(i64TimeStamp, true, 0, true, 0);
+        pGPSChunkThreeChannel = std::make_shared<GPSChunk>(i64TimeStamp, 0, 0, true);
         pGPSChunkThreeChannel->SetSourceIdentifier({2});
 
         pTimeChunkFourChannel = std::make_shared<TimeChunk>(dChunkSize,dSampleRate,i64TimeStamp,uBits,uNumBytes,uNumChannels+2);
         pTimeChunkFourChannel->SetSourceIdentifier({3});
-        pGPSChunkFourChannel = std::make_shared<GPSChunk>(i64TimeStamp, true, 0, true, 0);
+        pGPSChunkFourChannel = std::make_shared<GPSChunk>(i64TimeStamp, 0, 0, true);
         pGPSChunkFourChannel->SetSourceIdentifier({3});
     }
 
