@@ -32,18 +32,10 @@ void GPSInterfaceModule::ConfigureModuleJSON(nlohmann::json_abi_v3_11_2::json js
         CheckAndThrowJSON(jsonConfig, "SimulatedLatitude");
         double dSimulatedLongitude = jsonConfig["SimulatedLongitude"];
         double dSimulatedLatitude = jsonConfig["SimulatedLatitude"];
-
-        if (dSimulatedLongitude > 0)
-            m_bSimulatedIsWest = false;
-        else
-            m_bSimulatedIsWest = true;
-        m_dSimulatedLongitude = std::abs(dSimulatedLongitude);
-
-        if (dSimulatedLatitude > 0)
-            m_bSimulatedIsNorth = true;
-        else
-            m_bSimulatedIsNorth = false;
-        m_dSimulatedLatitude = std::abs(dSimulatedLatitude);
+        m_bGPSCurrentlyLocked = true;
+        
+        m_dSimulatedLongitude = dSimulatedLongitude;
+        m_dSimulatedLatitude = dSimulatedLatitude;
     }
 }
 
@@ -119,10 +111,10 @@ void GPSInterfaceModule::TryTransmitPositionData()
             TryOpenGPSInterface();
         }
         
+        m_bGPSCurrentlyLocked = false;
         if(gpsData.fix.mode >= MODE_2D)
             m_bGPSCurrentlyLocked = true;
-        else
-            m_bGPSCurrentlyLocked = false;
+            
 
         auto pGPSChunk = std::make_shared<GPSChunk>();
         pGPSChunk->SetSourceIdentifier(m_vu8SourceIdentifier);
@@ -132,10 +124,9 @@ void GPSInterfaceModule::TryTransmitPositionData()
         std::time_t epochTime = std::chrono::system_clock::to_time_t(now);
         pGPSChunk->m_i64TimeStamp = static_cast<uint64_t>(epochTime);
 
-        pGPSChunk->m_bIsNorth = gpsData.fix.latitude >= 0;
-        pGPSChunk->m_bIsWest = gpsData.fix.longitude < 0;
-        pGPSChunk->m_dLatitude = std::abs(gpsData.fix.latitude);
-        pGPSChunk->m_dLongitude = std::abs(gpsData.fix.longitude);
+        pGPSChunk->m_bIsLocked = m_bGPSCurrentlyLocked;
+        pGPSChunk->m_dLatitude = gpsData.fix.latitude;
+        pGPSChunk->m_dLongitude = gpsData.fix.longitude;
 
         TryPassChunk(pGPSChunk);
     
@@ -154,9 +145,8 @@ void GPSInterfaceModule::TrySimulatedPositionData()
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
     std::time_t epochTime = std::chrono::system_clock::to_time_t(now);
     pGPSChunk->m_i64TimeStamp = static_cast<uint64_t>(epochTime);
-
-    pGPSChunk->m_bIsNorth = m_bSimulatedIsNorth;
-    pGPSChunk->m_bIsWest = m_bSimulatedIsWest;
+    
+    pGPSChunk->m_bIsLocked = m_bGPSCurrentlyLocked;
     pGPSChunk->m_dLatitude = m_dSimulatedLatitude;
     pGPSChunk->m_dLongitude = m_dSimulatedLongitude;
 
