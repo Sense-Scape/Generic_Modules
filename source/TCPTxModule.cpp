@@ -70,6 +70,9 @@ void TCPTxModule::ConnectToClient()
                 std::string strFatal = std::string(__FUNCTION__) + ":INVALID_SOCKET ";
                 PLOG_FATAL << strFatal;
             }
+            // Add SO_REUSEADDR option
+            int yes = 1;
+            setsockopt(clientSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
             
             bool bConnectionSuccessful = (connect(clientSocket, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) == 0);
 
@@ -108,6 +111,9 @@ void TCPTxModule::ListenForClients()
         // Handle socket creation error
         return;
     }
+    // Add SO_REUSEADDR option
+    int yes = 1;
+    setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
 
     sockaddr_in listenAddr;
     listenAddr.sin_family = AF_INET;
@@ -123,10 +129,11 @@ void TCPTxModule::ListenForClients()
         throw;
     }
 
-    PLOG_INFO << std::string(__FUNCTION__) + ": Listening for connections on " + m_sDestinationIPAddress;
+    PLOG_INFO << std::string(__FUNCTION__) + ": Listening for connections on " + m_sDestinationIPAddress + " on port " + std::to_string(m_u16TCPPort);
 
     if (bind(serverSocket, (struct sockaddr *)&listenAddr, sizeof(listenAddr)) < 0) {
         // Handle bind error
+        PLOG_INFO << std::string(__FUNCTION__) + ": Unable to bind on " + m_sDestinationIPAddress + " on port " + std::to_string(m_u16TCPPort) + " - " + std::strerror(errno);
         close(serverSocket);
         return;
     }
