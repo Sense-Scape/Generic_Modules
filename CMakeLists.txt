@@ -32,6 +32,9 @@ else()
   message(FATAL_ERROR "GPS library not found!")
 endif()
 
+message(STATUS "Looking for LibCurl Library")
+find_package(CURL REQUIRED)
+
 add_subdirectory(components/kissfft)
 add_subdirectory(components/cpp-httplib)
 
@@ -49,10 +52,11 @@ target_include_directories(GenericModuleLib
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/components/cpp-httplib
 )
 
-target_link_libraries(GenericModuleLib PRIVATE httplib::httplib)
+target_link_libraries(GenericModuleLib PRIVATE httplib::httplib CURL::libcurl)
 
 # Find Google Test package
 find_package(GTest REQUIRED)
+
 # Main executable
 
 message(STATUS "Adding test files")
@@ -71,4 +75,4 @@ target_include_directories(GenericTests
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/components/kissfft	
 )
 
-target_link_libraries(GenericTests PRIVATE GenericModuleLib BaseModuleLib ChunkTypesLib GTest::GTest GTest::Main gps httplib::httplib)
+target_link_libraries(GenericTests PRIVATE GenericModuleLib BaseModuleLib ChunkTypesLib GTest::GTest GTest::Main gps httplib::httplib CURL::libcurl)
