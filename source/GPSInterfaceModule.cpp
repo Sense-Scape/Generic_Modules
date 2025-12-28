@@ -1,194 +1,185 @@
 #include "GPSInterfaceModule.h"
+#include "plog/Log.h"
 
+GPSInterfaceModule::GPSInterfaceModule(
+    unsigned uBufferSize, nlohmann::json_abi_v3_11_2::json jsonConfig)
+    : BaseModule(uBufferSize) {
+  ConfigureModuleJSON(jsonConfig);
 
-GPSInterfaceModule::GPSInterfaceModule(unsigned uBufferSize, nlohmann::json_abi_v3_11_2::json jsonConfig) : 
-    BaseModule(uBufferSize)
-{
-    ConfigureModuleJSON(jsonConfig);
-    
-    if(!m_bSimulateData)
-        TryOpenGPSInterface();
+  if (!m_bSimulateData)
+    TryOpenGPSInterface();
 }
 
-void GPSInterfaceModule::ConfigureModuleJSON(nlohmann::json_abi_v3_11_2::json jsonConfig)
-{
+void GPSInterfaceModule::ConfigureModuleJSON(
+    nlohmann::json_abi_v3_11_2::json jsonConfig) {
 
-    PLOG_INFO << jsonConfig.dump();
-    
-    CheckAndThrowJSON(jsonConfig, "SourceIdentifier");
-    m_vu8SourceIdentifier = jsonConfig["SourceIdentifier"].get<std::vector<uint8_t>>();
+  PLOG_INFO << "Starting GPS config";
+  PLOG_INFO << jsonConfig.dump();
 
-    CheckAndThrowJSON(jsonConfig, "SerialPort");
-    m_strInterfaceName = jsonConfig["SerialPort"];
+  CheckAndThrowJSON(jsonConfig, "SourceIdentifier");
+  m_vu8SourceIdentifier =
+      jsonConfig["SourceIdentifier"].get<std::vector<uint8_t>>();
 
-    CheckAndThrowJSON(jsonConfig, "SimulatePosition");
-    std::string strSimulatePosition = jsonConfig["SimulatePosition"];
-    std::transform(strSimulatePosition.begin(), strSimulatePosition.end(), strSimulatePosition.begin(), 
-                  [](unsigned char c) { return std::toupper(c); });
-    m_bSimulateData = (strSimulatePosition == "TRUE");
+  CheckAndThrowJSON(jsonConfig, "SerialPort");
+  m_strInterfaceName = jsonConfig["SerialPort"];
 
+  CheckAndThrowJSON(jsonConfig, "SimulatePosition");
+  std::string strSimulatePosition = jsonConfig["SimulatePosition"];
+  std::transform(strSimulatePosition.begin(), strSimulatePosition.end(),
+                 strSimulatePosition.begin(),
+                 [](unsigned char c) { return std::toupper(c); });
+  m_bSimulateData = (strSimulatePosition == "TRUE");
+
+  if (m_bSimulateData) {
+    CheckAndThrowJSON(jsonConfig, "SimulatedLongitude");
+    CheckAndThrowJSON(jsonConfig, "SimulatedLatitude");
+    double dSimulatedLongitude = jsonConfig["SimulatedLongitude"];
+    double dSimulatedLatitude = jsonConfig["SimulatedLatitude"];
+    m_bGPSCurrentlyLocked = true;
+
+    m_dSimulatedLongitude = dSimulatedLongitude;
+    m_dSimulatedLatitude = dSimulatedLatitude;
+  }
+
+  PLOG_INFO << "Finished GPS config";
+}
+
+void GPSInterfaceModule::CheckAndThrowJSON(
+    const nlohmann::json_abi_v3_11_2::json &j, const std::string &key) {
+  auto it = j.find(key);
+  if (it == j.end()) {
+    std::string strFatal =
+        std::string(__FUNCTION__) + "Key '" + key + "' not found in JSON.";
+    PLOG_FATAL << strFatal;
+    throw std::runtime_error(strFatal);
+  }
+}
+
+void GPSInterfaceModule::ContinuouslyTryProcess() {
+
+  if (m_bSimulateData)
+    CheckIfSimulationPositionSet();
+
+  while (!m_bShutDown) {
+    auto pBaseChunk = std::make_shared<BaseChunk>();
+    DefaultProcess(pBaseChunk);
+  }
+}
+
+void GPSInterfaceModule::DefaultProcess(std::shared_ptr<BaseChunk> pBaseChunk) {
+  while (!m_bShutDown) {
+    PLOG_INFO << 2;
     if (m_bSimulateData) {
-        CheckAndThrowJSON(jsonConfig, "SimulatedLongitude");
-        CheckAndThrowJSON(jsonConfig, "SimulatedLatitude");
-        double dSimulatedLongitude = jsonConfig["SimulatedLongitude"];
-        double dSimulatedLatitude = jsonConfig["SimulatedLatitude"];
-        m_bGPSCurrentlyLocked = true;
-        
-        m_dSimulatedLongitude = dSimulatedLongitude;
-        m_dSimulatedLatitude = dSimulatedLatitude;
+      PLOG_INFO << 1;
+      TrySimulatedPositionData();
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    } else {
+      TryTransmitPositionData();
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
+  }
 }
 
-void GPSInterfaceModule::CheckAndThrowJSON(const nlohmann::json_abi_v3_11_2::json& j, const std::string& key) {
-    auto it = j.find(key);
-    if (it == j.end()) {
-        std::string strFatal = std::string(__FUNCTION__) + "Key '" + key + "' not found in JSON.";
-        PLOG_FATAL << strFatal;
-        throw std::runtime_error(strFatal);
+void GPSInterfaceModule::TryOpenGPSInterface() {
+  while (!m_bShutDown) {
+    if (gps_open("localhost", "2947", &gpsData) == -1) {
+      PLOG_WARNING << "Failed to connect to gpsd";
+      std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    } else {
+      PLOG_WARNING << "Connected to gpsd";
+      gps_stream(&gpsData, WATCH_ENABLE, NULL);
+      break;
     }
+  }
 }
 
-void GPSInterfaceModule::ContinuouslyTryProcess()
-{
+void GPSInterfaceModule::TryTransmitPositionData() {
 
-    if (m_bSimulateData)
-        CheckIfSimulationPositionSet();
+  // Wait for a response
+  char message[4096];                // Buffer for raw GPSD messages (optional)
+  int message_len = sizeof(message); // Length of the buffer
 
-    while (!m_bShutDown)
-    {
-        auto pBaseChunk = std::make_shared<BaseChunk>();
-        DefaultProcess(pBaseChunk);
+  if (gps_waiting(&gpsData, 5000000)) { // Wait for up to 5 seconds
+
+    if (gps_read(&gpsData, message, message_len) == -1) {
+      PLOG_WARNING << "Failed to read from gpsd";
+      gps_close(&gpsData);
+      TryOpenGPSInterface();
     }
-}
 
-void GPSInterfaceModule::DefaultProcess(std::shared_ptr<BaseChunk> pBaseChunk)
-{
-    while (!m_bShutDown)
-    {
-        // Are connected
-        if (m_bSimulateData)
-        {
-            TrySimulatedPositionData();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        }
-        else
-        {
-            TryTransmitPositionData();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        }
-    }
-}
-
-void GPSInterfaceModule::TryOpenGPSInterface()
-{
-    while (!m_bShutDown)
-    {
-        if (gps_open("localhost", "2947", &gpsData) == -1) {
-                PLOG_WARNING << "Failed to connect to gpsd";
-                std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-            }
-            else
-            {
-                PLOG_WARNING << "Connected to gpsd";
-                gps_stream(&gpsData, WATCH_ENABLE, NULL);
-                break;
-            }
-    }
-}
-
-void GPSInterfaceModule::TryTransmitPositionData()
-{
-
-    // Wait for a response
-    char message[4096]; // Buffer for raw GPSD messages (optional)
-    int message_len = sizeof(message); // Length of the buffer
-
-    if (gps_waiting(&gpsData, 5000000)) { // Wait for up to 5 seconds
-
-        if (gps_read(&gpsData, message, message_len) == -1) {
-            PLOG_WARNING << "Failed to read from gpsd";
-            gps_close(&gpsData);
-            TryOpenGPSInterface();
-        }
-        
-        m_bGPSCurrentlyLocked = false;
-        if(gpsData.fix.mode >= MODE_2D)
-            m_bGPSCurrentlyLocked = true;
-            
-
-        auto pGPSChunk = std::make_shared<GPSChunk>();
-        pGPSChunk->SetSourceIdentifier(m_vu8SourceIdentifier);
-
-        // Get the current time point using system clock
-        std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-        std::time_t epochTime = std::chrono::system_clock::to_time_t(now);
-        pGPSChunk->m_i64TimeStamp = static_cast<uint64_t>(epochTime);
-
-        pGPSChunk->m_bIsLocked = m_bGPSCurrentlyLocked;
-        pGPSChunk->m_dLatitude = gpsData.fix.latitude;
-        pGPSChunk->m_dLongitude = gpsData.fix.longitude;
-
-        TryPassChunk(pGPSChunk);
-    
-    } 
-    else
-        PLOG_WARNING << "Timeout waiting for GPS data";
-}
-
-void GPSInterfaceModule::TrySimulatedPositionData()
-{
+    m_bGPSCurrentlyLocked = false;
+    if (gpsData.fix.mode >= MODE_2D)
+      m_bGPSCurrentlyLocked = true;
 
     auto pGPSChunk = std::make_shared<GPSChunk>();
     pGPSChunk->SetSourceIdentifier(m_vu8SourceIdentifier);
 
     // Get the current time point using system clock
-    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point now =
+        std::chrono::system_clock::now();
     std::time_t epochTime = std::chrono::system_clock::to_time_t(now);
     pGPSChunk->m_i64TimeStamp = static_cast<uint64_t>(epochTime);
-    
+
     pGPSChunk->m_bIsLocked = m_bGPSCurrentlyLocked;
-    pGPSChunk->m_dLatitude = m_dSimulatedLatitude;
-    pGPSChunk->m_dLongitude = m_dSimulatedLongitude;
+    pGPSChunk->m_dLatitude = gpsData.fix.latitude;
+    pGPSChunk->m_dLongitude = gpsData.fix.longitude;
 
     TryPassChunk(pGPSChunk);
+
+  } else
+    PLOG_WARNING << "Timeout waiting for GPS data";
 }
 
-void GPSInterfaceModule::CheckIfSimulationPositionSet()
-{
-    if (!m_bSimulateData)
-        return;
+void GPSInterfaceModule::TrySimulatedPositionData() {
 
-    if (m_dSimulatedLatitude == 0 && m_dSimulatedLongitude == 0)
-        PLOG_WARNING << "GPS in simulation mode but no position has beens set";
+  auto pGPSChunk = std::make_shared<GPSChunk>();
+  pGPSChunk->SetSourceIdentifier(m_vu8SourceIdentifier);
+
+  // Get the current time point using system clock
+  std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+  std::time_t epochTime = std::chrono::system_clock::to_time_t(now);
+  pGPSChunk->m_i64TimeStamp = static_cast<uint64_t>(epochTime);
+
+  pGPSChunk->m_bIsLocked = m_bGPSCurrentlyLocked;
+  pGPSChunk->m_dLatitude = m_dSimulatedLatitude;
+  pGPSChunk->m_dLongitude = m_dSimulatedLongitude;
+
+  PLOG_ERROR << pGPSChunk->ToJSON()->dump();
+
+  TryPassChunk(pGPSChunk);
 }
 
- void GPSInterfaceModule::StartReportingLoop()
- {
-     while (!m_bShutDown)
-        {
+void GPSInterfaceModule::CheckIfSimulationPositionSet() {
+  if (!m_bSimulateData)
+    return;
 
-            // Lets start by generating Queue stat
-            std::unique_lock<std::mutex> BufferAccessLock(m_BufferStateMutex);
-            uint16_t u16CurrentBufferSize = m_cbBaseChunkBuffer.size();
-            auto strModuleName = GetModuleType();
-            BufferAccessLock.unlock();
+  if (m_dSimulatedLatitude == 0 && m_dSimulatedLongitude == 0)
+    PLOG_WARNING << "GPS in simulation mode but no position has beens set";
+}
 
-            nlohmann::json j = {
-                {m_strReportingJsonRoot, {
-                    { strModuleName  + "_"+ m_strReportingJsonModuleAddition, {  // Extra `{}` around key-value pairs
-                        {"QueueLength", std::to_string(u16CurrentBufferSize)},
-                        {"Simulation Mode", std::to_string(m_bSimulateData)},
-                        {"GPSLock", std::to_string(m_bGPSCurrentlyLocked)}
-                    }}
-                }}
-            };
+void GPSInterfaceModule::StartReportingLoop() {
+  while (!m_bShutDown) {
 
-            // Then transmit
-            auto pJSONChunk = std::make_shared<JSONChunk>();
-            pJSONChunk->m_JSONDocument = j;
-            TryPassReportingChunk(pJSONChunk);
+    // Lets start by generating Queue stat
+    std::unique_lock<std::mutex> BufferAccessLock(m_BufferStateMutex);
+    uint16_t u16CurrentBufferSize = m_cbBaseChunkBuffer.size();
+    auto strModuleName = GetModuleType();
+    BufferAccessLock.unlock();
 
-            // And sleep as not to send too many
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        }
- }
+    nlohmann::json j = {
+        {m_strReportingJsonRoot,
+         {{strModuleName + "_" + m_strReportingJsonModuleAddition,
+           {// Extra `{}` around key-value pairs
+            {"QueueLength", std::to_string(u16CurrentBufferSize)},
+            {"Simulation Mode", std::to_string(m_bSimulateData)},
+            {"GPSLock", std::to_string(m_bGPSCurrentlyLocked)}}}}}};
+
+    // Then transmit
+    auto pJSONChunk = std::make_shared<JSONChunk>();
+    pJSONChunk->m_JSONDocument = j;
+    TryPassReportingChunk(pJSONChunk);
+
+    // And sleep as not to send too many
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  }
+}
