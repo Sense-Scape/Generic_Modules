@@ -68,9 +68,7 @@ void GPSInterfaceModule::ContinuouslyTryProcess() {
 
 void GPSInterfaceModule::DefaultProcess(std::shared_ptr<BaseChunk> pBaseChunk) {
   while (!m_bShutDown) {
-    PLOG_INFO << 2;
     if (m_bSimulateData) {
-      PLOG_INFO << 1;
       TrySimulatedPositionData();
       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     } else {
@@ -143,8 +141,6 @@ void GPSInterfaceModule::TrySimulatedPositionData() {
   pGPSChunk->m_bIsLocked = m_bGPSCurrentlyLocked;
   pGPSChunk->m_dLatitude = m_dSimulatedLatitude;
   pGPSChunk->m_dLongitude = m_dSimulatedLongitude;
-
-  PLOG_ERROR << pGPSChunk->ToJSON()->dump();
 
   TryPassChunk(pGPSChunk);
 }
