@@ -43,36 +43,31 @@ public:
   void ContinuouslyTryProcess() override;
 
   /// Data Generation
-  unsigned m_uNumChannels;        ///< Number of ADC channels to simulate
-  unsigned m_uSimulatedFrequency; ///< Sinusoid frequency to simulate
+  const unsigned m_uNumChannels;        ///< Number of ADC channels to simulate
+  const unsigned m_uSimulatedFrequency; ///< Sinusoid frequency to simulate
   uint64_t m_u64SampleCount; ///< Count to track index of simulated sinusoid
   uint64_t m_u64CurrentTimeStamp_us; ///< Simulated timestamp of the module
-  double m_dSampleRate;              ///< Sample rate in Hz
-  double m_dChunkSize;               ///< How many samples in each chunk channel
+  const double m_dSampleRate;        ///< Sample rate in Hz
+  const double m_dChunkSize;         ///< How many samples in each chunk channel
   std::shared_ptr<TimeChunk>
       m_pTimeChunk; ///< Pointer to member time data chunk
-  std::vector<float> m_vfChannelPhases_rad; ///< Vector od channel phases
-  std::vector<uint8_t>
+  std::vector<float> m_vfChannelPhases_rad; ///< Vector of channel phases
+  const std::vector<uint8_t>
       m_vu8SourceIdentifier; ///< Source identifier of generated chunks
 
   // Signal Generation
-  uint32_t m_i64StartUpDelay_us; ///< Delay in microseconds
-  float m_fSNR_db;               ///< SNR of signal
-  float m_fSignalPower_dBm;      ///< As a percentage of full scale
+  const uint32_t m_i64StartUpDelay_us; ///< Delay in microseconds
+  const float m_fSNR_db;               ///< SNR of signal
+  const float m_fSignalPower_dBm;      ///< As a percentage of full scale
+  float m_fAmplitudeScalingFactor;     ///< Power scaling facotr used when
+                                       ///< generating a sinusoid
 
-  std::string m_strADCMode;
-  std::string m_strClockMode;
+  const std::string m_strADCMode;   ///< Supporst either "Sunsoid" or "Gaussian"
+  const std::string m_strClockMode; ///< Supports either "clock" or "Counter"
 
   std::mt19937 m_generator = std::mt19937(0);
   std::normal_distribution<double> m_dist;
   uint64_t m_count = 0;
-
-  /**
-   * @brief sets the phase for a particulat channel
-   * @param vfChannelPhases_deg vector of floats corresponding to phase of each
-   * channel.
-   */
-  void SetChannelPhases(std::vector<float> vfChannelPhases_deg);
 
   /**
    * @brief Initializes Time Chunk vectors default values. Initializes according
@@ -146,7 +141,7 @@ public:
    * @brief use a json object to configure this module
    * @param[in] jsonConfig JSON configuration of this module
    */
-  void ConfigureModuleJSON(nlohmann::json_abi_v3_11_2::json jsonConfig);
+  void ConfigureModule(nlohmann::json_abi_v3_11_2::json jsonConfig);
 
   /**
    * @brief send reporting json messaages

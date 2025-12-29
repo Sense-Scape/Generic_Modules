@@ -1,16 +1,36 @@
 #include "SimulatorModule.h"
+#include "plog/Log.h"
+#include <cstdint>
 #include <numbers>
 #include <random>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 SimulatorModule::SimulatorModule(unsigned uBufferSize,
                                  nlohmann::json_abi_v3_11_2::json jsonConfig)
-    : BaseModule(uBufferSize) {
-  ConfigureModuleJSON(jsonConfig);
+    : BaseModule(uBufferSize), m_dChunkSize(512),
+      m_vu8SourceIdentifier(CheckAndThrowJSON<std::vector<uint8_t>>(
+          jsonConfig, "SourceIdentifier")),
+      m_dSampleRate(CheckAndThrowJSON<double>(jsonConfig, "SampleRate_Hz")),
+      m_fSNR_db(CheckAndThrowJSON<float>(jsonConfig, "SNR_db")),
+      m_strADCMode(CheckAndThrowJSON<std::string>(jsonConfig, "ADCMode")),
+      m_strClockMode(CheckAndThrowJSON<std::string>(jsonConfig, "ClockMode")),
+      m_fSignalPower_dBm(
+          CheckAndThrowJSON<float>(jsonConfig, "SignalPower_dBm")),
+      m_uSimulatedFrequency(
+          CheckAndThrowJSON<uint32_t>(jsonConfig, "SimulatedFrequency_Hz")),
+      m_uNumChannels(
+          CheckAndThrowJSON<uint16_t>(jsonConfig, "NumberOfChannels")),
+      m_i64StartUpDelay_us(
+          CheckAndThrowJSON<int64_t>(jsonConfig, "StartupDelay_us")),
+      m_u64CurrentTimeStamp_us(
+          CheckAndThrowJSON<int64_t>(jsonConfig, "StartupDelay_us")) {
+  ConfigureModule(jsonConfig);
   PrintConfiguration();
 }
 
 void SimulatorModule::PrintConfiguration() {
-
   std::string strSourceIdentifier = std::accumulate(
       m_vu8SourceIdentifier.begin(), m_vu8SourceIdentifier.end(),
       std::string(""), [](const std::string &str, int element) {
@@ -33,59 +53,32 @@ void SimulatorModule::PrintConfiguration() {
   PLOG_INFO << strInfo;
 }
 
-void SimulatorModule::ConfigureModuleJSON(
+void SimulatorModule::ConfigureModule(
     nlohmann::json_abi_v3_11_2::json jsonConfig) {
-  m_dChunkSize = 512;
 
-  CheckAndThrowJSON(jsonConfig, "SourceIdentifier");
-  m_vu8SourceIdentifier =
-      jsonConfig["SourceIdentifier"].get<std::vector<uint8_t>>();
-
-  CheckAndThrowJSON(jsonConfig, "SampleRate_Hz");
-  m_dSampleRate = jsonConfig["SampleRate_Hz"];
-
-  CheckAndThrowJSON(jsonConfig, "SimulatedFrequency_Hz");
-  m_uSimulatedFrequency = jsonConfig["SimulatedFrequency_Hz"];
-
-  CheckAndThrowJSON(jsonConfig, "NumberOfChannels");
-  m_uNumChannels = jsonConfig["NumberOfChannels"];
-
-  CheckAndThrowJSON(jsonConfig, "StartupDelay_us");
-  m_i64StartUpDelay_us = jsonConfig["StartupDelay_us"];
-  m_u64CurrentTimeStamp_us = m_i64StartUpDelay_us;
-
-  CheckAndThrowJSON(jsonConfig, "SNR_db");
-  m_fSNR_db = jsonConfig["SNR_db"];
-
-  CheckAndThrowJSON(jsonConfig, "ADCMode");
-  m_strADCMode = jsonConfig["ADCMode"];
-
-  CheckAndThrowJSON(jsonConfig, "ClockMode");
-  m_strClockMode = jsonConfig["ClockMode"];
-
-  CheckAndThrowJSON(jsonConfig, "SignalPower_dBm");
-  m_fSignalPower_dBm = jsonConfig["SignalPower_dBm"];
-
-  CheckAndThrowJSON(jsonConfig, "ChannelPhases_deg");
+  // Convert phases to radians
   m_vfChannelPhases_rad =
-      jsonConfig["ChannelPhases_deg"].get<std::vector<float>>();
+      CheckAndThrowJSON<std::vector<float>>(jsonConfig, "ChannelPhases_deg");
   std::transform(m_vfChannelPhases_rad.begin(), m_vfChannelPhases_rad.end(),
                  m_vfChannelPhases_rad.begin(),
                  [](float f) { return f * M_PI / 180; });
 
-  if (m_vfChannelPhases_rad.size() != m_uNumChannels) {
-    std::string strFatal = std::string(__FUNCTION__) +
-                           "Channel phase count does not equal channel count";
-    PLOG_FATAL << strFatal;
-    throw std::runtime_error(strFatal);
-  }
-
-  m_vfChannelPhases_rad.resize(m_uNumChannels);
-
   // Used only in gaussian mode
-  auto stdDev = ConvertPowerToStdDev(m_fSignalPower_dBm);
-  std::normal_distribution<double> dist(0, stdDev);
-  m_dist = dist;
+  if (m_strADCMode == "Gaussian") {
+
+    float stdDev = ConvertPowerToStdDev(m_fSignalPower_dBm);
+    assert(stdDev >= 0 && "std dev of gaussian cannot be negative! ");
+    std::normal_distribution<double> dist(0, stdDev);
+    m_dist = dist;
+
+  } else if (m_strADCMode == "Sinusoid") {
+
+    auto fSignalPower_lin = std::pow(10, m_fSignalPower_dBm / 10);
+    m_fAmplitudeScalingFactor = std::pow(fSignalPower_lin * 2, 0.5);
+
+  } else {
+    std::runtime_error(m_strADCMode + " must be either Gaussian or Sinusoid");
+  }
 }
 
 void SimulatorModule::ContinuouslyTryProcess() {
@@ -97,18 +90,7 @@ void SimulatorModule::ContinuouslyTryProcess() {
   }
 }
 
-void SimulatorModule::SetChannelPhases(std::vector<float> vfChannelPhases_deg) {
-  assert(vfChannelPhases_deg.size() == m_uNumChannels);
-
-  std::transform(vfChannelPhases_deg.begin(), vfChannelPhases_deg.end(),
-                 vfChannelPhases_deg.begin(),
-                 [](double d) { return d * std::numbers::pi / 180; });
-
-  m_vfChannelPhases_rad = vfChannelPhases_deg;
-}
-
 void SimulatorModule::Process(std::shared_ptr<BaseChunk> pBaseChunk) {
-
   // Creating simulated data
   ReinitializeTimeChunk();
   SimulateADCSamples();
@@ -144,8 +126,6 @@ void SimulatorModule::ReinitializeTimeChunk() {
 }
 
 void SimulatorModule::GenerateSinsoid() {
-  auto m_fSignalPower_lin = std::pow(10, m_fSignalPower_dBm / 10);
-  float fAmplitudeScalingFactor = std::pow(m_fSignalPower_lin * 2, 0.5);
 
   // Iterate through each channel vector and sample index
   for (unsigned uCurrentSampleIndex = 0; uCurrentSampleIndex < m_dChunkSize;
@@ -155,7 +135,7 @@ void SimulatorModule::GenerateSinsoid() {
                             ((double)m_uSimulatedFrequency *
                              (double)m_u64SampleCount / (double)m_dSampleRate);
       int16_t datum =
-          fAmplitudeScalingFactor *
+          m_fAmplitudeScalingFactor *
           sin(dSinArgument + (double)m_vfChannelPhases_rad[uChannel]);
       m_pTimeChunk->m_vvi16TimeChunks[uChannel][uCurrentSampleIndex] = datum;
     }
@@ -215,14 +195,16 @@ void SimulatorModule::SimulateTimeStampMetaData() {
 }
 
 float SimulatorModule::ConvertPowerToStdDev(float fSignalPower_dBm) {
+  PLOG_FATAL << std::to_string(m_fSignalPower_dBm * std::pow(10, -1 / 10));
   return std::pow(m_fSignalPower_dBm * std::pow(10, -1 / 10), 0.5);
 }
 
 void SimulatorModule::SimulateNoise() {
   // Noise signal is norm dist with power = stddev as defined above where we
   // back calcualte using snr and signal level
+  float fSignalPower_mw = std::pow(10, m_fSignalPower_dBm / 10) / 1000;
   auto stdDevNoise =
-      std::pow(m_fSignalPower_dBm * std::pow(10, -m_fSNR_db / 10), 0.5);
+      std::pow(fSignalPower_mw / std::pow(10, m_fSNR_db / 10), 0.5);
 
   // Now generate normal distribution wiht power to create noise
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
