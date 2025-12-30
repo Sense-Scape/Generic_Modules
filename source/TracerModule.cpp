@@ -1,44 +1,36 @@
 #include "TracerModule.h"
+#include <ChunkToJSONConverter.h>
 
-TracerModule::TracerModule(std::string strPipelinePosition) : BaseModule(1000),
-                                                              m_strPipelinePosition(strPipelinePosition)
-{
+TracerModule::TracerModule(nlohmann::json_abi_v3_11_2::json jsonConfig)
+    : BaseModule(1000),
+      m_strPipelinePositionName(
+          CheckAndThrowJSON<std::string>(jsonConfig, "PipelinePostitionName")),
+      m_bPrintJSONIfPossible(
+          CheckAndThrowJSON<bool>(jsonConfig, "PrintJSONContent")) {
+
+
+    RegisterChunkCallbackFunction(ChunkType::JSONChunk, &TracerModule::Process_Chunk, (BaseModule*)this);
+    RegisterChunkCallbackFunction(ChunkType::TimeChunk, &TracerModule::Process_Chunk, (BaseModule*)this);
+    RegisterChunkCallbackFunction(ChunkType::GPSChunk, &TracerModule::Process_Chunk, (BaseModule*)this);
+    RegisterChunkCallbackFunction(ChunkType::JSONChunk, &TracerModule::Process_Chunk, (BaseModule*)this);
+
 }
 
-void TracerModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
-{
-    PLOG_DEBUG << m_strPipelinePosition + ": " + ChunkTypesNamingUtility::toString(pBaseChunk->GetChunkType());
+void TracerModule::Process_Chunk(std::shared_ptr<BaseChunk> pBaseChunk) {
+  PLOG_DEBUG << m_strPipelinePositionName + ": " +
+                    ChunkTypesNamingUtility::toString(
+                        pBaseChunk->GetChunkType());
 
-    if(m_bPrintJSONIfPossible)
-    {
-        if (ChunkToJSONConverter *pChunkToJSONConverter = dynamic_cast<ChunkToJSONConverter *>(pBaseChunk.get()))
-        {
-            auto pJSONChunk = std::make_shared<JSONChunk>();
-            PLOG_DEBUG << pChunkToJSONConverter->ToJSON()->dump();
-        }
-        else if (pBaseChunk->GetChunkType() == ChunkType::JSONChunk)
-        {
-            auto a = std::static_pointer_cast<JSONChunk>(pBaseChunk);
-            PLOG_DEBUG << a->m_JSONDocument.dump();
-        }
-        
+  if (m_bPrintJSONIfPossible) {
+    if (ChunkToJSONConverter *pChunkToJSONConverter =
+            dynamic_cast<ChunkToJSONConverter *>(pBaseChunk.get())) {
+      auto pJSONChunk = std::make_shared<JSONChunk>();
+      PLOG_DEBUG << pChunkToJSONConverter->ToJSON()->dump();
+    } else if (pBaseChunk->GetChunkType() == ChunkType::JSONChunk) {
+      auto pJSONChunk = std::static_pointer_cast<JSONChunk>(pBaseChunk);
+      PLOG_DEBUG << pJSONChunk->m_JSONDocument.dump();
     }
+  }
 
-    TryPassChunk(pBaseChunk);
-}
-
-void TracerModule::ContinuouslyTryProcess()
-{
-    while (!m_bShutDown)
-    {
-        std::shared_ptr<BaseChunk> pBaseChunk;
-        if (TakeFromBuffer(pBaseChunk))
-            Process(pBaseChunk);
-        else
-        {
-            // Wait to be notified that there is data available
-            std::unique_lock<std::mutex> BufferAccessLock(m_BufferStateMutex);
-            m_cvDataInBuffer.wait_for(BufferAccessLock, std::chrono::milliseconds(1),  [this] {return (!m_cbBaseChunkBuffer.empty() || m_bShutDown);});
-        }
-    }
+  TryPassChunk(pBaseChunk);
 }
