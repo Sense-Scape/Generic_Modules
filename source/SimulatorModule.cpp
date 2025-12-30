@@ -25,6 +25,7 @@ SimulatorModule::SimulatorModule(unsigned uBufferSize,
       m_i64StartUpDelay_us(
           CheckAndThrowJSON<int64_t>(jsonConfig, "StartupDelay_us")),
       m_u64CurrentTimeStamp_us(
+          1767112434 +
           CheckAndThrowJSON<int64_t>(jsonConfig, "StartupDelay_us")) {
   ConfigureModule(jsonConfig);
   PrintConfiguration();
