@@ -1,196 +1,190 @@
 #include "TCPRxModule.h"
+#include <ByteChunk.h>
+#include <cstdint>
+#include <signal.h>
+#include <string>
 
-TCPRxModule::TCPRxModule(std::string sIPAddress, uint16_t u16TCPPort, unsigned uMaxInputBufferSize, int iDatagramSize, std::string strMode)
+TCPRxModule::TCPRxModule(unsigned uMaxInputBufferSize,
+                         nlohmann::json_abi_v3_11_2::json jsonConfig)
     : BaseModule(uMaxInputBufferSize),
-      m_sBindIPAddress(sIPAddress),
-      m_u16TCPPort(u16TCPPort),
-      m_Socket(),
-      m_SocketStruct(),
-      m_bTCPConnected(),
-      m_strMode(strMode),
-      m_iDatagramSize(iDatagramSize)
-{
+      m_strBindIPAddress(CheckAndThrowJSON<std::string>(jsonConfig, "IP")),
+      m_u16TCPPort(CheckAndThrowJSON<uint16_t>(jsonConfig, "Port")), m_Socket(),
+      m_SocketStruct(), m_bTCPConnected(false),
+      m_strMode(CheckAndThrowJSON<std::string>(jsonConfig, "Mode")),
+      m_u32DatagramSize(512) {}
+
+TCPRxModule::~TCPRxModule() { close(m_Socket); }
+
+void TCPRxModule::Process() {
+  if (m_strMode == std::string("Connect")) {
+    ConnectToServer();
+  } else if (m_strMode == std::string("Listen")) {
+    ListenForClients();
+  } else {
+    PLOG_ERROR << std::string(__FUNCTION__) + ": Invalid Connection Mode";
+    throw;
+  }
 }
 
-TCPRxModule::~TCPRxModule()
-{
-    close(m_Socket);
-}
+void TCPRxModule::ConnectToServer() {
+  sockaddr_in sockaddr;
+  sockaddr.sin_family = AF_INET;
+  sockaddr.sin_port = htons(m_u16TCPPort);
+  signal(SIGPIPE, SIG_IGN);
 
-void TCPRxModule::Process()
-{
-    if (m_strMode == std::string("Connect")) {
-        ConnectToServer();
-    } else if (m_strMode == std::string("Listen")) {
-        ListenForClients();
+  while (!m_bShutDown) {
+    if (!m_bTCPConnected) {
+      if (inet_pton(AF_INET, m_strBindIPAddress.c_str(),
+                    &(sockaddr.sin_addr)) <= 0) {
+        PLOG_WARNING << std::string(__FUNCTION__) + ": Invalid IP address ";
+        return;
+      }
+
+      int clientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+      if (clientSocket == -1) {
+        PLOG_FATAL << std::string(__FUNCTION__) + ":INVALID_SOCKET ";
+        continue;
+      }
+
+      bool bConnectionSuccessful =
+          (connect(clientSocket, (struct sockaddr *)&sockaddr,
+                   sizeof(sockaddr)) == 0);
+
+      if (bConnectionSuccessful) {
+        m_bTCPConnected = true;
+        std::thread serverThread(
+            [this, &clientSocket] { RunServerThread(clientSocket); });
+        serverThread.detach();
+      } else {
+        close(clientSocket);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
     } else {
-        PLOG_ERROR << std::string(__FUNCTION__) + ": Invalid Connection Mode";
-        throw;
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+  }
 }
 
-void TCPRxModule::ConnectToServer()
-{
-    sockaddr_in sockaddr;
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = htons(m_u16TCPPort);
-    signal(SIGPIPE, SIG_IGN);
+void TCPRxModule::ListenForClients() {
+  int serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (serverSocket == -1) {
+    return;
+  }
 
-    while (!m_bShutDown)
-    {
-        if (!m_bTCPConnected)
-        {
-            if (inet_pton(AF_INET, m_sBindIPAddress.c_str(), &(sockaddr.sin_addr)) <= 0)
-            {
-                PLOG_WARNING << std::string(__FUNCTION__) + ": Invalid IP address ";
-                return;
-            }
+  sockaddr_in listenAddr;
+  listenAddr.sin_family = AF_INET;
+  listenAddr.sin_port = htons(m_u16TCPPort);
+  signal(SIGPIPE, SIG_IGN);
 
-            int clientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-            if (clientSocket == -1)
-            {
-                PLOG_FATAL << std::string(__FUNCTION__) + ":INVALID_SOCKET ";
-                continue;
-            }
+  if (inet_pton(AF_INET, m_strBindIPAddress.c_str(), &(listenAddr.sin_addr)) <=
+      0) {
+    PLOG_ERROR << std::string(__FUNCTION__) + ": Invalid IP address ";
+    throw;
+  }
 
-            bool bConnectionSuccessful = (connect(clientSocket, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) == 0);
-
-            if (bConnectionSuccessful)
-            {
-                m_bTCPConnected = true;
-                std::thread serverThread([this, &clientSocket] { RunServerThread(clientSocket); });
-                serverThread.detach();
-            }
-            else
-            {
-                close(clientSocket);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
-        }
-        else
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    }
-}
-
-void TCPRxModule::ListenForClients()
-{
-    int serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (serverSocket == -1) {
-        return;
-    }
-
-    sockaddr_in listenAddr;
-    listenAddr.sin_family = AF_INET;
-    listenAddr.sin_port = htons(m_u16TCPPort);
-    signal(SIGPIPE, SIG_IGN);
-
-    if (inet_pton(AF_INET, m_sBindIPAddress.c_str(), &(listenAddr.sin_addr)) <= 0)
-    {
-        PLOG_ERROR << std::string(__FUNCTION__) + ": Invalid IP address ";
-        throw;
-    }
-
-    if (bind(serverSocket, (struct sockaddr *)&listenAddr, sizeof(listenAddr)) < 0) {
-        close(serverSocket);
-        return;
-    }
-
-    listen(serverSocket, 1);
-
-    while (!m_bShutDown) {
-        int clientSocket = accept(serverSocket, nullptr, nullptr);
-        if (clientSocket >= 0) {
-            std::thread serverThread([this, &clientSocket] { RunServerThread(clientSocket); });
-            serverThread.detach();
-        }
-    }
-
+  if (bind(serverSocket, (struct sockaddr *)&listenAddr, sizeof(listenAddr)) <
+      0) {
     close(serverSocket);
+    return;
+  }
+
+  listen(serverSocket, 1);
+
+  while (!m_bShutDown) {
+    int clientSocket = accept(serverSocket, nullptr, nullptr);
+    if (clientSocket >= 0) {
+      std::thread serverThread(
+          [this, &clientSocket] { RunServerThread(clientSocket); });
+      serverThread.detach();
+    }
+  }
+
+  close(serverSocket);
 }
 
-void TCPRxModule::RunServerThread(int &clientSocket)
-{
-    std::vector<char> vcAccumulatedBytes;
-    vcAccumulatedBytes.reserve(2048);
+void TCPRxModule::RunServerThread(int &clientSocket) {
+  std::vector<char> vcAccumulatedBytes;
+  vcAccumulatedBytes.reserve(2048);
 
-    while (!m_bShutDown)
-    {
-        bool bSocketErrorOccured = false;
+  while (!m_bShutDown) {
+    bool bSocketErrorOccured = false;
 
-        std::vector<char> vcByteData;
-        vcByteData.resize(512);
-        int uReceivedDataLength = recv(clientSocket, &vcByteData[0], 512, 0);
+    std::vector<char> vcByteData;
+    vcByteData.resize(512);
+    int uReceivedDataLength = recv(clientSocket, &vcByteData[0], 512, 0);
 
-        bSocketErrorOccured = CheckForSocketReadErrors(uReceivedDataLength, vcByteData.size());
-        if (bSocketErrorOccured)
-            break;
+    bSocketErrorOccured =
+        CheckForSocketReadErrors(uReceivedDataLength, vcByteData.size());
+    if (bSocketErrorOccured)
+      break;
 
-        for (int i = 0; i < uReceivedDataLength; i++)
-            vcAccumulatedBytes.emplace_back(vcByteData[i]);
+    for (int i = 0; i < uReceivedDataLength; i++)
+      vcAccumulatedBytes.emplace_back(vcByteData[i]);
 
-        if (bSocketErrorOccured)
-            break;
+    if (bSocketErrorOccured)
+      break;
 
-        if (vcAccumulatedBytes.size() < 2)
-            continue; // Not enough data for size header
+    if (vcAccumulatedBytes.size() < 2)
+      continue; // Not enough data for size header
 
-        uint16_t u16SessionTransmissionSize;
-        memcpy(&u16SessionTransmissionSize, &vcAccumulatedBytes[0], 2);
+    uint16_t u16SessionTransmissionSize;
+    memcpy(&u16SessionTransmissionSize, &vcAccumulatedBytes[0], 2);
 
-        if (vcAccumulatedBytes.size() < 2 + u16SessionTransmissionSize)
-            continue; // Not enough data for size header
+    if (vcAccumulatedBytes.size() < 2 + u16SessionTransmissionSize)
+      continue; // Not enough data for size header
 
-        auto vcCompleteClassByteVector = std::vector<char>(
-            vcAccumulatedBytes.begin() + 2,
-            vcAccumulatedBytes.begin() + 2 + u16SessionTransmissionSize);
+    auto vcCompleteClassByteVector = std::vector<char>(
+        vcAccumulatedBytes.begin() + 2,
+        vcAccumulatedBytes.begin() + 2 + u16SessionTransmissionSize);
 
-        auto vcReducedAccumulatedBytes = std::vector<char>(
-            vcAccumulatedBytes.begin() + u16SessionTransmissionSize,
-            vcAccumulatedBytes.end());
+    auto vcReducedAccumulatedBytes = std::vector<char>(
+        vcAccumulatedBytes.begin() + u16SessionTransmissionSize,
+        vcAccumulatedBytes.end());
 
-        vcAccumulatedBytes = vcReducedAccumulatedBytes;
+    vcAccumulatedBytes = vcReducedAccumulatedBytes;
 
-        auto pUDPDataChunk = std::make_shared<ByteChunk>(m_iDatagramSize);
-        pUDPDataChunk->m_vcDataChunk = vcCompleteClassByteVector;
+    auto pUDPDataChunk = std::make_shared<ByteChunk>(m_u32DatagramSize);
+    pUDPDataChunk->m_vcDataChunk = vcCompleteClassByteVector;
 
-        TryPassChunk(std::dynamic_pointer_cast<BaseChunk>(pUDPDataChunk));
-    }
+    TryPassChunk(std::dynamic_pointer_cast<BaseChunk>(pUDPDataChunk));
+  }
 
-    close(clientSocket);
-    m_bTCPConnected = false;
+  close(clientSocket);
+  m_bTCPConnected = false;
 }
 
-bool TCPRxModule::CheckForSocketReadErrors(ssize_t stReportedSocketDataLength, size_t stActualDataLength)
-{
-    // Check for timeout
-    if (stReportedSocketDataLength == -1 && errno == EAGAIN)
-    {
-        std::string strWarning = std::string(__FUNCTION__) + ": recv() timed out or errored (error: " + std::to_string(errno) + ") " + m_sBindIPAddress;
-        PLOG_WARNING << strWarning;
-        return true;
-    }
-    else if (stReportedSocketDataLength == 0)
-    {
-        // connection closed
-        std::string strInfo = std::string(__FUNCTION__) + ": client " + m_sBindIPAddress + " closed connection, shutting down thread";
-        PLOG_INFO << strInfo;
-        return true;
-    }
+bool TCPRxModule::CheckForSocketReadErrors(ssize_t stReportedSocketDataLength,
+                                           size_t stActualDataLength) {
+  // Check for timeout
+  if (stReportedSocketDataLength == -1 && errno == EAGAIN) {
+    std::string strWarning =
+        std::string(__FUNCTION__) +
+        ": recv() timed out or errored (error: " + std::to_string(errno) +
+        ") " + m_strBindIPAddress;
+    PLOG_WARNING << strWarning;
+    return true;
+  } else if (stReportedSocketDataLength == 0) {
+    // connection closed
+    std::string strInfo = std::string(__FUNCTION__) + ": client " +
+                          m_strBindIPAddress +
+                          " closed connection, shutting down thread";
+    PLOG_INFO << strInfo;
+    return true;
+  }
 
-    // Check if received data length is valid
-    if (stReportedSocketDataLength > stActualDataLength)
-    {
-        std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + std::to_string(m_u16TCPPort) + ": received data length shorter than actual received data ";
-        PLOG_WARNING << strWarning;
-        return true;
-    }
+  // Check if received data length is valid
+  if (stReportedSocketDataLength > stActualDataLength) {
+    std::string strWarning =
+        std::string(__FUNCTION__) + ": Closed connection to " +
+        std::to_string(m_u16TCPPort) +
+        ": received data length shorter than actual received data ";
+    PLOG_WARNING << strWarning;
+    return true;
+  }
 
-    return false;
+  return false;
 }
 
-void TCPRxModule::StartProcessing()
-{
-    m_thread = std::thread([this] { Process(); });
-} 
+void TCPRxModule::StartProcessing() {
+  m_thread = std::thread([this] { Process(); });
+}
