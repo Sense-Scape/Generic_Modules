@@ -110,13 +110,12 @@ bool SoundCardInterfaceModule::UpdatePCMSamples() {
 }
 
 void SoundCardInterfaceModule::UpdateTimeStamp() {
-  // Get the current time point using system clock
-  std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-
-  // Convert the time point to duration since epoch
-  std::time_t epochTime = std::chrono::system_clock::to_time_t(now);
-
-  m_u64CurrentTimeStamp = static_cast<uint64_t>(epochTime);
+  auto now = std::chrono::system_clock::now();
+  auto i64CurrentTime_us =
+      std::chrono::duration_cast<std::chrono::microseconds>(
+          now.time_since_epoch())
+          .count();
+  m_u64CurrentTimeStamp = i64CurrentTime_us;
 }
 
 void SoundCardInterfaceModule::UpdateTimeStampMetaData() {
