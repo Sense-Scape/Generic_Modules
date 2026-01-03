@@ -1,11 +1,12 @@
+
 #include "JSONStateAccumulatorModule.h"
-#include <string>
 
 JSONStateAccumulatorModule::JSONStateAccumulatorModule(
     unsigned uBufferSize, nlohmann::json_abi_v3_11_2::json jsonConfig)
-    : BaseModule(uBufferSize) {
-  ConfigureModuleJSON(jsonConfig);
-
+    : BaseModule(uBufferSize),
+      m_bEnableJSONLogs(CheckAndThrowJSON<bool>(jsonConfig, "EnableJSONLogs")),
+      m_dReportingPeriod_s(
+          CheckAndThrowJSON<double>(jsonConfig, "ReportingPeriod_s")) {
   RegisterChunkCallbackFunction(ChunkType::JSONChunk,
                                 &JSONStateAccumulatorModule::Process_JSONChunk,
                                 (BaseModule *)this);
@@ -62,20 +63,4 @@ void JSONStateAccumulatorModule::Process_JSONChunk(
     auto value = itNewJSONChunk.value();
     jsonCurrentState[key] = value;
   }
-}
-
-void JSONStateAccumulatorModule::ConfigureModuleJSON(
-    nlohmann::json_abi_v3_11_2::json jsonConfig) {
-
-  PLOG_INFO << jsonConfig.dump();
-
-  CheckAndThrowJSON<std::string>(jsonConfig, "EnableJSONLogs");
-  std::string strEnableJSONLogs = jsonConfig["EnableJSONLogs"];
-  std::transform(strEnableJSONLogs.begin(), strEnableJSONLogs.end(),
-                 strEnableJSONLogs.begin(),
-                 [](unsigned char c) { return std::toupper(c); });
-  m_bEnableJSONLogs = (strEnableJSONLogs == "TRUE");
-
-  CheckAndThrowJSON<double>(jsonConfig, "ReportingPeriod_s");
-  m_dReportingPeriod_s = jsonConfig["ReportingPeriod_s"].get<double>();
 }
