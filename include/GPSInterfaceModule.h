@@ -4,11 +4,9 @@
 /*Linux Includes*/
 #include <fstream>
 #include <gps.h>
-#include <iostream>
 
 /*Custom Includes*/
 #include "BaseModule.h"
-#include "GPSChunk.h"
 
 /**
  * @brief Class that reads the GPS data from the serial interface
@@ -39,12 +37,12 @@ public:
    */
   void ContinuouslyTryProcess() override;
 
-  std::fstream m_fsSerialInterface; ///< Stream to serial interface
-  std::string m_strInterfaceName;   ///< The string in the /dev directory
-  std::vector<uint8_t>
+  const std::string m_strInterfaceName; ///< The string in the /dev directory
+  const std::vector<uint8_t>
       m_vu8SourceIdentifier; ///< Source identifier of generated chunks
   // Simulation Data
-  bool m_bSimulateData;             ///< Whether GPS should try simulate Data
+  const bool m_bSimulateData;       ///< Whether GPS should try simulate Data
+  std::fstream m_fsSerialInterface; ///< Stream to serial interface
   double m_dSimulatedLatitude = 0;  ///< The simulated latitide
   double m_dSimulatedLongitude = 0; ///< The simulated longitude
   bool m_bGPSCurrentlyLocked;       ///< Is the GPS currently locked
@@ -77,14 +75,6 @@ private:
    * @param[in] jsonConfig JSON configuration of this module
    */
   void ConfigureModuleJSON(nlohmann::json_abi_v3_11_2::json jsonConfig);
-
-  /**
-   * @brief look for specified key and throw if not found
-   * @param[in] jsonConfig JSON configuration of this module
-   * @param[in] key Key for which one is looking
-   */
-  void CheckAndThrowJSON(const nlohmann::json_abi_v3_11_2::json &j,
-                         const std::string &key);
 
   /**
    * @brief send reporting json messaages

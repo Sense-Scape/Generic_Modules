@@ -1,62 +1,37 @@
 #include "GPSInterfaceModule.h"
 #include "plog/Log.h"
 
+#include "GPSChunk.h"
+#include <iostream>
+#include <vector>
+
 GPSInterfaceModule::GPSInterfaceModule(
     unsigned uBufferSize, nlohmann::json_abi_v3_11_2::json jsonConfig)
-    : BaseModule(uBufferSize) {
-  ConfigureModuleJSON(jsonConfig);
-
+    : BaseModule(uBufferSize),
+      m_strInterfaceName(
+          CheckAndThrowJSON<std::string>(jsonConfig, "SerialPort")),
+      m_vu8SourceIdentifier(CheckAndThrowJSON<std::vector<uint8_t>>(
+          jsonConfig, "SourceIdentifier")),
+      m_dSimulatedLatitude(
+          CheckAndThrowJSON<double>(jsonConfig, "SimulatedLatitude")),
+      m_dSimulatedLongitude(
+          CheckAndThrowJSON<double>(jsonConfig, "SimulatedLongitude")),
+      m_bSimulateData(CheckAndThrowJSON<bool>(jsonConfig, "SimulatePosition")),
+      m_bGPSCurrentlyLocked(
+          CheckAndThrowJSON<bool>(jsonConfig, "SimulatePosition")) {
   if (!m_bSimulateData)
     TryOpenGPSInterface();
 }
 
 void GPSInterfaceModule::ConfigureModuleJSON(
     nlohmann::json_abi_v3_11_2::json jsonConfig) {
-
-  PLOG_INFO << "Starting GPS config";
-  PLOG_INFO << jsonConfig.dump();
-
-  CheckAndThrowJSON(jsonConfig, "SourceIdentifier");
-  m_vu8SourceIdentifier =
-      jsonConfig["SourceIdentifier"].get<std::vector<uint8_t>>();
-
-  CheckAndThrowJSON(jsonConfig, "SerialPort");
-  m_strInterfaceName = jsonConfig["SerialPort"];
-
-  CheckAndThrowJSON(jsonConfig, "SimulatePosition");
-  std::string strSimulatePosition = jsonConfig["SimulatePosition"];
-  std::transform(strSimulatePosition.begin(), strSimulatePosition.end(),
-                 strSimulatePosition.begin(),
-                 [](unsigned char c) { return std::toupper(c); });
-  m_bSimulateData = (strSimulatePosition == "TRUE");
-
   if (m_bSimulateData) {
-    CheckAndThrowJSON(jsonConfig, "SimulatedLongitude");
-    CheckAndThrowJSON(jsonConfig, "SimulatedLatitude");
-    double dSimulatedLongitude = jsonConfig["SimulatedLongitude"];
-    double dSimulatedLatitude = jsonConfig["SimulatedLatitude"];
+
     m_bGPSCurrentlyLocked = true;
-
-    m_dSimulatedLongitude = dSimulatedLongitude;
-    m_dSimulatedLatitude = dSimulatedLatitude;
-  }
-
-  PLOG_INFO << "Finished GPS config";
-}
-
-void GPSInterfaceModule::CheckAndThrowJSON(
-    const nlohmann::json_abi_v3_11_2::json &j, const std::string &key) {
-  auto it = j.find(key);
-  if (it == j.end()) {
-    std::string strFatal =
-        std::string(__FUNCTION__) + "Key '" + key + "' not found in JSON.";
-    PLOG_FATAL << strFatal;
-    throw std::runtime_error(strFatal);
   }
 }
 
 void GPSInterfaceModule::ContinuouslyTryProcess() {
-
   if (m_bSimulateData)
     CheckIfSimulationPositionSet();
 
@@ -92,7 +67,6 @@ void GPSInterfaceModule::TryOpenGPSInterface() {
 }
 
 void GPSInterfaceModule::TryTransmitPositionData() {
-
   // Wait for a response
   char message[4096];                // Buffer for raw GPSD messages (optional)
   int message_len = sizeof(message); // Length of the buffer
@@ -129,7 +103,6 @@ void GPSInterfaceModule::TryTransmitPositionData() {
 }
 
 void GPSInterfaceModule::TrySimulatedPositionData() {
-
   auto pGPSChunk = std::make_shared<GPSChunk>();
   pGPSChunk->SetSourceIdentifier(m_vu8SourceIdentifier);
 
